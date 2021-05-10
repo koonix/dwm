@@ -43,6 +43,25 @@ static const Rule rules[] = {
 static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+
+/* hint for attachdirection
+ * attach above:
+ *   Make new clients attach above the selected client,
+ *   instead of always becoming the new master. This behaviour is known from xmonad.
+ * attach aside:
+ *   Make new clients get attached and focused in the stacking area,
+ *   instead of always becoming the new master. It's basically an attachabove modification.
+ * attach below:
+ *   Make new clients attach below the selected client,
+ *   instead of always becoming the new master. Inspired heavily by attachabove.
+ * attach bottom:
+ *   New clients attach at the bottom of the stack instead of the top.
+ * attach top:
+ *   New client attaches below the last master/on top of the stack.
+ *   Behavior feels very intuitive as it doesn't disrupt existing masters,
+ *   no matter the amount of them, it only pushes the clients in stack down.
+ *   In case of nmaster = 1 feels like attachaside
+ */
 static const int attachdirection = 0;    /* 0 default, 1 above, 2 aside, 3 below, 4 bottom, 5 top */
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
