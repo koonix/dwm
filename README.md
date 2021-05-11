@@ -8,6 +8,7 @@ this is my build of dwm, the tiling window manager:
 utility:
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
+(improved it's visiblity a little bit)
 
 - [push](https://dwm.suckless.org/patches/push)
 
