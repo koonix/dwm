@@ -84,7 +84,8 @@ static const int attachdirection = 0;
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "[]=",      tile },    /* first entry is default */
+	{ ">M>",      centeredfloatingmaster }, /* first entry is default */
+	{ "[]=",      tile },
 	{ "[M]",      monocle },
 	{ "[@]",      spiral },
 	{ "[\\]",     dwindle },
@@ -96,7 +97,6 @@ static const Layout layouts[] = {
 	{ "---",      horizgrid },
 	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
-	{ ">M>",      centeredfloatingmaster },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
@@ -111,7 +111,7 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define TERM "alacritty"
+#define TERM "kitty"
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
@@ -208,16 +208,16 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_h,      setcfact,       {.f = -0.25} },
 	{ MODKEY|ShiftMask,             XK_l,      setcfact,       {.f = +0.25} },
 	{ MODKEY|ShiftMask,             XK_o,      setcfact,       {.f =  0.00} },
-	{ MODKEY,                       XK_x,      transfer,       {0} },
+	{ MODKEY|ShiftMask,             XK_Return, transfer,       {0} },
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,                       XK_w,      killclient,     {0} },
-	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} },
-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[4]} },
-	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[8]} },
-	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[12]} },
-	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[11]} },
+	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[1]} },
+	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} },
+	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[5]} },
+	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[9]} },
+	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[0]} },
+	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[12]} },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 
 	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
