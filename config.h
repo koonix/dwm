@@ -150,6 +150,7 @@ static const char *qalc[] = { "qalculate-gtk", NULL };
 static const char *browser[]  = { "firefox", NULL };
 
 /* other */
+static const char *tray = { "tray", NULL };
 #define GIMME SHCMD("wand -l | dmenu -p spell: | xargs wand")
 #define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
@@ -190,6 +191,8 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_MUSIC },
 	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
+
+	{ MODKEY,                       XK_l,      spawn,          {.v = frwd } },
 
 	{ ControlMask|ShiftMask,           XK_j,      spawn,          FF_TAB_NEXT },
 	{ ControlMask|ShiftMask,           XK_k,      spawn,          FF_TAB_PREV },
