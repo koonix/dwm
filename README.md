@@ -8,7 +8,7 @@ this is my build of dwm, the tiling window manager:
 utility:
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
-(improved it's visiblity a little bit)
+(I improved it's visiblity a little bit)
 
 - [push](https://dwm.suckless.org/patches/push)
 
@@ -19,10 +19,10 @@ utility:
 vanity:
 
 - [clientindicators](https://dwm.suckless.org/patches/clientindicators)
-(hide vacant variant)
+(it's hide vacant variant)
 
 - [status2d](https://dwm.suckless.org/patches/status2d)
-and it's swap-save-restore patch
+(plus it's swap-save-restore patch)
 
 - [vanitygaps-cfacts](https://dwm.suckless.org/patches/vanitygaps)
 
@@ -30,7 +30,7 @@ and it's swap-save-restore patch
 
 - [titlecolor](https://dwm.suckless.org/patches/titlecolor)
 
-## please install libxft-bgra!
+## requires libxft-bgra
 
 This build of dwm does not block color emoji in the status/info bar,
 so you must install libxft-bgra from the AUR,
