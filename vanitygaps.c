@@ -467,6 +467,57 @@ deck(Monitor *m)
 }
 
 /*
+ * Stairs layout + gaps
+ */
+void
+stairs(Monitor *m)
+{
+	unsigned int i, n;
+	int oh, ov, ih, iv;
+    int invertedpos, stackareapos, invshift, stackshift;
+    int stsx, stsy, stsw, stsh;
+	int mx = 0, my = 0, mh = 0, mw = 0;
+	int sx = 0, sy = 0, sh = 0, sw = 0;
+	float mfacts, sfacts;
+	int mrest, srest;
+	Client *c;
+
+	getgaps(m, &oh, &ov, &ih, &iv, &n);
+	if (n == 0)
+		return;
+
+	sx = mx = m->wx + ov;
+	sy = my = m->wy + oh;
+	sh = mh = m->wh - 2*oh - ih * (MIN(n, m->nmaster) - 1);
+	sw = mw = m->ww - 2*ov;
+
+	if (m->nmaster && n > m->nmaster) {
+		sw = (mw - iv) * (1 - m->mfact);
+		mw = mw - iv - sw;
+		sx = mx + mw + iv;
+		sh = m->wh - 2*oh;
+	}
+
+	getfacts(m, mh, sh, &mfacts, &sfacts, &mrest, &srest);
+
+	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		if (i < m->nmaster) {
+			resize(c, mx, my, mw - (2*c->bw), mh * (c->cfact / mfacts) + (i < mrest ? 1 : 0) - (2*c->bw), 0);
+			my += HEIGHT(c) + ih;
+		} else {
+			invertedpos  = n - i - 1;
+			stackareapos = i - m->nmaster;
+			invshift   = stairpx * invertedpos;
+			stackshift = stairpx * stackareapos;
+			stsx = sx + stackshift;
+			stsy = sy + invshift;
+			stsw = sw - (2*c->bw) - stackshift - invshift;
+			stsh = sh - (2*c->bw) - stackshift - invshift;
+			resize(c, stsx, stsy, stsw, stsh, 0);
+		}
+}
+
+/*
  * Fibonacci layout + gaps
  * https://dwm.suckless.org/patches/fibonacci/
  */
