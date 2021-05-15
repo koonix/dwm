@@ -1,6 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
+static const unsigned int stairpx   = 80;       /* depth of stairs layout */
 static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 20;       /* snap pixel */
 static const unsigned int gappih    = 25;       /* horiz inner gap between windows */
@@ -21,8 +22,9 @@ static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 
 /* custom colors */
+static const char common_bg_gray[]  = "#333333";
 static const char col_null[]        = "#000000";
-static const char common_bg[]       = "#333333";
+static const char common_bg[]       = "#000000";
 static const char norm_fg[]         = "#555555";
 static const char norm_border[]     = "#444444";
 static const char norm_float[]      = "#222222";
@@ -82,9 +84,10 @@ static const int attachdirection = 0;
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
 
+/* layout array. first entry is default. */
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ ">M>",      centeredfloatingmaster }, /* first entry is default */
+    { "_-^",      stairs },
 	{ "[]=",      tile },
 	{ "[M]",      monocle },
 	{ "[@]",      spiral },
@@ -97,6 +100,7 @@ static const Layout layouts[] = {
 	{ "---",      horizgrid },
 	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
+	{ ">M>",      centeredfloatingmaster },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
@@ -150,7 +154,7 @@ static const char *qalc[] = { "qalculate-gtk", NULL };
 static const char *browser[]  = { "firefox", NULL };
 
 /* other */
-static const char *tray = { "tray", NULL };
+static const char *tray[] = { "tray", NULL };
 #define GIMME SHCMD("wand -l | dmenu -p spell: | xargs wand")
 #define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
@@ -192,7 +196,7 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
 
-	{ MODKEY,                       XK_l,      spawn,          {.v = frwd } },
+	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 
 	{ ControlMask|ShiftMask,           XK_j,      spawn,          FF_TAB_NEXT },
 	{ ControlMask|ShiftMask,           XK_k,      spawn,          FF_TAB_PREV },
@@ -215,12 +219,16 @@ static Key keys[] = {
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,                       XK_w,      killclient,     {0} },
-	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} },
-	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[5]} },
-	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[9]} },
+	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} },
+	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
+	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[4]} },
+	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[10]} },
+	{ MODKEY|ShiftMask,             XK_g,      setlayout,      {.v = &layouts[9]} },
 	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[0]} },
-	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[12]} },
+	{ MODKEY,                       XK_a,      setlayout,      {.v = &layouts[5]} },
+	{ MODKEY|ShiftMask,             XK_a,      setlayout,      {.v = &layouts[6]} },
+	{ MODKEY|ShiftMask,             XK_s,      setlayout,      {.v = &layouts[2]} },
+	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[11]} },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 
 	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
