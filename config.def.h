@@ -1,7 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int startpx   = 50;       /* depth of stairs layout */
+static const unsigned int stairpx   = 50;       /* depth of stairs layout */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const unsigned int gappih    = 20;       /* horiz inner gap between windows */
@@ -19,7 +19,6 @@ static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 static const char *colors[][4]      = {
-    +static const char *colors[][4]      = {
     /*               fg         bg         border     float */
     [SchemeNorm]  = { col_gray3, col_gray1, col_gray2, col_gray2 },
     [SchemeSel]   = { col_gray4, col_cyan,  col_gray2, col_cyan  },
@@ -83,7 +82,7 @@ static const Layout layouts[] = {
 	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
 	{ ">M>",      centeredfloatingmaster },
-	{ "_-`",      stairs },
+	{ "H==",      stairs },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
