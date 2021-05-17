@@ -164,6 +164,9 @@ static const char *tray[] = { "tray", NULL };
 #define FF_TAB_CLOSE SHCMD("inject 'ctrl+shift+m' firefox 'ctrl+w'")
 #define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
 
+/* library for XF86XK_Audio keys */
+#include <X11/XF86keysym.h>
+
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -188,6 +191,9 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = pauseall } },
+	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
+	{ 0,XF86XK_AudioLowerVolume,               spawn,          {.v = voldec } },
+	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute   } },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          {.v = prevsong } },
