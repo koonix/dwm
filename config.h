@@ -1,8 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int stairpx   = 80;       /* depth of stairs layout */
-static const unsigned int borderpx  = 2;        /* border pixel of windows */
+static const unsigned int stairpx   = 50;       /* depth of stairs layout */
+static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 20;       /* snap pixel */
 static const unsigned int gappih    = 25;       /* horiz inner gap between windows */
 static const unsigned int gappiv    = 25;       /* vert inner gap between windows */
@@ -87,7 +87,6 @@ static const int attachdirection = 0;
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-    { "_-^",      stairs },
 	{ "[]=",      tile },
 	{ "[M]",      monocle },
 	{ "[@]",      spiral },
@@ -101,6 +100,7 @@ static const Layout layouts[] = {
 	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
 	{ ">M>",      centeredfloatingmaster },
+	{ "H==",      stairs },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
@@ -115,7 +115,7 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define TERM "kitty"
+#define TERM "alacritty"
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
@@ -150,7 +150,7 @@ static const char *frwd[] = { "mpc", "seek", "+10", NULL };
 static const char *back[] = { "mpc", "seek", "-10", NULL };
 
 /* gui */
-static const char *qalc[] = { "qalculate-gtk", NULL };
+static const char *calculator[] = { TERM, "-e", "insect", NULL };
 static const char *browser[]  = { "firefox", NULL };
 
 /* other */
@@ -170,7 +170,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_i,      spawn,          GIMME },
 	{ MODKEY,                       XK_t,      spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
-	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = qalc } },
+	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = calculator } },
 
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          {.v = ncmpcpp } },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = aria2p } },
@@ -221,7 +221,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_w,      killclient,     {0} },
 	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[4]} },
+	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[13]} },
 	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[10]} },
 	{ MODKEY|ShiftMask,             XK_g,      setlayout,      {.v = &layouts[9]} },
 	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[0]} },
