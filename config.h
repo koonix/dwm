@@ -155,7 +155,7 @@ static const char *browser[]  = { "firefox", NULL };
 
 /* other */
 static const char *tray[] = { "tray", NULL };
-#define GIMME SHCMD("wand -l | dmenu -p spell: | xargs wand")
+#define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
 #define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
 #define FF_TAB_PREV SHCMD("inject 'ctrl+shift+k' firefox 'ctrl+Page_Up'")
