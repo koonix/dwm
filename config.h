@@ -29,7 +29,7 @@ static const char norm_fg[]         = "#555555";
 static const char norm_border[]     = "#444444";
 static const char norm_float[]      = "#222222";
 static const char sel_fg[]          = "#9d9d9d";
-static const char sel_border[]      = "#bbbbbb";
+static const char sel_border[]      = "#9d9d9d";
 static const char sel_float[]       = "#005577";
 static const char title_fg[]        = "#9d9d9d";
 
@@ -78,7 +78,7 @@ static const int resizehints = 1;    /* 1 means respect size hints in tiled resi
  *   no matter the amount of them, it only pushes the clients in stack down.
  *   In case of nmaster = 1 feels like attachaside
  */
-static const int attachdirection = 0;
+static const int attachdirection = 1;
 
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
@@ -155,6 +155,7 @@ static const char *browser[]  = { "firefox", NULL };
 
 /* other */
 static const char *tray[] = { "tray", NULL };
+static const char *bar[] = { "togglebar", NULL };
 #define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
 #define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
@@ -203,6 +204,7 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
+	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
 
 	{ ControlMask|ShiftMask,           XK_j,      spawn,          FF_TAB_NEXT },
 	{ ControlMask|ShiftMask,           XK_k,      spawn,          FF_TAB_PREV },
