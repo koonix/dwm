@@ -4,6 +4,7 @@
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 20;       /* snap pixel */
+static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
 static const unsigned int gappih    = 25;       /* horiz inner gap between windows */
 static const unsigned int gappiv    = 25;       /* vert inner gap between windows */
 static const unsigned int gappoh    = 25;       /* horiz outer gap between windows and screen edge */
@@ -48,10 +49,12 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class, instance, title, tags mask, isfloating, monitor */
-    {"TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, -1}, /* don't tile telegram's media viewer */
-    {"Qalculate-gtk", NULL, NULL, 0, 1, -1}, /* keep qalculate floating */
-
+	/* class, instance, title, tags mask, isfloating, isterminal, noswallow, monitor */
+    {"TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1}, /* don't tile telegram's media viewer */
+    {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
+    {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
+    {"Alacritty", NULL, NULL, 0, 0, 1, 0, -1},
+    {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
 };
 
 /* layout(s) */
