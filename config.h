@@ -78,7 +78,7 @@ static const int resizehints = 1;    /* 1 means respect size hints in tiled resi
  *   no matter the amount of them, it only pushes the clients in stack down.
  *   In case of nmaster = 1 feels like attachaside
  */
-static const int attachdirection = 1;
+static const int attachdirection = 5;
 
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
