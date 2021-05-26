@@ -1,5 +1,9 @@
 /* See LICENSE file for copyright and license details. */
 
+/* terminal */
+#define TERM "alacritty"
+#define TERMCLASS "Alacritty"
+
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -52,8 +56,7 @@ static const Rule rules[] = {
 	/* class, instance, title, tags mask, isfloating, isterminal, noswallow, monitor */
     {"TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1}, /* don't tile telegram's media viewer */
     {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
-    {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
-    {"Alacritty", NULL, NULL, 0, 0, 1, 0, -1},
+    {TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
 };
 
@@ -118,7 +121,6 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define TERM "alacritty"
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
