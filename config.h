@@ -154,11 +154,11 @@ static const char *prevsong[] = { "mpc", "prev", NULL };
 static const char *frwd[] = { "mpc", "seek", "+10", NULL };
 static const char *back[] = { "mpc", "seek", "-10", NULL };
 
-/* gui */
-static const char *calculator[] = { TERM, "-e", "insect", NULL };
-static const char *browser[]  = { "firefox", NULL };
 
 /* other */
+static const char *browser[]  = { "firefox", NULL };
+static const char *calculator[] = { TERM, "-e", "sh", "-c", "echo calculator; printf '\\033[6 q'; bc -qi", NULL };
+static const char *insect[] = { TERM, "-e", "sh", "-c", "echo insect; printf '\\033[6 q'; insect", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
 #define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
@@ -180,6 +180,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_t,      spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
 	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = calculator } },
+	{ MODKEY|Mod1Mask,              XK_q,      spawn,          {.v = insect } },
 
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          {.v = ncmpcpp } },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = aria2p } },
