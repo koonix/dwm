@@ -131,7 +131,7 @@ static const char *termcmd[] = { TERM, NULL };
 static const char *ncmpcpp[] = { TERM, "-e", "ncmpcpp" , NULL };
 static const char *aria2p[] = { TERM, "-e", "aria2p" , NULL };
 static const char *tremc[] = { TERM, "-e", "tremc" , NULL };
-static const char *top[] = { TERM, "-e", "gotop" , NULL };
+static const char *top[] = { TERM, "-e", "htop" , NULL };
 static const char *vim[] = { TERM, "-e", "nvim" , NULL };
 
 /* dmenu */
