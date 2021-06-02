@@ -1,7 +1,11 @@
-# soystemd's dwm
+# dwm
 
 this is my build of dwm, the tiling window manager:
 [dwm.suckless.org](https://dwm.suckless.org)
+
+[tile layout](sc-tile.png)
+
+[stairs layout](sc-stairs.png)
 
 ## patches
 
@@ -17,6 +21,8 @@ utility:
 - [attachdirection](https://dwm.suckless.org/patches/attachdirection)
 
 - [transfer](https://dwm.suckless.org/patches/transfer)
+
+- a new custom layout: stairs
 
 vanity:
 
@@ -39,3 +45,8 @@ so you must install libxft-bgra from the AUR,
 which fixes a libxft color emoji rendering problem,
 otherwise dwm will crash upon trying to render one.
 Hopefully this fix will be in all libxft soon enough.
+
+## related stuff
+
+- my statusbar: [soystemd/dwmBar](https://github.com/soystemd/dwmbar)
+- my dotfiles: [soystemd/dotfiles](https://github.com/soystemd/dotfiles)
