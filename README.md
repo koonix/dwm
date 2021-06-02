@@ -3,9 +3,9 @@
 this is my build of dwm, the tiling window manager:
 [dwm.suckless.org](https://dwm.suckless.org)
 
-[tile layout](sc-tile.png)
+![tile layout](sc-tile.png)
 
-[stairs layout](sc-stairs.png)
+![stairs layout](sc-stairs.png)
 
 ## patches
 
