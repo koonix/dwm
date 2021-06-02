@@ -14,7 +14,7 @@ utility:
 - [swallow](https://dwm.suckless.org/patches/swallow)
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
-(I improved it's visiblity a little bit)
+(improved it's visiblity a little bit)
 
 - [push](https://dwm.suckless.org/patches/push)
 
@@ -22,7 +22,7 @@ utility:
 
 - [transfer](https://dwm.suckless.org/patches/transfer)
 
-- a new custom layout: stairs
+- my stairs layout (on the second screenshot)
 
 vanity:
 
