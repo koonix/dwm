@@ -241,7 +241,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_a,      setlayout,      {.v = &layouts[5]} },
 	{ MODKEY|ShiftMask,             XK_a,      setlayout,      {.v = &layouts[6]} },
-	{ MODKEY|ShiftMask,             XK_s,      setlayout,      {.v = &layouts[2]} },
+	{ MODKEY|ControlMask,           XK_a,      setlayout,      {.v = &layouts[2]} },
 	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[11]} },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 
