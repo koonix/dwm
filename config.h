@@ -137,6 +137,8 @@ static const char *vim[] = { TERM, "-e", "nvim" , NULL };
 
 /* dmenu */
 static const char *sysact[] = { "sysact", NULL };
+static const char *lock[] = { "sysact", "lock", NULL };
+static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bmrun[] = { "bmrun", NULL };
@@ -190,6 +192,8 @@ static Key keys[] = {
 	{ MODKEY,                       XK_v,      spawn,          {.v = vim } },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
+	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
+	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY,                       XK_n,      spawn,          {.v = bmrun } },
