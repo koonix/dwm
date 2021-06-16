@@ -127,7 +127,7 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
-static const char *termcmd[] = { TERM, NULL };
+static const char *terminal[] = { TERM, NULL };
 
 /* tui */
 static const char *ncmpcpp[] = { TERM, "-e", "ncmpcpp" , NULL };
@@ -181,7 +181,7 @@ static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_i,      spawn,          GIMME },
-	{ MODKEY,                       XK_t,      spawn,          {.v = termcmd } },
+	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
 	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = calculator } },
 	{ MODKEY|Mod1Mask,              XK_q,      spawn,          {.v = insect } },
@@ -282,7 +282,7 @@ static Button buttons[] = {
 	{ ClkLtSymbol,          0,              Button2,        setlayout,      {.v = &layouts[0]} },
 	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[13]} },
 	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
-	{ ClkStatusText,        0,              Button2,        spawn,          {.v = termcmd } },
+	{ ClkStatusText,        0,              Button2,        spawn,          {.v = terminal } },
 	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
 	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
 	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
