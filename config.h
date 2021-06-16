@@ -161,10 +161,9 @@ static const char *back[] = { "mpc", "seek", "-10", NULL };
 
 /* other */
 static const char *browser[]  = { "firefox", NULL };
-static const char *calculator[] = { TERM, "-e", "sh", "-c", "echo calculator; printf '\\033[6 q'; bc -qi", NULL };
-static const char *insect[] = { TERM, "-e", "sh", "-c", "echo insect; printf '\\033[6 q'; insect", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
+#define CALCULATOR TERMCMD("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
 #define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
 #define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
@@ -183,8 +182,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_i,      spawn,          GIMME },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
-	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = calculator } },
-	{ MODKEY|Mod1Mask,              XK_q,      spawn,          {.v = insect } },
+	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
 
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          ARIA2P },
