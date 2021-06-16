@@ -130,11 +130,11 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
 static const char *terminal[] = { TERM, NULL };
 
 /* tui */
-static const char *ncmpcpp[] = { TERM, "-e", "ncmpcpp" , NULL };
-static const char *aria2p[] = { TERM, "-e", "aria2p" , NULL };
-static const char *tremc[] = { TERM, "-e", "tremc" , NULL };
-static const char *top[] = { TERM, "-e", "htop" , NULL };
-static const char *vim[] = { TERM, "-e", "nvim" , NULL };
+#define NCMPCPP TERMCMD("ncmpcpp")
+#define ARIA2P TERMCMD("aria2p")
+#define TREMC TERMCMD("tremc")
+#define HTOP TERMCMD("htop")
+#define VIM TERMCMD("nvim")
 
 /* dmenu */
 static const char *sysact[] = { "sysact", NULL };
@@ -186,11 +186,11 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_q,      spawn,          {.v = calculator } },
 	{ MODKEY|Mod1Mask,              XK_q,      spawn,          {.v = insect } },
 
-	{ MODKEY|ShiftMask,             XK_m,      spawn,          {.v = ncmpcpp } },
-	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = aria2p } },
-	{ MODKEY|ControlMask,           XK_d,      spawn,          {.v = tremc } },
-	{ MODKEY|ControlMask,           XK_c,      spawn,          {.v = top } },
-	{ MODKEY,                       XK_v,      spawn,          {.v = vim } },
+	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
+	{ MODKEY|ShiftMask,             XK_d,      spawn,          ARIA2P },
+	{ MODKEY|ControlMask,           XK_d,      spawn,          TREMC },
+	{ MODKEY|ControlMask,           XK_c,      spawn,          HTOP },
+	{ MODKEY,                       XK_v,      spawn,          VIM },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
