@@ -158,7 +158,6 @@ static const char *prevsong[] = { "mpc", "prev", NULL };
 static const char *frwd[] = { "mpc", "seek", "+10", NULL };
 static const char *back[] = { "mpc", "seek", "-10", NULL };
 
-
 /* other */
 static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
@@ -190,12 +189,13 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_c,      spawn,          HTOP },
 	{ MODKEY,                       XK_v,      spawn,          VIM },
 
-	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
+	{ MODKEY|ControlMask,           XK_e,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY,                       XK_n,      spawn,          {.v = bmrun } },
+	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 
 	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
@@ -269,7 +269,6 @@ static Key keys[] = {
 	TAGKEYS(                        XK_7,                      6)
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
-	{ MODKEY|ControlMask,              XK_q,      quit,           {0} },
 };
 
 /* button definitions */
