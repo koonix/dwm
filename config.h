@@ -6,7 +6,7 @@
 
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
-static const unsigned int borderpx  = 3;        /* border pixel of windows */
+static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 20;       /* snap pixel */
 static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
 static const unsigned int gappih    = 20;       /* horiz inner gap between windows */
@@ -35,7 +35,6 @@ static const char col_null[]        = "#000000";
 static const char common_bg[]       = "#000000";
 static const char norm_fg[]         = "#555555";
 static const char norm_border[]     = "#444444";
-static const char norm_float[]      = "#222222";
 static const char sel_fg[]          = "#9d9d9d";
 static const char sel_border[]      = "#9d9d9d";
 static const char sel_float[]       = "#005577";
@@ -43,8 +42,8 @@ static const char title_fg[]        = "#9d9d9d";
 #endif
 
 static const char *colors[][4]      = {
-    /*               fg         bg         border     float */
-    [SchemeNorm]  = { norm_fg,  common_bg, norm_border, norm_float },
+    /*               fg         bg         border       float */
+    [SchemeNorm]  = { norm_fg,  common_bg, norm_border, col_null },
     [SchemeSel]   = { sel_fg,   common_bg, sel_border,  sel_float },
     [SchemeTitle] = { title_fg, common_bg, col_null,    col_null },
 };
