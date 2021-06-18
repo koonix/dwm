@@ -27,7 +27,10 @@ static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 
 /* custom colors */
-static const char common_bg_gray[]  = "#333333";
+#if defined __has_include && __has_include ("/tmp/wal-dwm.h")
+#include "/tmp/wal-dwm.h"
+#endif
+#ifndef PYWAL
 static const char col_null[]        = "#000000";
 static const char common_bg[]       = "#000000";
 static const char norm_fg[]         = "#555555";
@@ -37,6 +40,7 @@ static const char sel_fg[]          = "#9d9d9d";
 static const char sel_border[]      = "#9d9d9d";
 static const char sel_float[]       = "#005577";
 static const char title_fg[]        = "#9d9d9d";
+#endif
 
 static const char *colors[][4]      = {
     /*               fg         bg         border     float */
