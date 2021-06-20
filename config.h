@@ -192,7 +192,7 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_c,      spawn,          HTOP },
 	{ MODKEY,                       XK_v,      spawn,          VIM },
 
-	{ MODKEY|ControlMask,           XK_e,      spawn,          {.v = sysact } },
+	{ MODKEY,                       XK_r,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
