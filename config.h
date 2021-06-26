@@ -145,7 +145,7 @@ static const char *lock[] = { "sysact", "lock", NULL };
 static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
-static const char *bmrun[] = { "bmrun", NULL };
+static const char *bmrun[] = { "bm", "-d", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "10", NULL };
