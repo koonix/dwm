@@ -148,8 +148,8 @@ static const char *dshot[] = { "dshot", NULL };
 static const char *bmrun[] = { "bm", "-d", NULL };
 
 /* audio */
-static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "10", NULL };
-static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "10", NULL };
+static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
+static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 static const char *pauseall[] = { "playerctl", "-a", "pause", NULL };
