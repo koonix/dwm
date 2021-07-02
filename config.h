@@ -167,12 +167,7 @@ static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
 #define CALCULATOR TERMCMD("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
 #define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
-#define NOTIFY_MUSIC SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
-#define FF_TAB_NEXT SHCMD("inject 'ctrl+shift+j' firefox 'ctrl+Page_Down'")
-#define FF_TAB_PREV SHCMD("inject 'ctrl+shift+k' firefox 'ctrl+Page_Up'")
-#define FF_TAB_PUSH SHCMD("inject 'ctrl+alt+shift+j' firefox 'ctrl+shift+Page_Down'")
-#define FF_TAB_PULL SHCMD("inject 'ctrl+alt+shift+k' firefox 'ctrl+shift+Page_Up'")
-#define FF_TAB_CLOSE SHCMD("inject 'ctrl+shift+m' firefox 'ctrl+w'")
+#define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
 
 /* library for XF86XK_Audio keys */
@@ -212,19 +207,14 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          {.v = prevsong } },
 	{ MODKEY|Mod1Mask,              XK_l,      spawn,          {.v = nextsong } },
-	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_MUSIC },
+	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
 	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
 
-	{ ControlMask|ShiftMask,           XK_j,      spawn,          FF_TAB_NEXT },
-	{ ControlMask|ShiftMask,           XK_k,      spawn,          FF_TAB_PREV },
-	{ ControlMask|ShiftMask,           XK_m,      spawn,          FF_TAB_CLOSE },
 	{ ControlMask|ShiftMask,           XK_b,      spawn,          FF_FOCUS },
-	{ ControlMask|ShiftMask|Mod1Mask,  XK_j,      spawn,          FF_TAB_PUSH },
-	{ ControlMask|ShiftMask|Mod1Mask,  XK_k,      spawn,          FF_TAB_PULL },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
