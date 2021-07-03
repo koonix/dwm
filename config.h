@@ -125,7 +125,7 @@ static const Layout layouts[] = {
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define TERMCMD(cmd) { .v = (const char*[]){ TERM, "-e", "sh", "-c", cmd, NULL } }
+#define TUI(cmd) { .v = (const char*[]){ TERM, "-e", "sh", "-c", cmd, NULL } }
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
@@ -133,11 +133,11 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
 static const char *terminal[] = { TERM, NULL };
 
 /* tui */
-#define NCMPCPP TERMCMD("ncmpcpp")
-#define ARIA2P TERMCMD("aria2p")
-#define TREMC TERMCMD("tremc")
-#define HTOP TERMCMD("htop")
-#define VIM TERMCMD("nvim")
+#define NCMPCPP TUI("ncmpcpp")
+#define ARIA2P TUI("aria2p")
+#define TREMC TUI("tremc")
+#define HTOP TUI("htop")
+#define VIM TUI("nvim")
 
 /* dmenu */
 static const char *sysact[] = { "sysact", NULL };
@@ -165,7 +165,7 @@ static const char *back[] = { "mpc", "seek", "-10", NULL };
 static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
-#define CALCULATOR TERMCMD("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
+#define CALCULATOR TUI("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
 #define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
 #define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
