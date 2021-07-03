@@ -27,26 +27,32 @@ static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 
 /* custom colors */
-#if defined __has_include && __has_include ("/tmp/wal-dwm.h")
-#include "/tmp/wal-dwm.h"
-#endif
-#ifndef PYWAL
-static const char col_null[]        = "#000000";
-static const char common_bg[]       = "#000000";
-static const char norm_fg[]         = "#555555";
-static const char norm_border[]     = "#444444";
-static const char sel_fg[]          = "#9d9d9d";
-static const char sel_border[]      = "#9d9d9d";
-static const char sel_float[]       = "#005577";
-static const char title_fg[]        = "#9d9d9d";
-#endif
+static char col_null[]        = "#000000";
+static char common_bg[]       = "#000000";
+static char norm_fg[]         = "#555555";
+static char norm_border[]     = "#444444";
+static char sel_fg[]          = "#9d9d9d";
+static char sel_border[]      = "#9d9d9d";
+static char sel_float[]       = "#005577";
+static char title_fg[]        = "#9d9d9d";
 
-static const char *colors[][4]      = {
+static char *colors[][4]      = {
     /*               fg         bg         border       float */
     [SchemeNorm]  = { norm_fg,  common_bg, norm_border, col_null },
     [SchemeSel]   = { sel_fg,   common_bg, sel_border,  sel_float },
     [SchemeTitle] = { title_fg, common_bg, col_null,    col_null },
 };
+
+/* specify colors to read from xrdb */
+XCOLORS
+    XLOAD( common_bg,   "*.background"  );
+    XLOAD( norm_fg,     "*.color2"      );
+    XLOAD( norm_border, "*.background"  );
+    XLOAD( sel_fg,      "*.color6"      );
+    XLOAD( sel_border,  "*.color6"      );
+    XLOAD( sel_float,   "*.color9"      );
+    XLOAD( title_fg,    "*.color2"      );
+XCOLORS_END
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -194,6 +200,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY,                       XK_n,      spawn,          {.v = bmrun } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
+	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
