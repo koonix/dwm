@@ -202,18 +202,27 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
-	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
-	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
-	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = pauseall } },
+
+	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
+
+	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
 	{ 0,XF86XK_AudioLowerVolume,               spawn,          {.v = voldec } },
-	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute   } },
+
+	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
+	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
+	{ 0,XF86XK_AudioPlay,                      spawn,          {.v = music } },
+
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          {.v = prevsong } },
+	{ 0,XF86XK_AudioPrev,                      spawn,          {.v = prevsong } },
+
 	{ MODKEY|Mod1Mask,              XK_l,      spawn,          {.v = nextsong } },
+	{ 0,XF86XK_AudioNext,                      spawn,          {.v = nextsong } },
+
 	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
 	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
