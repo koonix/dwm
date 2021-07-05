@@ -167,6 +167,12 @@ static const char *prevsong[] = { "mpc", "prev", NULL };
 static const char *frwd[] = { "mpc", "seek", "+10", NULL };
 static const char *back[] = { "mpc", "seek", "-10", NULL };
 
+/* backlight */
+static const char *lightinc[] = { "light", "-A", "10", NULL };
+static const char *lightdec[] = { "light", "-U", "10", NULL };
+static const char *lightincsmall[] = { "light", "-A", "1", NULL };
+static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
+
 /* other */
 static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
@@ -226,6 +232,14 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
 	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
 	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
+
+	{ MODKEY,            XK_bracketright,      spawn,          {.v = lightinc } },
+	{ MODKEY|ShiftMask,  XK_bracketright,      spawn,          {.v = lightincsmall } },
+	{ 0,XF86XK_MonBrightnessUp,                spawn,          {.v = lightinc } },
+
+	{ MODKEY,             XK_bracketleft,      spawn,          {.v = lightdec } },
+	{ MODKEY|ShiftMask,   XK_bracketleft,      spawn,          {.v = lightdecsmall } },
+	{ 0,XF86XK_MonBrightnessDown,              spawn,          {.v = lightdec } },
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
