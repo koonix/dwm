@@ -159,6 +159,7 @@ static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 static const char *pauseall[] = { "playerctl", "-a", "pause", NULL };
+#define MIC_MUTE SHCMD("pactl list short sources | cut -f1 | xargs -I{} pactl set-source-mute {} toggle; dwmbarref audio")
 
 /* music */
 static const char *music[] = { "mpc", "toggle", NULL };
@@ -219,6 +220,8 @@ static Key keys[] = {
 
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
+	{ MODKEY|ControlMask,           XK_m,      spawn,          MIC_MUTE },
+	{ 0,XF86XK_AudioMicMute,                   spawn,          MIC_MUTE },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
 	{ 0,XF86XK_AudioPlay,                      spawn,          {.v = music } },
