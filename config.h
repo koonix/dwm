@@ -50,7 +50,7 @@ XCOLORS
     XLOAD( norm_border, "*.background"  );
     XLOAD( sel_fg,      "*.color6"      );
     XLOAD( sel_border,  "*.color6"      );
-    XLOAD( sel_float,   "*.color9"      );
+    XLOAD( sel_float,   "*.color6"      );
     XLOAD( title_fg,    "*.color2"      );
 XCOLORS_END
 
@@ -158,7 +158,7 @@ static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
 static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
-static const char *pauseall[] = { "playerctl", "-a", "pause", NULL };
+static const char *toggleall[] = { "toggleall", NULL };
 #define MIC_MUTE SHCMD("pactl list short sources | cut -f1 | xargs -I{} pactl set-source-mute {} toggle; dwmbarref audio")
 
 /* music */
@@ -210,7 +210,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
-	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = pauseall } },
+	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = toggleall } },
 	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
