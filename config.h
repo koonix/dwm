@@ -43,6 +43,9 @@ static char *colors[][4]      = {
     [SchemeTitle] = { title_fg, common_bg, col_null,    col_null },
 };
 
+/* colors that can be used by the statusbar */
+static char *status_colors[] = { norm_fg, sel_fg };
+
 /* specify colors to read from xrdb */
 XCOLORS
     XLOAD( common_bg,   "*.background"  );
