@@ -154,7 +154,7 @@ static const char *lock[] = { "sysact", "lock", NULL };
 static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
-static const char *bmrun[] = { "bm", "-d", NULL };
+#define BMRUN SHCMD("bm -l | dmenu -p 'Go Where?' | xargs -r bm -- | xargs -r termopen")
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -208,7 +208,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
-	{ MODKEY,                       XK_n,      spawn,          {.v = bmrun } },
+	{ MODKEY,                       XK_n,      spawn,          BMRUN },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
