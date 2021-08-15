@@ -1,8 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
 /* terminal */
-#define TERM "kitty"
-#define TERMCLASS "kitty"
+#define TERM "st"
+#define TERMCLASS "St"
 
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
