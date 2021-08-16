@@ -184,7 +184,7 @@ static const char *bar[] = { "togglebar", NULL };
 #define CALCULATOR TUI("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
 #define GIMME SHCMD("gimme -l | dmenu -p 'Choose Your Poison' | xargs gimme")
 #define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
-#define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
+static const char *fffixfocus[] = { "fffixfocus", NULL };
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -244,7 +244,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
 
-	{ ControlMask|ShiftMask,           XK_b,      spawn,          FF_FOCUS },
+	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
