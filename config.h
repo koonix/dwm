@@ -154,7 +154,7 @@ static const char *lock[] = { "sysact", "lock", NULL };
 static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
-#define BMRUN SHCMD("bm -l | dmenu -p 'Go Where?' | xargs -r bm -- | xargs -r termopen")
+static const char *bookmarks[] = { "bm", "-m", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -181,8 +181,8 @@ static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
+static const char *gimme[] = { "gimme", "-m", NULL };
 #define CALCULATOR TUI("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
-#define GIMME SHCMD("gimme -l | dmenu -p 'Choose Your Poison' | xargs gimme")
 #define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 #define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
 
@@ -192,7 +192,7 @@ static const char *bar[] = { "togglebar", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
-	{ MODKEY,                       XK_i,      spawn,          GIMME },
+	{ MODKEY,                       XK_i,      spawn,          {.v = gimme } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
 	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
@@ -208,7 +208,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
-	{ MODKEY,                       XK_n,      spawn,          BMRUN },
+	{ MODKEY,                       XK_n,      spawn,          {.v = bookmarks } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
