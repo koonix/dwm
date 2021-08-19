@@ -182,7 +182,7 @@ static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
 static const char *gimme[] = { "gimme", "-m", NULL };
-#define CALCULATOR TUI("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
+#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then qalc; else bc -qi; fi")
 #define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 
