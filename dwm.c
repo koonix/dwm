@@ -2701,29 +2701,29 @@ isdescprocess(pid_t p, pid_t c)
 int
 is_a_tmux_server(pid_t pid)
 {
-    char path[256];
-    char name[15];
-    FILE* stat;
+	char path[256];
+	char name[15];
+	FILE* stat;
 
-    snprintf(path, sizeof(path) - 1, "/proc/%u/stat", (unsigned)pid);
+	snprintf(path, sizeof(path) - 1, "/proc/%u/stat", (unsigned)pid);
 
-    if (!(stat = fopen(path, "r")))
-        return 0;
+	if (!(stat = fopen(path, "r")))
+		return 0;
 
-    fscanf(stat, "%*u (%12[^)])", name);
-    fclose(stat);
-    return (strcmp(name, "tmux: server") == 0);
+	fscanf(stat, "%*u (%12[^)])", name);
+	fclose(stat);
+	return (strcmp(name, "tmux: server") == 0);
 }
 
 pid_t
 get_tmux_client_pid(pid_t shell_pid)
 {
-    pid_t pane_pid, client_pid;
-    FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
-    while (pane_pid != shell_pid)
-        fscanf(list, "%ld %ld", &pane_pid, &client_pid);
-    fclose(list);
-    return client_pid;
+	pid_t pane_pid, client_pid;
+	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
+	while (pane_pid != shell_pid)
+		fscanf(list, "%ld %ld", &pane_pid, &client_pid);
+	fclose(list);
+	return client_pid;
 }
 
 Client *
