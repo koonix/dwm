@@ -298,7 +298,7 @@ static void xrdb_read(void);
 static void zoom(const Arg *arg);
 
 static pid_t getparentprocess(pid_t p);
-static int isdescprocess(pid_t p, pid_t c);
+static int isdescprocess(pid_t parent, pid_t child);
 static int is_a_tmux_server(pid_t pid);
 static pid_t get_tmux_client_pid(pid_t shell_pid);
 static Client *swallowingclient(Window w);
@@ -2685,17 +2685,17 @@ getparentprocess(pid_t p)
 }
 
 int
-isdescprocess(pid_t p, pid_t c)
+isdescprocess(pid_t parent, pid_t child)
 {
-	pid_t pp;
-	while (p != c && c != 0) {
-		pp = getparentprocess(c);
-		if (is_a_tmux_server(pp))
-			c = get_tmux_client_pid(c);
+	pid_t parent_tmp;
+	while (child != parent && child != 0) {
+		parent_tmp = getparentprocess(child);
+		if (is_a_tmux_server(parent_tmp))
+			child = get_tmux_client_pid(child);
 		else
-			c = pp;
+			child = parent_tmp;
 	}
-	return (int)c;
+	return (int)child;
 }
 
 int
@@ -2720,9 +2720,11 @@ get_tmux_client_pid(pid_t shell_pid)
 {
 	pid_t pane_pid, client_pid;
 	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
-	while (pane_pid != shell_pid)
+	if (!list)
+		return 0;
+	for (int i=0; i<1000 && pane_pid != shell_pid; i++)
 		fscanf(list, "%ld %ld", &pane_pid, &client_pid);
-	fclose(list);
+	pclose(list);
 	return client_pid;
 }
 
