@@ -300,7 +300,7 @@ static void zoom(const Arg *arg);
 static pid_t getparentprocess(pid_t p);
 static int isdescprocess(pid_t parent, pid_t child);
 static int is_a_tmux_server(pid_t pid);
-static pid_t get_tmux_client_pid(pid_t shell_pid);
+static long get_tmux_client_pid(long shell_pid);
 static Client *swallowingclient(Window w);
 static Client *termforwin(const Client *c);
 static pid_t winpid(Window w);
@@ -2715,15 +2715,17 @@ is_a_tmux_server(pid_t pid)
 	return (strcmp(name, "tmux: server") == 0);
 }
 
-pid_t
-get_tmux_client_pid(pid_t shell_pid)
+/* parameter "shell_pid" is the pid of a direct child
+ * of the tmux's server process, which usually is a shell process. */
+long
+get_tmux_client_pid(long shell_pid)
 {
-	pid_t pane_pid, client_pid;
+	long pane_pid, client_pid;
 	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
 	if (!list)
 		return 0;
-	for (int i=0; i<1000 && pane_pid != shell_pid; i++)
-		fscanf(list, "%ld %ld", &pane_pid, &client_pid);
+	while (!feof(list) && pane_pid != shell_pid)
+		fscanf(list, "%ld %ld\n", &pane_pid, &client_pid);
 	pclose(list);
 	return client_pid;
 }
