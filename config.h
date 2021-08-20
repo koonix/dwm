@@ -1,8 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
 /* terminal */
-#define TERM "kitty"
-#define TERMCLASS "kitty"
+#define TERM "st"
+#define TERMCLASS "St"
 
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
@@ -42,6 +42,9 @@ static char *colors[][4]      = {
     [SchemeSel]   = { sel_fg,   common_bg, sel_border,  sel_float },
     [SchemeTitle] = { title_fg, common_bg, col_null,    col_null },
 };
+
+/* colors that can be used by the statusbar */
+static char *status_colors[] = { norm_fg, sel_fg };
 
 /* specify colors to read from xrdb */
 XCOLORS
@@ -151,7 +154,7 @@ static const char *lock[] = { "sysact", "lock", NULL };
 static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
-static const char *bmrun[] = { "bm", "-d", NULL };
+static const char *bookmarks[] = { "bm", "-m", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -178,10 +181,10 @@ static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 static const char *browser[]  = { "firefox", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
-#define CALCULATOR TUI("echo calculator; printf '\\033[6 q'; if command -v insect >/dev/null; then insect; else bc -qi; fi")
-#define GIMME SHCMD("gimme -l | dmenu -p 'choose your poison' | xargs gimme")
+static const char *gimme[] = { "gimme", "-m", NULL };
+#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then qalc; else bc -qi; fi")
 #define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
-#define FF_FOCUS SHCMD("isfocused firefox && fffixfocus")
+static const char *fffixfocus[] = { "fffixfocus", NULL };
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -189,7 +192,7 @@ static const char *bar[] = { "togglebar", NULL };
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
-	{ MODKEY,                       XK_i,      spawn,          GIMME },
+	{ MODKEY,                       XK_i,      spawn,          {.v = gimme } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
 	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
@@ -205,7 +208,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
-	{ MODKEY,                       XK_n,      spawn,          {.v = bmrun } },
+	{ MODKEY,                       XK_n,      spawn,          {.v = bookmarks } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
@@ -241,7 +244,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
 
-	{ ControlMask|ShiftMask,           XK_b,      spawn,          FF_FOCUS },
+	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
