@@ -142,11 +142,11 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
 static const char *terminal[] = { TERM, NULL };
 
 /* tui */
-#define NCMPCPP TUI("ncmpcpp")
-#define ARIA2P TUI("aria2p")
-#define TREMC TUI("tremc")
-#define HTOP TUI("htop")
-#define VIM TUI("nvim")
+#define NCMPCPP TUI("exec ncmpcpp")
+#define ARIA2P TUI("exec aria2p")
+#define TREMC TUI("exec tremc")
+#define HTOP TUI("exec htop")
+#define VIM TUI("exec nvim")
 
 /* dmenu */
 static const char *sysact[] = { "sysact", NULL };
@@ -178,13 +178,13 @@ static const char *lightincsmall[] = { "light", "-A", "1", NULL };
 static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 
 /* other */
-static const char *browser[]  = { "firefox", NULL };
+#define BROWSER SHCMD("exec $BROWSER")
 static const char *tray[] = { "tray", NULL };
 static const char *bar[] = { "togglebar", NULL };
 static const char *gimme[] = { "gimme", "-m", NULL };
-#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then qalc; else bc -qi; fi")
-#define NOTIFY_SONG SHCMD("mpc current | xargs -0 dunstify -r 45 -u low -t 2500 Playing:")
 static const char *fffixfocus[] = { "fffixfocus", NULL };
+#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
+#define NOTIFY_SONG SHCMD("dunstify -r 45 -u low Playing: \"$(mpc current)\" || notify-send -u low Playing: \"$(mpc current)\"")
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -194,7 +194,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_i,      spawn,          {.v = gimme } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
-	{ MODKEY,                       XK_b,      spawn,          {.v = browser } },
+	{ MODKEY,                       XK_b,      spawn,          BROWSER },
 	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
 
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
