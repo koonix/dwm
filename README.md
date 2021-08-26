@@ -12,6 +12,7 @@ this is my build of dwm, the tiling window manager:
 utility:
 
 - [swallow](https://dwm.suckless.org/patches/swallow)
+(patched to support tmux)
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
 (improved it's visiblity a little bit)
@@ -27,10 +28,10 @@ utility:
 vanity:
 
 - [clientindicators](https://dwm.suckless.org/patches/clientindicators)
-(it's hide vacant variant)
+(the "hide vacant" variant)
 
 - [status2d](https://dwm.suckless.org/patches/status2d)
-(plus it's swap-save-restore patch)
+(and it's "swap-save-restore" patch)
 
 - [vanitygaps-cfacts](https://dwm.suckless.org/patches/vanitygaps)
 
