@@ -215,6 +215,7 @@ static Key keys[] = {
 
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = toggleall } },
+	{ 0,XF86XK_AudioPlay,                      spawn,          {.v = toggleall } },
 	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
@@ -225,7 +226,6 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioMicMute,                   spawn,          MIC_MUTE },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
-	{ 0,XF86XK_AudioPlay,                      spawn,          {.v = music } },
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          {.v = prevsong } },
 	{ 0,XF86XK_AudioPrev,                      spawn,          {.v = prevsong } },
 	{ MODKEY|Mod1Mask,              XK_l,      spawn,          {.v = nextsong } },
