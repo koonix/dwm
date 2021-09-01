@@ -146,7 +146,6 @@ static const char *terminal[] = { TERM, NULL };
 #define NCMPCPP TUI("exec ncmpcpp")
 #define ARIA2P TUI("exec aria2p")
 #define TREMC TUI("exec tremc")
-#define HTOP TUI("exec htop")
 #define VIM TUI("exec nvim")
 
 /* dmenu */
@@ -201,7 +200,6 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ControlMask,           XK_d,      spawn,          TREMC },
-	{ MODKEY|ControlMask,           XK_c,      spawn,          HTOP },
 	{ MODKEY,                       XK_v,      spawn,          VIM },
 
 	{ MODKEY,                       XK_r,      spawn,          {.v = sysact } },
