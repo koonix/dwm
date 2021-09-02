@@ -241,8 +241,6 @@ static Key keys[] = {
 	{ 0,XF86XK_MonBrightnessDown,              spawn,          {.v = lightdec } },
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
-	{ MODKEY|ControlMask,           XK_b,      spawn,          {.v = bar } },
-
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
