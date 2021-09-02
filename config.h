@@ -27,34 +27,32 @@ static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
 
 /* custom colors */
-static char col_null[]        = "#000000";
-static char common_bg[]       = "#000000";
-static char norm_fg[]         = "#555555";
-static char norm_border[]     = "#444444";
-static char sel_fg[]          = "#9d9d9d";
-static char sel_border[]      = "#9d9d9d";
-static char sel_float[]       = "#005577";
-static char title_fg[]        = "#9d9d9d";
+static char null[]           = "#000000";
+static char bg[]             = "#000000";
+static char normfg[]         = "#555555";
+static char normborder[]     = "#444444";
+static char selfg[]          = "#9d9d9d";
+static char selborder[]      = "#9d9d9d";
+static char titlefg[]        = "#9d9d9d";
 
 static char *colors[][4]      = {
-    /*               fg         bg         border       float */
-    [SchemeNorm]  = { norm_fg,  common_bg, norm_border, col_null },
-    [SchemeSel]   = { sel_fg,   common_bg, sel_border,  sel_float },
-    [SchemeTitle] = { title_fg, common_bg, col_null,    col_null },
+    /*               fg         bg   border        float */
+    [SchemeNorm]  = { normfg,  bg,  normborder,  normborder },
+    [SchemeSel]   = { selfg,   bg,  selborder,   selborder },
+    [SchemeTitle] = { titlefg, bg,  null,        null },
 };
 
 /* colors that can be used by the statusbar */
-static char *status_colors[] = { norm_fg, sel_fg };
+static char *statuscolors[] = { normfg, selfg };
 
 /* specify colors to read from xrdb */
 XCOLORS
-    XLOAD( common_bg,   "*.background"  );
-    XLOAD( norm_fg,     "*.color2"      );
-    XLOAD( norm_border, "*.background"  );
-    XLOAD( sel_fg,      "*.color6"      );
-    XLOAD( sel_border,  "*.color6"      );
-    XLOAD( sel_float,   "*.color6"      );
-    XLOAD( title_fg,    "*.color2"      );
+    XLOAD( bg,         "*.background"  );
+    XLOAD( normfg,     "*.color2"      );
+    XLOAD( normborder, "*.background"  );
+    XLOAD( selfg,      "*.color6"      );
+    XLOAD( selborder,  "*.color6"      );
+    XLOAD( titlefg,    "*.color2"      );
 XCOLORS_END
 
 /* tagging */
@@ -180,7 +178,6 @@ static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 /* other */
 #define BROWSER SHCMD("exec $BROWSER")
 static const char *tray[] = { "tray", NULL };
-static const char *bar[] = { "togglebar", NULL };
 static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
