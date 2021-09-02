@@ -185,6 +185,7 @@ static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("dunstify -r 45 -u low Playing: \"$(mpc current)\" || notify-send -u low Playing: \"$(mpc current)\"")
+#define PIPEURL SHCMD("clipnotify && pipeurl \"$(xclip -o)\"")
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -242,6 +243,7 @@ static Key keys[] = {
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
+	{ MODKEY,                       XK_z,      spawn,          PIPEURL },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
