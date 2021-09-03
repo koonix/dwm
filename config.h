@@ -108,7 +108,7 @@ static const Layout layouts[] = {
 	{ "[]=",      tile },
 	{ "H==",      stairs },
 	{ "[M]",      monocle },
-	{ "HHH",      grid },
+	{ ":::",      gaplessgrid },
 	{ "|M|",      centeredmaster },
 	{ ">M>",      centeredfloatingmaster },
 	{ "[@]",      spiral },
@@ -118,7 +118,7 @@ static const Layout layouts[] = {
 	{ "===",      bstackhoriz },
 	{ "###",      nrowgrid },
 	{ "---",      horizgrid },
-	{ ":::",      gaplessgrid },
+	{ "HHH",      grid },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
@@ -262,7 +262,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_w,      killclient,     {0} },
 	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
 	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
-	{ MODKEY|ShiftMask,             XK_s,      setlayout,      {.v = &layouts[1]} }, /* stairs */
+	{ MODKEY|ShiftMask,             XK_d,      setlayout,      {.v = &layouts[1]} }, /* stairs */
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
 	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[3]} }, /* grid */
 	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[4]} }, /* centeredmaster */
