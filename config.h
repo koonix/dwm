@@ -36,10 +36,10 @@ static char selborder[]      = "#9d9d9d";
 static char titlefg[]        = "#9d9d9d";
 
 static char *colors[][4]      = {
-    /*               fg         bg   border        float */
-    [SchemeNorm]  = { normfg,  bg,  normborder,  normborder },
-    [SchemeSel]   = { selfg,   bg,  selborder,   selborder },
-    [SchemeTitle] = { titlefg, bg,  null,        null },
+    /*               fg        bg   border    */
+    [SchemeNorm]  = { normfg,  bg,  normborder },
+    [SchemeSel]   = { selfg,   bg,  selborder  },
+    [SchemeTitle] = { titlefg, bg,  null       },
 };
 
 /* colors that can be used by the statusbar */
