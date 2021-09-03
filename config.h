@@ -106,19 +106,19 @@ static const int attachdirection = 5;
 static const Layout layouts[] = {
 	/* symbol     arrange function */
 	{ "[]=",      tile },
+	{ "H==",      stairs },
 	{ "[M]",      monocle },
+	{ "HHH",      grid },
+	{ "|M|",      centeredmaster },
+	{ ">M>",      centeredfloatingmaster },
 	{ "[@]",      spiral },
 	{ "[\\]",     dwindle },
 	{ "H[]",      deck },
 	{ "TTT",      bstack },
 	{ "===",      bstackhoriz },
-	{ "HHH",      grid },
 	{ "###",      nrowgrid },
 	{ "---",      horizgrid },
 	{ ":::",      gaplessgrid },
-	{ "|M|",      centeredmaster },
-	{ ">M>",      centeredfloatingmaster },
-	{ "H==",      stairs },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ NULL,       NULL },
 };
@@ -154,6 +154,7 @@ static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
+static const char *passmenu[] = { "passmenu", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -190,24 +191,25 @@ static const char *fffixfocus[] = { "fffixfocus", NULL };
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
-	{ MODKEY,                       XK_i,      spawn,          {.v = gimme } },
+	{ MODKEY,                       XK_p,      spawn,          {.v = gimme } },
+	{ MODKEY|ControlMask|Mod1Mask,  XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          BROWSER },
-	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
+	{ MODKEY,                       XK_c,      spawn,          CALCULATOR },
 
 	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
-	{ MODKEY|ShiftMask,             XK_d,      spawn,          ARIA2P },
-	{ MODKEY|ControlMask,           XK_d,      spawn,          TREMC },
+	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
+	{ MODKEY|ControlMask,           XK_t,      spawn,          TREMC },
 	{ MODKEY,                       XK_v,      spawn,          VIM },
 
-	{ MODKEY,                       XK_r,      spawn,          {.v = sysact } },
+	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
-	{ MODKEY,                       XK_n,      spawn,          {.v = bookmarks } },
+	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
+	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = passmenu } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
@@ -242,7 +244,7 @@ static Key keys[] = {
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
-	{ MODKEY,                       XK_z,      spawn,          PIPEURL },
+	{ MODKEY,                       XK_a,      spawn,          PIPEURL },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
@@ -258,16 +260,13 @@ static Key keys[] = {
 	{ MODKEY,                       XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,                       XK_w,      killclient,     {0} },
-	{ MODKEY,                       XK_c,      setlayout,      {.v = &layouts[0]} },
-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_d,      setlayout,      {.v = &layouts[13]} },
-	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[10]} },
-	{ MODKEY|ShiftMask,             XK_g,      setlayout,      {.v = &layouts[9]} },
-	{ MODKEY,                       XK_a,      setlayout,      {.v = &layouts[5]} },
-	{ MODKEY|ShiftMask,             XK_a,      setlayout,      {.v = &layouts[6]} },
-	{ MODKEY|ControlMask,           XK_a,      setlayout,      {.v = &layouts[2]} },
-	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[11]} },
-	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
+	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
+	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
+	{ MODKEY|ShiftMask,             XK_s,      setlayout,      {.v = &layouts[1]} }, /* stairs */
+	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
+	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[3]} }, /* grid */
+	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[4]} }, /* centeredmaster */
+	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = &layouts[5]} }, /* centeredfloatingmaster*/
 
 	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ControlMask,           XK_j,      incnmaster,     {.i = -1 } },
