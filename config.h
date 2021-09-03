@@ -154,7 +154,7 @@ static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
-#define PASSMENU SHCMD("passmenu && notify-send 'Password Copied.'")
+#define PASSMENU SHCMD("passmenu -p 'Wat passwd u want?' && notify-send 'Copied to clipboard.'")
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
