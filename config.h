@@ -141,6 +141,7 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
 static const char *terminal[] = { TERM, NULL };
 
 /* tui */
+#define BASHMOUNT TUI("exec bashmount")
 #define NCMPCPP TUI("exec ncmpcpp")
 #define ARIA2P TUI("exec aria2p")
 #define TREMC TUI("exec tremc")
@@ -195,6 +196,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_b,      spawn,          BROWSER },
 	{ MODKEY,                       XK_q,      spawn,          CALCULATOR },
 
+	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ControlMask,           XK_d,      spawn,          TREMC },
