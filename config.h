@@ -154,7 +154,7 @@ static const char *suspend[] = { "sysact", "sleep", NULL };
 static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
-#define PASSMENU SHCMD("passmenu && notify-send 'Password Copied.'")
+static const char *dpass[] = { "dpass", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -209,7 +209,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
-	{ MODKEY|ShiftMask,             XK_p,      spawn,          PASSMENU },
+	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dpass } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
