@@ -32,7 +32,7 @@ static char bg[]             = "#000000";
 static char normfg[]         = "#555555";
 static char normborder[]     = "#444444";
 static char selfg[]          = "#9d9d9d";
-static char selborder[]      = "#9d9d9d";
+static char selborder[]      = "#a8a8a8";
 static char titlefg[]        = "#9d9d9d";
 
 static char *colors[][4]      = {
@@ -49,9 +49,7 @@ static char *statuscolors[] = { normfg, selfg };
 XCOLORS
     XLOAD( bg,         "*.background"  );
     XLOAD( normfg,     "*.color2"      );
-    XLOAD( normborder, "*.background"  );
     XLOAD( selfg,      "*.color6"      );
-    XLOAD( selborder,  "*.color6"      );
     XLOAD( titlefg,    "*.color2"      );
 XCOLORS_END
 
