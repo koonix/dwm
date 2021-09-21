@@ -180,6 +180,7 @@ static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 static const char *tray[] = { "tray", NULL };
 static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
+static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("dunstify -r 45 -u low Playing: \"$(mpc current)\" || notify-send -u low Playing: \"$(mpc current)\"")
 #define PIPEURL SHCMD("clipnotify && pipeurl \"$(xclip -o)\"")
@@ -200,6 +201,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ControlMask,           XK_t,      spawn,          TREMC },
 	{ MODKEY,                       XK_v,      spawn,          VIM },
+	{ MODKEY,                       XK_y,      spawn,          {.v = ytfzf } },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
