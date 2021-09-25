@@ -159,15 +159,18 @@ static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
 static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
-static const char *toggleall[] = { "toggleall", NULL };
 #define MIC_MUTE SHCMD("pactl list short sources | cut -f1 | xargs -I{} pactl set-source-mute {} toggle; dwmbarref audio")
 
-/* music */
+/* media */
 static const char *music[] = { "mpc", "toggle", NULL };
-static const char *nextsong[] = { "mpc", "next", NULL };
-static const char *prevsong[] = { "mpc", "prev", NULL };
-static const char *frwd[] = { "mpc", "seek", "+10", NULL };
-static const char *back[] = { "mpc", "seek", "-10", NULL };
+#define MEDIA_NEXT SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl next -p")
+#define MEDIA_PREV SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
+#define MEDIA_SEEK_FWD SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
+#define MEDIA_SEEK_BACK SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10- -p")
+#define MEDIA_PLAYPAUSE SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/playpause; \
+p=$(playerctl -a status -f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { \
+printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || \
+cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 
 /* backlight */
 static const char *lightinc[] = { "light", "-A", "10", NULL };
@@ -214,8 +217,6 @@ static Key keys[] = {
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
-	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = toggleall } },
-	{ 0,XF86XK_AudioPlay,                      spawn,          {.v = toggleall } },
 	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
@@ -226,12 +227,14 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioMicMute,                   spawn,          MIC_MUTE },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
-	{ MODKEY|Mod1Mask,              XK_h,      spawn,          {.v = prevsong } },
-	{ 0,XF86XK_AudioPrev,                      spawn,          {.v = prevsong } },
-	{ MODKEY|Mod1Mask,              XK_l,      spawn,          {.v = nextsong } },
-	{ 0,XF86XK_AudioNext,                      spawn,          {.v = nextsong } },
-	{ MODKEY|ControlMask,           XK_h,      spawn,          {.v = back } },
-	{ MODKEY|ControlMask,           XK_l,      spawn,          {.v = frwd } },
+	{ MODKEY|ControlMask,           XK_p,      spawn,          MEDIA_PLAYPAUSE },
+	{ 0,XF86XK_AudioPlay,                      spawn,          MEDIA_PLAYPAUSE },
+	{ MODKEY|Mod1Mask,              XK_h,      spawn,          MEDIA_PREV },
+	{ 0,XF86XK_AudioPrev,                      spawn,          MEDIA_PREV },
+	{ MODKEY|Mod1Mask,              XK_l,      spawn,          MEDIA_NEXT },
+	{ 0,XF86XK_AudioNext,                      spawn,          MEDIA_NEXT },
+	{ MODKEY|ControlMask,           XK_h,      spawn,          MEDIA_SEEK_BACK },
+	{ MODKEY|ControlMask,           XK_l,      spawn,          MEDIA_SEEK_FWD },
 	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
 
 	{ MODKEY,            XK_bracketright,      spawn,          {.v = lightinc } },
