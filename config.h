@@ -163,10 +163,10 @@ static const char *cycle[] = { "pacycle", NULL };
 
 /* media */
 static const char *music[] = { "mpc", "toggle", NULL };
-#define MEDIA_NEXT SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl next -p")
-#define MEDIA_PREV SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
-#define MEDIA_SEEK_FWD SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
-#define MEDIA_SEEK_BACK SHCMD("playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10- -p")
+#define MEDIA_NEXT SHCMD("(mpc | grep -q '^\\[playing' && mpc next) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl next -p")
+#define MEDIA_PREV SHCMD("(mpc | grep -q '^\\[playing' && mpc prev) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
+#define MEDIA_SEEK_FWD SHCMD("(mpc | grep -q '^\\[playing' && mpc seek +10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
+#define MEDIA_SEEK_BACK SHCMD("(mpc | grep -q '^\\[playing' && mpc seek -10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10- -p")
 #define MEDIA_PLAYPAUSE SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/playpause; \
 p=$(playerctl -a status -f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { \
 printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || \
