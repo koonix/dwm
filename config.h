@@ -159,7 +159,11 @@ static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
 static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
-#define MIC_MUTE SHCMD("pactl list short sources | cut -f1 | xargs -I{} pactl set-source-mute {} toggle; dwmbarref audio")
+#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { \
+pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && \
+notify-send 'Mic Unmuted.' ;:; } || { \
+pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && \
+notify-send 'Mic Muted.' ;:; }")
 
 /* media */
 static const char *music[] = { "mpc", "toggle", NULL };
@@ -209,7 +213,6 @@ static Key keys[] = {
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
-	{ MODKEY,                       XK_m,      spawn,          {.v = dmount } },
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dpass } },
@@ -223,8 +226,8 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioLowerVolume,               spawn,          {.v = voldec } },
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
-	{ MODKEY|ControlMask,           XK_m,      spawn,          MIC_MUTE },
-	{ 0,XF86XK_AudioMicMute,                   spawn,          MIC_MUTE },
+	{ MODKEY|ControlMask,           XK_m,      spawn,          TOGGLE_MIC_MUTE },
+	{ 0,XF86XK_AudioMicMute,                   spawn,          TOGGLE_MIC_MUTE },
 
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          MEDIA_PLAYPAUSE },
