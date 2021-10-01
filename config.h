@@ -139,11 +139,13 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, NULL };
 static const char *terminal[] = { TERM, NULL };
 
 /* tui */
+#define EDITOR TUI("exec \"${EDITOR:-nvim}\"")
 #define BASHMOUNT TUI("exec bashmount")
+#define NEWSBOAT TUI("exec newsboat")
 #define NCMPCPP TUI("exec ncmpcpp")
+#define NEOMUTT TUI("exec neomutt")
 #define ARIA2P TUI("exec aria2p")
 #define TREMC TUI("exec tremc")
-#define VIM TUI("exec nvim")
 
 /* dmenu */
 static const char *sysact[] = { "sysact", NULL };
@@ -153,6 +155,7 @@ static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
 static const char *dpass[] = { "dpass", NULL };
+static const char *unread[] = { "unread", NULL }; /* notifies unread emails */
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -205,9 +208,11 @@ static Key keys[] = {
 
 	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
+	{ MODKEY|ControlMask|Mod1Mask,  XK_m,      spawn,          NEOMUTT },
+	{ MODKEY,                       XK_n,      spawn,          NEWSBOAT },
 	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ControlMask,           XK_t,      spawn,          TREMC },
-	{ MODKEY,                       XK_v,      spawn,          VIM },
+	{ MODKEY,                       XK_v,      spawn,          EDITOR },
 	{ MODKEY,                       XK_y,      spawn,          {.v = ytfzf } },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
@@ -250,6 +255,7 @@ static Key keys[] = {
 
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
+	{ MODKEY,                       XK_u,      spawn,          {.v = unread } },
 	{ MODKEY,                       XK_a,      spawn,          PIPEURL },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
