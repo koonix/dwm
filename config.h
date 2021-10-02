@@ -164,9 +164,9 @@ static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 #define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && \
-notify-send 'Mic Unmuted.' -u low -h string:x-dunst-stack-tag:togglemicmute ;:; } || { \
+notify-send 'Mic Unmuted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && \
-notify-send 'Mic Muted.' -u low -h string:x-dunst-stack-tag:togglemicmute ;:; }")
+notify-send 'Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
 
 /* media */
 static const char *music[] = { "mpc", "toggle", NULL };
@@ -192,7 +192,7 @@ static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
-#define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-dunst-stack-tag:notifysong Playing: \"$(mpc current)\"")
+#define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define PIPEURL SHCMD("clipnotify && pipeurl \"$(xclip -o -selection clipboard)\"")
 
 /* library for XF86XK_Audio keys */
