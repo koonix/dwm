@@ -151,7 +151,6 @@ static const char *terminal[] = { TERM, NULL };
 static const char *sysact[] = { "sysact", NULL };
 static const char *lock[] = { "loginctl", "lock-session", NULL };
 static const char *suspend[] = { "sysact", "sleep", NULL };
-static const char *dmount[] = { "dmount", NULL };
 static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
 static const char *dpass[] = { "dpass", NULL };
