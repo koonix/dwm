@@ -192,7 +192,7 @@ static const char *fffixfocus[] = { "fffixfocus", NULL };
 static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
-#define PIPEURL SHCMD("clipnotify && pipeurl \"$(xclip -o -selection clipboard)\"")
+static const char* pipeurl[] = { "pipeurl", "-c", NULL };
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -255,7 +255,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 	{ MODKEY,                       XK_u,      spawn,          {.v = unread } },
-	{ MODKEY,                       XK_a,      spawn,          PIPEURL },
+	{ MODKEY,                       XK_r,      spawn,          {.v = pipeurl } },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
