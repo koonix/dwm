@@ -192,7 +192,11 @@ static const char *fffixfocus[] = { "fffixfocus", NULL };
 static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
-static const char* pipeurl[] = { "pipeurl", "-c", NULL };
+#define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
+sh -c 'notify-send -u low \"Listening to Clipboard...\"; \
+while :; do echo PipeURL | xclip -selection clipboard; clipnotify || exit 1; \
+clip=$(xclip -o -selection clipboard); [ \"$clip\" = PipeURL ] && continue; \
+notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; done'")
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -255,7 +259,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 	{ MODKEY,                       XK_u,      spawn,          {.v = unread } },
-	{ MODKEY,                       XK_r,      spawn,          {.v = pipeurl } },
+	{ MODKEY,                       XK_r,      spawn,          CLIPLISTEN },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
