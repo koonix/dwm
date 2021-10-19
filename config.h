@@ -141,7 +141,7 @@ static const char *terminal[] = { TERM, NULL };
 /* tui */
 #define EDITOR TUI("exec \"${EDITOR:-nvim}\"")
 #define BASHMOUNT TUI("exec bashmount")
-#define NEWSBOAT TUI("exec newsboat")
+#define NEWSBOAT TUI("exec nboat")
 #define NCMPCPP TUI("exec ncmpcpp")
 #define NEOMUTT TUI("exec neomutt")
 #define ARIA2P TUI("exec aria2p")
