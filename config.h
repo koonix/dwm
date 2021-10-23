@@ -184,6 +184,11 @@ static const char *lightdec[] = { "light", "-U", "10", NULL };
 static const char *lightincsmall[] = { "light", "-A", "1", NULL };
 static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
 
+/* dunst */
+static const char *dunst_close[]   = { "dunstctl", "close", NULL };
+static const char *dunst_history[] = { "dunstctl", "history-pop", NULL };
+static const char *dunst_context[] = { "dunstctl", "context", NULL };
+
 /* other */
 #define BROWSER SHCMD("exec $BROWSER")
 static const char *tray[] = { "tray", NULL };
@@ -208,6 +213,10 @@ static Key keys[] = {
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          BROWSER },
 	{ MODKEY,                       XK_c,      spawn,          CALCULATOR },
+
+	{ ControlMask,                  XK_space,  spawn,          {.v = dunst_close } },
+	{ ControlMask,                  XK_grave,  spawn,          {.v = dunst_history } },
+	{ ControlMask|ShiftMask,        XK_period, spawn,          {.v = dunst_context } },
 
 	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
