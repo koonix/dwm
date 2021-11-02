@@ -20,6 +20,7 @@
  *
  * To understand everything else, start reading main().
  */
+#include <math.h>
 #include <errno.h>
 #include <locale.h>
 #include <signal.h>
@@ -2355,7 +2356,7 @@ updatebarpos(Monitor *m)
 
 void
 updateclientdesktop(Client *c) {
-	long data[] = { c->tags };
+	long data[] = { (unsigned int)log2((double)c->tags) };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
 			PropModeReplace, (unsigned char *)data, 1);
 }
