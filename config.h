@@ -191,9 +191,9 @@ static const char *dunst_context[] = { "dunstctl", "context", NULL };
 
 /* other */
 #define BROWSER SHCMD("exec $BROWSER")
-static const char *tray[] = { "tray", NULL };
 static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
+static const char *ffmerge[] = { "ffmerge", NULL };
 static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
@@ -265,7 +265,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,   XK_bracketleft,      spawn,          {.v = lightdecsmall } },
 	{ 0,XF86XK_MonBrightnessDown,              spawn,          {.v = lightdec } },
 
-	{ MODKEY,                       XK_x,      spawn,          {.v = tray } },
+	{ ControlMask|ShiftMask,        XK_m,      spawn,          {.v = ffmerge } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
 	{ MODKEY,                       XK_u,      spawn,          {.v = unread } },
 	{ MODKEY,                       XK_r,      spawn,          CLIPLISTEN },
