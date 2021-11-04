@@ -155,6 +155,7 @@ static const char *dshot[] = { "dshot", NULL };
 static const char *bookmarks[] = { "bm", "-m", NULL };
 static const char *dpass[] = { "dpass", NULL };
 static const char *unread[] = { "unread", NULL }; /* notifies unread emails */
+static const char *daria2[] = { "daria2", NULL };
 
 /* audio */
 static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
@@ -233,6 +234,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dpass } },
+	{ MODKEY|ControlMask,           XK_d,      spawn,          {.v = daria2 } },
 	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
