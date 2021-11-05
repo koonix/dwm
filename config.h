@@ -65,8 +65,10 @@ static const Rule rules[] = {
     {"TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1}, /* don't tile telegram's media viewer */
     {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
     {"Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, -1}, /* don't tile safeeyes */
+    /* swallowing rules: */
     {TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
+    {"Bottles", "bottles", "Bottles", 0, 0, 0, 1, -1},
 };
 
 /* layout(s) */
