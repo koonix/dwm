@@ -209,10 +209,15 @@ notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; d
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
 
+/* the logic behind the bindings:
+    - all of the audio and music related stuff start with super+alt
+    - all of the layouts start with super+control
+    - most bindings that have a similar function only differ in shift */
+
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = gimme } },
-	{ MODKEY|ControlMask|Mod1Mask,  XK_p,      spawn,          {.v = dmenucmd } },
+	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          BROWSER },
 	{ MODKEY,                       XK_c,      spawn,          CALCULATOR },
@@ -222,22 +227,22 @@ static Key keys[] = {
 	{ ControlMask|ShiftMask,        XK_period, spawn,          {.v = dunst_context } },
 
 	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
-	{ MODKEY|ShiftMask,             XK_m,      spawn,          NCMPCPP },
-	{ MODKEY|ControlMask|Mod1Mask,  XK_m,      spawn,          NEOMUTT },
+	{ MODKEY|ShiftMask,             XK_m,      spawn,          NEOMUTT },
+	{ MODKEY|Mod1Mask|ControlMask,  XK_m,      spawn,          NCMPCPP },
 	{ MODKEY,                       XK_n,      spawn,          NEWSBOAT },
 	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
-	{ MODKEY|ControlMask,           XK_t,      spawn,          TREMC },
+	{ MODKEY|ShiftMask,             XK_t,      spawn,          TREMC },
 	{ MODKEY,                       XK_v,      spawn,          EDITOR },
 	{ MODKEY,                       XK_y,      spawn,          {.v = ytfzf } },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
 	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
-	{ MODKEY|ShiftMask,             XK_s,      spawn,          {.v = dshot } },
+	{ MODKEY|Mod1Mask,              XK_s,      spawn,          {.v = dshot } },
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
-	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dpass } },
-	{ MODKEY|ControlMask,           XK_d,      spawn,          {.v = daria2 } },
-	{ MODKEY|Mod1Mask,              XK_z,      quit,           {0} },
+	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = dpass } },
+	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = daria2 } },
+	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
@@ -247,11 +252,11 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioLowerVolume,               spawn,          {.v = voldec } },
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
-	{ MODKEY|ControlMask,           XK_m,      spawn,          TOGGLE_MIC_MUTE },
+	{ MODKEY|Mod1Mask|ShiftMask,    XK_m,      spawn,          TOGGLE_MIC_MUTE },
 	{ 0,XF86XK_AudioMicMute,                   spawn,          TOGGLE_MIC_MUTE },
 
-	{ MODKEY|Mod1Mask,              XK_p,      spawn,          {.v = music } },
-	{ MODKEY|ControlMask,           XK_p,      spawn,          MEDIA_PLAYPAUSE },
+	{ MODKEY|Mod1Mask|ShiftMask,    XK_p,      spawn,          {.v = music } },
+	{ MODKEY|Mod1Mask,              XK_p,      spawn,          MEDIA_PLAYPAUSE },
 	{ 0,XF86XK_AudioPlay,                      spawn,          MEDIA_PLAYPAUSE },
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          MEDIA_PREV },
 	{ 0,XF86XK_AudioPrev,                      spawn,          MEDIA_PREV },
@@ -289,13 +294,13 @@ static Key keys[] = {
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,                       XK_w,      killclient,     {0} },
 	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
-	{ MODKEY|ShiftMask,             XK_f,      togglefullscr,  {0} },
-	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
-	{ MODKEY|ShiftMask,             XK_d,      setlayout,      {.v = &layouts[1]} }, /* stairs */
-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
-	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[3]} }, /* grid */
-	{ MODKEY|ShiftMask,             XK_c,      setlayout,      {.v = &layouts[4]} }, /* centeredmaster */
-	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = &layouts[5]} }, /* centeredfloatingmaster*/
+	{ MODKEY,                       XK_f,      togglefullscr,  {0} },
+	{ MODKEY|ControlMask,           XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
+	{ MODKEY|ControlMask,           XK_d,      setlayout,      {.v = &layouts[1]} }, /* stairs */
+	{ MODKEY|ControlMask,           XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
+	{ MODKEY|ControlMask,           XK_g,      setlayout,      {.v = &layouts[3]} }, /* grid */
+	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = &layouts[4]} }, /* centeredmaster */
+	{ MODKEY|ControlMask|ShiftMask, XK_c,      setlayout,      {.v = &layouts[5]} }, /* centeredfloatingmaster*/
 
 	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ControlMask,           XK_j,      incnmaster,     {.i = -1 } },
