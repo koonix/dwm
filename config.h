@@ -164,11 +164,13 @@ static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
 static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
+/**/
 #define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && \
-notify-send 'Mic Unmuted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
+notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && \
-notify-send 'Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+/**/
 
 /* media */
 static const char *music[] = { "mpc", "toggle", NULL };
@@ -176,10 +178,12 @@ static const char *music[] = { "mpc", "toggle", NULL };
 #define MEDIA_PREV SHCMD("(mpc | grep -q '^\\[playing' && mpc prev) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
 #define MEDIA_SEEK_FWD SHCMD("(mpc | grep -q '^\\[playing' && mpc seek +10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
 #define MEDIA_SEEK_BACK SHCMD("(mpc | grep -q '^\\[playing' && mpc seek -10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10- -p")
+/**/
 #define MEDIA_PLAYPAUSE SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/playpause; \
 p=$(playerctl -a status -f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { \
 printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || \
 cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
+/**/
 
 /* backlight */
 static const char *lightinc[] = { "light", "-A", "10", NULL };
@@ -200,11 +204,13 @@ static const char *ffmerge[] = { "ffmerge", NULL };
 static const char *ytfzf[] = { "yt", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
+/**/
 #define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
 sh -c 'notify-send -u low \"Listening to Clipboard...\"; \
 while :; do echo PipeURL | xclip -selection clipboard; clipnotify || exit 1; \
 clip=$(xclip -o -selection clipboard); [ \"$clip\" = PipeURL ] && continue; \
 notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; done'")
+/**/
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
