@@ -166,9 +166,9 @@ static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 #define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && \
-notify-send 'Mic Unmuted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
+notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
 pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && \
-notify-send 'Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
 
 /* media */
 static const char *music[] = { "mpc", "toggle", NULL };
