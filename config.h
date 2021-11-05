@@ -289,6 +289,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,                       XK_w,      killclient,     {0} },
 	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
+	{ MODKEY|ShiftMask,             XK_f,      togglefullscr,  {0} },
 	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
 	{ MODKEY|ShiftMask,             XK_d,      setlayout,      {.v = &layouts[1]} }, /* stairs */
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
