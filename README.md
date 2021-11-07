@@ -23,7 +23,9 @@ utility:
 
 - [transfer](https://dwm.suckless.org/patches/transfer)
 
-- my stairs layout (on the second screenshot)
+- the stairs layout (on the second screenshot)
+
+- [ewmhtags](https://dwm.suckless.org/patches/ewmhtags) + [_NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
 
 vanity:
 
