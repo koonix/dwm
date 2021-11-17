@@ -136,7 +136,7 @@ struct Client {
 	Client *swallowing;
 	Monitor *mon;
 	Window win;
-	unsigned char kbdgrp;
+	unsigned char xkblayout;
 };
 
 typedef struct {
@@ -1132,7 +1132,7 @@ focus(Client *c)
 			selmon = c->mon;
 		if (c->isurgent)
 			seturgent(c, 0);
-		XkbLockGroup(dpy, XkbUseCoreKbd, c->kbdgrp);
+		XkbLockGroup(dpy, XkbUseCoreKbd, c->xkblayout);
 		detachstack(c);
 		attachstack(c);
 		grabbuttons(c, 1);
@@ -1365,7 +1365,6 @@ manage(Window w, XWindowAttributes *wa)
 	Client *c, *t = NULL, *term = NULL;
 	Window trans = None;
 	XWindowChanges wc;
-	XkbStateRec kbd_state;
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
@@ -1439,8 +1438,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (c->mon == selmon)
 		unfocus(selmon->sel, 0);
 	c->mon->sel = c;
-	/* XkbGetState(dpy, XkbUseCoreKbd, &kbd_state); */
-	c->kbdgrp = defxkblayout;
+	c->xkblayout = defxkblayout;
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
 	if (term)
@@ -2267,7 +2265,6 @@ toggleview(const Arg *arg)
 void
 unfocus(Client *c, int setfocus)
 {
-	XkbStateRec kbd_state;
 	if (!c)
 		return;
 	grabbuttons(c, 0);
@@ -2276,8 +2273,10 @@ unfocus(Client *c, int setfocus)
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
-	XkbGetState(dpy, XkbUseCoreKbd, &kbd_state);
-	c->kbdgrp = kbd_state.group;
+	XkbStateRec xkbstate;
+	XkbGetState(dpy, XkbUseCoreKbd, &xkbstate);
+	c->xkblayout = xkbstate.group;
+	XkbLockGroup(dpy, XkbUseCoreKbd, defxkblayout);
 }
 
 void
@@ -2285,6 +2284,8 @@ unmanage(Client *c, int destroyed)
 {
 	Monitor *m = c->mon;
 	XWindowChanges wc;
+
+	XkbLockGroup(dpy, XkbUseCoreKbd, defxkblayout);
 
 	if (c->swallowing) {
 		unswallow(c);
