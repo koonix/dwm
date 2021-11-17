@@ -17,8 +17,13 @@ static       int smartgaps          = 0;        /* 1 means no outer gap when the
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const unsigned char defxkblayout = 0;    /* the default keyboard layout number (starts from 0) */
-static const char *fonts[]          = { "peep:size=12" , "Symbols Nerd Font:size=10", "JoyPixels:size=16" };
-static const char dmenufont[]       = "peep:size=12";
+
+/* fonts */
+static const char *fonts[] = {
+    "peep:size=12",
+    "Symbols Nerd Font:size=10",
+    "JoyPixels:size=16"
+};
 
 /* default colors */
 static const char col_gray1[]       = "#222222";
