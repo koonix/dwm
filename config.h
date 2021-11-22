@@ -148,10 +148,11 @@ static const char *terminal[] = { TERM, NULL };
 
 /* tui */
 #define EDITOR TUI("exec \"${EDITOR:-nvim}\"")
+#define DICTFZF TUI("exec dictfzf")
+#define NCMPCPP TUI("exec ncmpcpp")
 #define PULSEMIXER TUI("exec pulsemixer")
 #define BASHMOUNT TUI("exec bashmount")
 #define NEWSBOAT TUI("exec nboat")
-#define NCMPCPP TUI("exec ncmpcpp")
 #define NEOMUTT TUI("exec neomutt")
 #define ARIA2P TUI("exec aria2p")
 #define TREMC TUI("exec tremc")
@@ -247,6 +248,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ShiftMask,             XK_t,      spawn,          TREMC },
 	{ MODKEY,                       XK_v,      spawn,          EDITOR },
+	{ MODKEY|ControlMask|ShiftMask, XK_d,      spawn,          DICTFZF },
 	{ MODKEY,                       XK_y,      spawn,          {.v = ytfzf } },
 
 	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
