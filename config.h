@@ -210,7 +210,7 @@ static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 static const char *ffmerge[] = { "ffmerge", NULL };
 static const char *ytfzf[] = { "yt", NULL };
-#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then exec qalc; else exec bc -qi; fi")
+#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then trap exit HUP; qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 /**/
 #define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
