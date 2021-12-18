@@ -240,11 +240,12 @@ static Key keys[] = {
 	{ ControlMask,                  XK_grave,  spawn,          {.v = dunst_history } },
 	{ ControlMask|ShiftMask,        XK_period, spawn,          {.v = dunst_context } },
 
-	{ MODKEY,                       XK_m,      spawn,          BASHMOUNT },
-	{ MODKEY|ShiftMask,             XK_m,      spawn,          NEOMUTT },
-	{ MODKEY|Mod1Mask|ControlMask,  XK_m,      spawn,          PULSEMIXER },
-	{ MODKEY|ControlMask,           XK_m,      spawn,          NCMPCPP },
+	{ MODKEY,                       XK_u,      spawn,          BASHMOUNT },
 	{ MODKEY,                       XK_n,      spawn,          NEWSBOAT },
+	{ MODKEY|ShiftMask,             XK_n,      spawn,          NEOMUTT },
+	{ MODKEY|ControlMask,           XK_n,      spawn,          {.v = unread } },
+	{ MODKEY,                       XK_m,      spawn,          NCMPCPP },
+	{ MODKEY|ShiftMask,             XK_m,      spawn,          PULSEMIXER },
 	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
 	{ MODKEY|ShiftMask,             XK_t,      spawn,          TREMC },
 	{ MODKEY,                       XK_v,      spawn,          EDITOR },
@@ -292,7 +293,6 @@ static Key keys[] = {
 
 	{ ControlMask|ShiftMask,        XK_m,      spawn,          {.v = ffmerge } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
-	{ MODKEY,                       XK_u,      spawn,          {.v = unread } },
 	{ MODKEY,                       XK_r,      spawn,          CLIPLISTEN },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
