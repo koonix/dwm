@@ -312,6 +312,9 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 		if (utf8strlen) {
 			drw_font_getexts(usedfont, utf8str, utf8strlen, &ew, NULL);
 			/* shorten text if necessary */
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 			if (ew > w)
 				for (ew = 0, len = 0; ew < w - lpad * 2 && len < MIN(utf8strlen, sizeof(buf) - 1); len++)
 					drw_font_getexts(usedfont, utf8str, len, &ew, NULL);
@@ -334,6 +337,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 				w -= ew;
 			}
 		}
+#pragma GCC diagnostic pop
 
 		if (!*text) {
 			break;
