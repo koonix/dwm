@@ -2826,7 +2826,7 @@ is_a_tmux_server(pid_t pid)
 long
 get_tmux_client_pid(long shell_pid)
 {
-	long pane_pid, client_pid;
+	long volatile pane_pid ,client_pid;
 	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
 	if (!list)
 		return 0;
