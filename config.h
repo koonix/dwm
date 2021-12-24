@@ -74,7 +74,6 @@ static const Rule rules[] = {
 	/* swallowing rules: */
 	{ TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1 },
 	{ NULL, NULL, "Event Tester", 0, 0, 0, 1, -1 },
-	{ "Bottles", "bottles", "Bottles", 0, 0, 0, 1, -1 },
 };
 
 /* layout(s) */
