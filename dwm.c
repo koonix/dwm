@@ -70,7 +70,7 @@
 #define ColFloat                3
 
 #define XCOLORS \
-    void xrdb_colors(XrmDatabase xrdb) { \
+    void xrdbcolors(XrmDatabase xrdb) { \
         char *type; \
         XrmValue value;
 
@@ -301,13 +301,13 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xrdb(const Arg *arg);
-static void xrdb_read(void);
+static void xrdbread(void);
 static void zoom(const Arg *arg);
 
 static pid_t getparentprocess(pid_t p);
 static int isdescprocess(pid_t parent, pid_t child);
-static int is_a_tmux_server(pid_t pid);
-static long get_tmux_client_pid(long shell_pid);
+static int isatmuxserver(pid_t pid);
+static long gettmuxclientpid(long shellpid);
 static Client *swallowingclient(Window w);
 static Client *termforwin(const Client *c);
 static pid_t winpid(Window w);
@@ -2796,8 +2796,8 @@ isdescprocess(pid_t parent, pid_t child)
 	pid_t parent_tmp;
 	while (child != parent && child != 0) {
 		parent_tmp = getparentprocess(child);
-		if (is_a_tmux_server(parent_tmp))
-			child = get_tmux_client_pid(child);
+		if (isatmuxserver(parent_tmp))
+			child = gettmuxclientpid(child);
 		else
 			child = parent_tmp;
 	}
@@ -2805,7 +2805,7 @@ isdescprocess(pid_t parent, pid_t child)
 }
 
 int
-is_a_tmux_server(pid_t pid)
+isatmuxserver(pid_t pid)
 {
 	char path[256];
 	char name[15];
@@ -2821,19 +2821,19 @@ is_a_tmux_server(pid_t pid)
 	return (strcmp(name, "tmux: server") == 0);
 }
 
-/* parameter "shell_pid" is the pid of a direct child
+/* parameter "shellpid" is the pid of a direct child
  * of the tmux's server process, which usually is a shell process. */
 long
-get_tmux_client_pid(long shell_pid)
+gettmuxclientpid(long shellpid)
 {
-	long volatile pane_pid ,client_pid;
+	long volatile panepid, clientpid;
 	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
 	if (!list)
 		return 0;
-	while (!feof(list) && pane_pid != shell_pid)
-		fscanf(list, "%ld %ld\n", &pane_pid, &client_pid);
+	while (!feof(list) && panepid != shellpid)
+		fscanf(list, "%ld %ld\n", &panepid, &clientpid);
 	pclose(list);
-	return client_pid;
+	return clientpid;
 }
 
 Client *
@@ -2938,7 +2938,7 @@ xerrorstart(Display *dpy, XErrorEvent *ee)
 }
 
 void
-xrdb_read()
+xrdbread()
 {
     Display *display;
     char * resm;
@@ -2950,7 +2950,7 @@ xrdb_read()
         if (resm != NULL) {
             xrdb = XrmGetStringDatabase(resm);
             if (xrdb != NULL) {
-                xrdb_colors(xrdb);
+                xrdbcolors(xrdb);
             }
         }
     }
@@ -2960,7 +2960,7 @@ xrdb_read()
 void
 xrdb(const Arg *arg)
 {
-    xrdb_read();
+    xrdbread();
     int i;
     for (i = 0; i < LENGTH(colors); i++)
         scheme[i] = drw_scm_create(drw, colors[i], 3);
@@ -2997,7 +2997,7 @@ main(int argc, char *argv[])
 		die("dwm: cannot get xcb connection\n");
 	checkotherwm();
 	XrmInitialize();
-	xrdb_read();
+	xrdbread();
 	setup();
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath proc exec ps", NULL) == -1)
