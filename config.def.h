@@ -21,11 +21,10 @@ static char col_gray3[]       = "#bbbbbb";
 static char col_gray4[]       = "#eeeeee";
 static char col_cyan[]        = "#005577";
 static char *colors[][4]      = {
-    /*                fg         bg         border   */
-    [SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
-    [SchemeSel]   = { col_gray4, col_cyan,  col_gray2 },
-    [SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
-
+	/*                fg         bg         border   */
+	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
+	[SchemeSel]   = { col_gray4, col_cyan,  col_gray2 },
+	[SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
 };
 
 /* tagging */
@@ -182,3 +181,5 @@ static Button buttons[] = {
 	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
 	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
 };
+
+// vim:noexpandtab

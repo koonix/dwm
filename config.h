@@ -20,9 +20,9 @@ static const unsigned char defxkblayout = 0;    /* the default keyboard layout n
 
 /* fonts */
 static const char *fonts[] = {
-    "peep:size=12",
-    "Symbols Nerd Font:size=10",
-    "JoyPixels:size=16"
+	"peep:size=12",
+	"Symbols Nerd Font:size=10",
+	"JoyPixels:size=16"
 };
 
 /* default colors */
@@ -42,10 +42,10 @@ static char selborder[]      = "#a8a8a8";
 static char titlefg[]        = "#9d9d9d";
 
 static char *colors[][4]      = {
-    /*               fg        bg   border    */
-    [SchemeNorm]  = { normfg,  bg,  normborder },
-    [SchemeSel]   = { selfg,   bg,  selborder  },
-    [SchemeTitle] = { titlefg, bg,  null       },
+	/*               fg        bg   border    */
+	[SchemeNorm]  = { normfg,  bg,  normborder },
+	[SchemeSel]   = { selfg,   bg,  selborder  },
+	[SchemeTitle] = { titlefg, bg,  null       },
 };
 
 /* colors that can be used by the statusbar */
@@ -53,10 +53,10 @@ static char *statuscolors[] = { normfg, selfg };
 
 /* specify colors to read from xrdb */
 XCOLORS
-    XLOAD( bg,         "*.background"  );
-    XLOAD( normfg,     "*.color2"      );
-    XLOAD( selfg,      "*.color6"      );
-    XLOAD( titlefg,    "*.color2"      );
+	XLOAD( bg,         "*.background"  );
+	XLOAD( normfg,     "*.color2"      );
+	XLOAD( selfg,      "*.color6"      );
+	XLOAD( titlefg,    "*.color2"      );
 XCOLORS_END
 
 /* tagging */
@@ -68,13 +68,13 @@ static const Rule rules[] = {
 	 *	WM_NAME(STRING) = title
 	 */
 	/* class, instance, title, tags mask, isfloating, isterminal, noswallow, monitor */
-    {"TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1}, /* don't tile telegram's media viewer */
-    {"Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1}, /* keep qalculate floating */
-    {"Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, -1}, /* don't tile safeeyes */
-    /* swallowing rules: */
-    {TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1},
-    {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
-    {"Bottles", "bottles", "Bottles", 0, 0, 0, 1, -1},
+	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1 }, /* keep qalculate floating */
+	{ "Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, -1 }, /* don't tile safeeyes */
+	/* swallowing rules: */
+	{ TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1 },
+	{ NULL, NULL, "Event Tester", 0, 0, 0, 1, -1 },
+	{ "Bottles", "bottles", "Bottles", 0, 0, 0, 1, -1 },
 };
 
 /* layout(s) */
@@ -103,7 +103,6 @@ static const int lockfullscreen = 0; /* 1 will force focus on the fullscreen win
  *   In case of nmaster = 1 feels like attachaside
  */
 static const int attachdirection = 5;
-
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
@@ -224,9 +223,9 @@ notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; d
 #include <X11/XF86keysym.h>
 
 /* the logic behind the bindings:
-    - all of the audio and music related stuff start with super+alt
-    - all of the layouts start with super+control
-    - most bindings that have a similar function only differ in shift */
+	- all of the audio and music related stuff start with super+alt
+	- all of the layouts start with super+control
+	- most bindings that have a similar function only differ in shift */
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -365,3 +364,5 @@ static Button buttons[] = {
 	{ ClkStatusText,        MODKEY,         Button4,        spawn,          {.v = volinc } },
 	{ ClkStatusText,        MODKEY,         Button5,        spawn,          {.v = voldec } },
 };
+
+// vim:noexpandtab

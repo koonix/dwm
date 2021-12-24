@@ -70,28 +70,28 @@
 #define ColFloat                3
 
 #define XCOLORS \
-    void xrdbcolors(XrmDatabase xrdb) { \
-        char *type; \
-        XrmValue value;
+	void xrdbcolors(XrmDatabase xrdb) { \
+		char *type; \
+		XrmValue value;
 
 #define XCOLORS_END }
 
 #define XLOAD(V,R) \
-    if (XrmGetResource(xrdb, R, NULL, &type, &value) == True) { \
-        if (value.addr != NULL && strnlen(value.addr, 8) == 7 && value.addr[0] == '#') { \
-            int i = 1; \
-            for (; i <= 6; i++) { \
-                if (value.addr[i] < 48) break; \
-                if (value.addr[i] > 57 && value.addr[i] < 65) break; \
-                if (value.addr[i] > 70 && value.addr[i] < 97) break; \
-                if (value.addr[i] > 102) break; \
-            } \
-            if (i == 7) { \
-                strncpy(V, value.addr, 7); \
-                V[7] = '\0'; \
-            } \
-        } \
-    }
+	if (XrmGetResource(xrdb, R, NULL, &type, &value) == True) { \
+		if (value.addr != NULL && strnlen(value.addr, 8) == 7 && value.addr[0] == '#') { \
+			int i = 1; \
+			for (; i <= 6; i++) { \
+				if (value.addr[i] < 48) break; \
+				if (value.addr[i] > 57 && value.addr[i] < 65) break; \
+				if (value.addr[i] > 70 && value.addr[i] < 97) break; \
+				if (value.addr[i] > 102) break; \
+			} \
+			if (i == 7) { \
+				strncpy(V, value.addr, 7); \
+				V[7] = '\0'; \
+			} \
+		} \
+	}
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -1439,24 +1439,24 @@ manage(Window w, XWindowAttributes *wa)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
-    switch(attachdirection){
-        case 1:
-            attachabove(c);
-            break;
-        case 2:
-            attachaside(c);
-            break;
-        case 3:
-            attachbelow(c);
-            break;
-        case 4:
-            attachbottom(c);
-            break;
-        case 5:
-            attachtop(c);
-            break;
-        default:
-            attach(c);
+	switch(attachdirection){
+		case 1:
+			attachabove(c);
+			break;
+		case 2:
+			attachaside(c);
+			break;
+		case 3:
+			attachbelow(c);
+			break;
+		case 4:
+			attachbottom(c);
+			break;
+		case 5:
+			attachtop(c);
+			break;
+		default:
+			attach(c);
  	}
 
 	attachstack(c);
@@ -2740,18 +2740,18 @@ winpid(Window w)
 #endif /* __linux__ */
 
 #ifdef __OpenBSD__
-        Atom type;
-        int format;
-        unsigned long len, bytes;
-        unsigned char *prop;
-        pid_t ret;
+	Atom type;
+	int format;
+	unsigned long len, bytes;
+	unsigned char *prop;
+	pid_t ret;
 
-        if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1, False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
-               return 0;
+	if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1, False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
+		   return 0;
 
-        ret = *(pid_t*)prop;
-        XFree(prop);
-        result = ret;
+	ret = *(pid_t*)prop;
+	XFree(prop);
+	result = ret;
 
 #endif /* __OpenBSD__ */
 	return result;
@@ -2940,32 +2940,32 @@ xerrorstart(Display *dpy, XErrorEvent *ee)
 void
 xrdbread()
 {
-    Display *display;
-    char * resm;
-    XrmDatabase xrdb;
+	Display *display;
+	char * resm;
+	XrmDatabase xrdb;
 
-    display = XOpenDisplay(NULL);
-    if (display != NULL) {
-        resm = XResourceManagerString(display);
-        if (resm != NULL) {
-            xrdb = XrmGetStringDatabase(resm);
-            if (xrdb != NULL) {
-                xrdbcolors(xrdb);
-            }
-        }
-    }
-    XCloseDisplay(display);
+	display = XOpenDisplay(NULL);
+	if (display != NULL) {
+		resm = XResourceManagerString(display);
+		if (resm != NULL) {
+			xrdb = XrmGetStringDatabase(resm);
+			if (xrdb != NULL) {
+				xrdbcolors(xrdb);
+			}
+		}
+	}
+	XCloseDisplay(display);
 }
 
 void
 xrdb(const Arg *arg)
 {
-    xrdbread();
-    int i;
-    for (i = 0; i < LENGTH(colors); i++)
-        scheme[i] = drw_scm_create(drw, colors[i], 3);
-    focus(NULL);
-    arrange(NULL);
+	xrdbread();
+	int i;
+	for (i = 0; i < LENGTH(colors); i++)
+		scheme[i] = drw_scm_create(drw, colors[i], 3);
+	focus(NULL);
+	arrange(NULL);
 }
 
 void
@@ -3042,3 +3042,5 @@ transfer(const Arg *arg) {
 	}
 	arrange(selmon);
 }
+
+// vim:noexpandtab
