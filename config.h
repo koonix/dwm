@@ -346,7 +346,7 @@ static Button buttons[] = {
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
 	{ ClkLtSymbol,          0,              Button2,        setlayout,      {.v = &layouts[0]} },
-	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[13]} },
+	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[1]} },
 	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
 	{ ClkStatusText,        0,              Button2,        spawn,          {.v = terminal } },
 	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
@@ -356,4 +356,12 @@ static Button buttons[] = {
 	{ ClkTagBar,            0,              Button3,        toggleview,     {0} },
 	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
 	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
+	{ ClkRootWin,           MODKEY,         Button4,        focusstack,     {.i = -1 } },
+	{ ClkRootWin,           MODKEY,         Button5,        focusstack,     {.i = +1 } },
+	{ ClkClientWin,         MODKEY,         Button4,        focusstack,     {.i = -1 } },
+	{ ClkClientWin,         MODKEY,         Button5,        focusstack,     {.i = +1 } },
+	{ ClkStatusText,        MODKEY,         Button1,        spawn,          {.v = mute } },
+	{ ClkStatusText,        MODKEY,         Button3,        spawn,          {.v = cycle } },
+	{ ClkStatusText,        MODKEY,         Button4,        spawn,          {.v = volinc } },
+	{ ClkStatusText,        MODKEY,         Button5,        spawn,          {.v = voldec } },
 };
