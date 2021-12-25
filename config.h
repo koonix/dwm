@@ -26,20 +26,20 @@ static const char *fonts[] = {
 };
 
 /* default colors */
-static const char col_gray1[]       = "#222222";
-static const char col_gray2[]       = "#444444";
-static const char col_gray3[]       = "#bbbbbb";
-static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]        = "#005577";
+static const char col_gray1[] = "#222222";
+static const char col_gray2[] = "#444444";
+static const char col_gray3[] = "#bbbbbb";
+static const char col_gray4[] = "#eeeeee";
+static const char col_cyan[]  = "#005577";
 
 /* custom colors */
-static char null[]           = "#000000";
-static char bg[]             = "#000000";
-static char normfg[]         = "#555555";
-static char normborder[]     = "#333333";
-static char selfg[]          = "#9d9d9d";
-static char selborder[]      = "#a8a8a8";
-static char titlefg[]        = "#9d9d9d";
+static char null[]       = "#000000";
+static char bg[]         = "#000000";
+static char normfg[]     = "#555555";
+static char normborder[] = "#333333";
+static char selfg[]      = "#9d9d9d";
+static char selborder[]  = "#a8a8a8";
+static char titlefg[]    = "#9d9d9d";
 
 static char *colors[][4]      = {
 	/*               fg        bg   border    */
@@ -64,9 +64,8 @@ static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
 static const Rule rules[] = {
 	/* xprop(1):
-	 *	WM_CLASS(STRING) = instance, class
-	 *	WM_NAME(STRING) = title
-	 */
+	 * WM_CLASS(STRING) = instance, class
+	 * WM_NAME(STRING) = title */
 	/* class, instance, title, tags mask, isfloating, isterminal, noswallow, monitor */
 	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1 }, /* don't tile telegram's media viewer */
 	{ "Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1 }, /* keep qalculate floating */
@@ -83,24 +82,23 @@ static const int resizehints = 1;    /* 1 means respect size hints in tiled resi
 static const int lockfullscreen = 0; /* 1 will force focus on the fullscreen window */
 
 /* hint for attachdirection
- * 0 - default
- * 1 - attach above:
- *   Make new clients attach above the selected client,
- *   instead of always becoming the new master. This behaviour is known from xmonad.
- * 2 - attach aside:
- *   Make new clients get attached and focused in the stacking area,
- *   instead of always becoming the new master. It's basically an attachabove modification.
- * 3 - attach below:
- *   Make new clients attach below the selected client,
- *   instead of always becoming the new master. Inspired heavily by attachabove.
- * 4 - attach bottom:
- *   New clients attach at the bottom of the stack instead of the top.
- * 5 - attach top:
- *   New client attaches below the last master/on top of the stack.
- *   Behavior feels very intuitive as it doesn't disrupt existing masters,
- *   no matter the amount of them, it only pushes the clients in stack down.
- *   In case of nmaster = 1 feels like attachaside
- */
+  0 - default
+  1 - attach above:
+    Make new clients attach above the selected client,
+    instead of always becoming the new master. This behaviour is known from xmonad.
+  2 - attach aside:
+    Make new clients get attached and focused in the stacking area,
+    instead of always becoming the new master. It's basically an attachabove modification.
+  3 - attach below:
+    Make new clients attach below the selected client,
+    instead of always becoming the new master. Inspired heavily by attachabove.
+  4 - attach bottom:
+    New clients attach at the bottom of the stack instead of the top.
+  5 - attach top:
+    New client attaches below the last master/on top of the stack.
+    Behavior feels very intuitive as it doesn't disrupt existing masters,
+    no matter the amount of them, it only pushes the clients in stack down.
+    In case of nmaster = 1 feels like attachaside */
 static const int attachdirection = 5;
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
