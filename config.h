@@ -25,15 +25,7 @@ static const char *fonts[] = {
 	"JoyPixels:size=16"
 };
 
-/* default colors */
-static const char col_gray1[] = "#222222";
-static const char col_gray2[] = "#444444";
-static const char col_gray3[] = "#bbbbbb";
-static const char col_gray4[] = "#eeeeee";
-static const char col_cyan[]  = "#005577";
-static char col_urgborder[]   = "#ff0000";
-
-/* custom colors */
+/* colors */
 static char null[]       = "#000000";
 static char bg[]         = "#000000";
 static char normfg[]     = "#555555";
@@ -41,13 +33,14 @@ static char normborder[] = "#333333";
 static char selfg[]      = "#9d9d9d";
 static char selborder[]  = "#a8a8a8";
 static char titlefg[]    = "#9d9d9d";
+static char urgborder[]  = "#ff0000";
 
 static char *colors[][4]      = {
 	/*               fg        bg   border    */
 	[SchemeNorm]  = { normfg,  bg,  normborder },
 	[SchemeSel]   = { selfg,   bg,  selborder  },
 	[SchemeTitle] = { titlefg, bg,  null       },
-	[SchemeUrg]   = { normfg,  bg,  col_urgborder },
+	[SchemeUrg]   = { normfg,  bg,  urgborder  },
 };
 
 /* colors that can be used by the statusbar */
