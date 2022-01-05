@@ -20,10 +20,12 @@ static char col_gray2[]       = "#444444";
 static char col_gray3[]       = "#bbbbbb";
 static char col_gray4[]       = "#eeeeee";
 static char col_cyan[]        = "#005577";
+static char col_urgborder[]   = "#ff0000";
 static char *colors[][4]      = {
 	/*                fg         bg         border   */
 	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
 	[SchemeSel]   = { col_gray4, col_cyan,  col_gray2 },
+	[SchemeUrg]   = { col_gray4, col_cyan,  col_urgborder },
 	[SchemeTitle] = { col_gray4, col_cyan,  col_cyan  },
 };
 

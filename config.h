@@ -31,6 +31,7 @@ static const char col_gray2[] = "#444444";
 static const char col_gray3[] = "#bbbbbb";
 static const char col_gray4[] = "#eeeeee";
 static const char col_cyan[]  = "#005577";
+static char col_urgborder[]   = "#ff0000";
 
 /* custom colors */
 static char null[]       = "#000000";
@@ -46,6 +47,7 @@ static char *colors[][4]      = {
 	[SchemeNorm]  = { normfg,  bg,  normborder },
 	[SchemeSel]   = { selfg,   bg,  selborder  },
 	[SchemeTitle] = { titlefg, bg,  null       },
+	[SchemeUrg]   = { normfg,  bg,  col_urgborder },
 };
 
 /* colors that can be used by the statusbar */
@@ -206,6 +208,7 @@ static const char *gimme[] = { "gimme", "-m", NULL };
 static const char *fffixfocus[] = { "fffixfocus", NULL };
 static const char *ffmerge[] = { "ffmerge", NULL };
 static const char *ytfzf[] = { "yt", NULL };
+static const char *nmdmenu[] = { "networkmanager_dmenu", NULL };
 #define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then trap exit HUP; qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 /**/
@@ -255,6 +258,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = dpass } },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = daria2 } },
+	{ MODKEY|ShiftMask,             XK_r,      spawn,          {.v = nmdmenu } },
 	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
