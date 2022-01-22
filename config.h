@@ -2,7 +2,7 @@
 
 /* terminal */
 #define TERM "st"
-#define TERMCLASS "St"
+#define TERMCLASS "st-256color"
 
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
