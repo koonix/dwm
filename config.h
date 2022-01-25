@@ -159,8 +159,8 @@ static const char *unread[] = { "unread", NULL }; /* notifies unread emails */
 static const char *daria2[] = { "daria2", NULL };
 
 /* audio */
-static const char *volinc[] = { "pamixer", "--allow-boost", "-i", "5", NULL };
-static const char *voldec[] = { "pamixer", "--allow-boost", "-d", "5", NULL };
+#define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
+#define VOLDEC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-d", #n, NULL } }
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 /**/
@@ -185,10 +185,8 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 /**/
 
 /* backlight */
-static const char *lightinc[] = { "light", "-A", "10", NULL };
-static const char *lightdec[] = { "light", "-U", "10", NULL };
-static const char *lightincsmall[] = { "light", "-A", "1", NULL };
-static const char *lightdecsmall[] = { "light", "-U", "1", NULL };
+#define LIGHTINC(n) { .v = (const char*[]){ "light", "-A", #n, NULL } }
+#define LIGHTDEC(n) { .v = (const char*[]){ "light", "-U", #n, NULL } }
 
 /* dunst */
 static const char *dunst_close[]   = { "dunstctl", "close", NULL };
@@ -256,10 +254,14 @@ static Key keys[] = {
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
-	{ MODKEY|Mod1Mask,              XK_k,      spawn,          {.v = volinc } },
-	{ 0,XF86XK_AudioRaiseVolume,               spawn,          {.v = volinc } },
-	{ MODKEY|Mod1Mask,              XK_j,      spawn,          {.v = voldec } },
-	{ 0,XF86XK_AudioLowerVolume,               spawn,          {.v = voldec } },
+	{ MODKEY|Mod1Mask,              XK_k,      spawn,          VOLINC(5) },
+	{ MODKEY|Mod1Mask|ShiftMask,    XK_k,      spawn,          VOLINC(20) },
+	{ 0,XF86XK_AudioRaiseVolume,               spawn,          VOLINC(5) },
+	{ ShiftMask,XF86XK_AudioRaiseVolume,       spawn,          VOLINC(20) },
+	{ MODKEY|Mod1Mask,              XK_j,      spawn,          VOLDEC(5) },
+	{ MODKEY|Mod1Mask|ShiftMask,    XK_j,      spawn,          VOLDEC(20) },
+	{ 0,XF86XK_AudioLowerVolume,               spawn,          VOLDEC(5) },
+	{ ShiftMask,XF86XK_AudioLowerVolume,       spawn,          VOLDEC(20) },
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
 	{ MODKEY|Mod1Mask|ShiftMask,    XK_m,      spawn,          TOGGLE_MIC_MUTE },
@@ -276,13 +278,13 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioNext,                      spawn,          MEDIA_NEXT },
 	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
 
-	{ MODKEY,            XK_bracketright,      spawn,          {.v = lightinc } },
-	{ MODKEY|ShiftMask,  XK_bracketright,      spawn,          {.v = lightincsmall } },
-	{ 0,XF86XK_MonBrightnessUp,                spawn,          {.v = lightinc } },
+	{ 0,XF86XK_MonBrightnessUp,                spawn,          LIGHTINC(10) },
+	{ MODKEY,            XK_bracketright,      spawn,          LIGHTINC(10) },
+	{ MODKEY|ShiftMask,  XK_bracketright,      spawn,          LIGHTINC(1)  },
 
-	{ MODKEY,             XK_bracketleft,      spawn,          {.v = lightdec } },
-	{ MODKEY|ShiftMask,   XK_bracketleft,      spawn,          {.v = lightdecsmall } },
-	{ 0,XF86XK_MonBrightnessDown,              spawn,          {.v = lightdec } },
+	{ 0,XF86XK_MonBrightnessDown,              spawn,          LIGHTDEC(10) },
+	{ MODKEY,             XK_bracketleft,      spawn,          LIGHTDEC(10) },
+	{ MODKEY|ShiftMask,   XK_bracketleft,      spawn,          LIGHTDEC(1)  },
 
 	{ ControlMask|ShiftMask,        XK_m,      spawn,          {.v = ffmerge } },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
@@ -357,8 +359,8 @@ static Button buttons[] = {
 	{ ClkClientWin,         MODKEY,         Button5,        focusstack,     {.i = +1 } },
 	{ ClkStatusText,        MODKEY,         Button1,        spawn,          {.v = mute } },
 	{ ClkStatusText,        MODKEY,         Button3,        spawn,          {.v = cycle } },
-	{ ClkStatusText,        MODKEY,         Button4,        spawn,          {.v = volinc } },
-	{ ClkStatusText,        MODKEY,         Button5,        spawn,          {.v = voldec } },
+	{ ClkStatusText,        MODKEY,         Button4,        spawn,          VOLINC(5) },
+	{ ClkStatusText,        MODKEY,         Button5,        spawn,          VOLDEC(5) },
 };
 
 // vim:noexpandtab
