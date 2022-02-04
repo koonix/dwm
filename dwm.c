@@ -297,6 +297,7 @@ static void updatewmhints(Client *c);
 static void view(const Arg *arg);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
+static void gototag(const Arg* arg);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
@@ -2905,6 +2906,25 @@ wintomon(Window w)
 	if ((c = wintoclient(w)))
 		return c->mon;
 	return selmon;
+}
+
+/* https://dwm.suckless.org/patches/winview */
+void
+gototag(const Arg* arg)
+{
+	Window win, win_r, win_p, *win_c;
+	unsigned nc;
+	int unused;
+	Client* c;
+	Arg a;
+	if (!XGetInputFocus(dpy, &win, &unused))
+		return;
+	while(XQueryTree(dpy, win, &win_r, &win_p, &win_c, &nc) && win_p != win_r)
+		win = win_p;
+	if (!(c = wintoclient(win)))
+		return;
+	a.ui = c->tags;
+	view(&a);
 }
 
 /* There's no way to check accesses to destroyed windows, thus those cases are
