@@ -218,6 +218,8 @@ notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; d
 	- all of the layouts start with super+control
 	- most bindings that have a similar function only differ in shift */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = gimme } },
@@ -308,14 +310,14 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_f,      togglefullscr,  {0} },
 	{ MODKEY,                       XK_o,      gototag,        {0} },
-	{ MODKEY|ControlMask,           XK_t,      setlayout,      {.v = &layouts[0]} }, /* tile   */
-	{ MODKEY|ControlMask,           XK_d,      setlayout,      {.v = &layouts[1]} }, /* stairs */
-	{ MODKEY|ControlMask,           XK_f,      setlayout,      {.v = &layouts[2]} }, /* monocle */
-	{ MODKEY|ControlMask,           XK_g,      setlayout,      {.v = &layouts[3]} }, /* grid */
-	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = &layouts[4]} }, /* centeredmaster */
-	{ MODKEY|ControlMask|ShiftMask, XK_c,      setlayout,      {.v = &layouts[5]} }, /* centeredfloatingmaster*/
-	{ MODKEY|ControlMask,           XK_a,      setlayout,      {.v = &layouts[6]} }, /* bstack */
-	{ MODKEY|ControlMask,           XK_x,      setlayout,      {.v = &layouts[7]} }, /* dwindle */
+	{ MODKEY|ControlMask,           XK_t,      setlayout,      {.v = tile } },
+	{ MODKEY|ControlMask,           XK_d,      setlayout,      {.v = stairs } },
+	{ MODKEY|ControlMask,           XK_f,      setlayout,      {.v = monocle } },
+	{ MODKEY|ControlMask,           XK_g,      setlayout,      {.v = grid } },
+	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = centeredmaster } },
+	{ MODKEY|ControlMask|ShiftMask, XK_c,      setlayout,      {.v = centeredfloatingmaster } },
+	{ MODKEY|ControlMask,           XK_a,      setlayout,      {.v = bstack } },
+	{ MODKEY|ControlMask,           XK_x,      setlayout,      {.v = dwindle } },
 
 	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
 	{ MODKEY|ControlMask,           XK_j,      incnmaster,     {.i = -1 } },
@@ -338,6 +340,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 };
+#pragma GCC diagnostic pop
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */

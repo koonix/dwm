@@ -2007,10 +2007,20 @@ setfullscreen(Client *c, int fullscreen)
 void
 setlayout(const Arg *arg)
 {
-	if (!arg || !arg->v || arg->v != selmon->lt[selmon->sellt])
+	const Layout *lt = NULL;
+	if (arg && arg->v) {
+		int n;
+		int nlayouts = sizeof(layouts) / sizeof(layouts[1]);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+		for (n = 0; n < nlayouts && layouts[n].arrange != arg->v; n++);
+#pragma GCC diagnostic pop
+		lt = &layouts[n];
+	}
+	if (!arg || !arg->v || lt != selmon->lt[selmon->sellt])
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag] ^= 1;
 	if (arg && arg->v)
-		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = (Layout *)arg->v;
+		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = lt;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-truncation"
 	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
