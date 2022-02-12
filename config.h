@@ -201,8 +201,9 @@ static Key keys[] = {
 	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
 	{ ControlMask|ShiftMask,        XK_period, spawn,          CMD("dunstctl", "context") },
 
+	{ MODKEY|ShiftMask,             XK_c,      spawn,          TUI("htop") },
 	{ MODKEY,                       XK_u,      spawn,          TUI("bashmount") },
-	{ MODKEY,                       XK_n,      spawn,          TUI("newsboat") },
+	{ MODKEY,                       XK_n,      spawn,          TUI("nboat") },
 	{ MODKEY|ShiftMask,             XK_n,      spawn,          TUI("neomutt") },
 	{ MODKEY|ControlMask,           XK_n,      spawn,          CMD("unread") },
 	{ MODKEY,                       XK_m,      spawn,          TUI("ncmpcpp") },
