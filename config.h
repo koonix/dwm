@@ -129,34 +129,15 @@ static const Layout layouts[] = {
 	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
+#define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
+#define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define TUI(cmd) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", cmd, NULL } }
+#define SHTUI(cmd) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", cmd, NULL } }
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 static const char *terminal[] = { TERM, NULL };
-
-/* tui */
-#define EDITOR TUI("exec \"${EDITOR:-nvim}\"")
-#define DICTFZF TUI("exec dictfzf")
-#define NCMPCPP TUI("exec ncmpcpp")
-#define PULSEMIXER TUI("exec pulsemixer")
-#define BASHMOUNT TUI("exec bashmount")
-#define NEWSBOAT TUI("exec nboat")
-#define NEOMUTT TUI("exec neomutt")
-#define ARIA2P TUI("exec aria2p")
-#define TREMC TUI("exec tremc")
-
-/* dmenu */
-static const char *sysact[] = { "sysact", NULL };
-static const char *lock[] = { "loginctl", "lock-session", NULL };
-static const char *suspend[] = { "sysact", "sleep", NULL };
-static const char *dshot[] = { "dshot", NULL };
-static const char *bookmarks[] = { "bm", "-m", NULL };
-static const char *dpass[] = { "dpass", NULL };
-static const char *unread[] = { "unread", NULL }; /* notifies unread emails */
-static const char *daria2[] = { "daria2", NULL };
 
 /* audio */
 #define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
@@ -172,7 +153,6 @@ notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:to
 /**/
 
 /* media */
-static const char *music[] = { "mpc", "toggle", NULL };
 #define MEDIA_NEXT SHCMD("(mpc | grep -q '^\\[playing' && mpc next) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl next -p")
 #define MEDIA_PREV SHCMD("(mpc | grep -q '^\\[playing' && mpc prev) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
 #define MEDIA_SEEK_FWD SHCMD("(mpc | grep -q '^\\[playing' && mpc seek +10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
@@ -188,19 +168,8 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 #define LIGHTINC(n) { .v = (const char*[]){ "light", "-A", #n, NULL } }
 #define LIGHTDEC(n) { .v = (const char*[]){ "light", "-U", #n, NULL } }
 
-/* dunst */
-static const char *dunst_close[]   = { "dunstctl", "close", NULL };
-static const char *dunst_history[] = { "dunstctl", "history-pop", NULL };
-static const char *dunst_context[] = { "dunstctl", "context", NULL };
-
 /* other */
-#define BROWSER SHCMD("exec $BROWSER")
-static const char *gimme[] = { "gimme", "-m", NULL };
-static const char *fffixfocus[] = { "fffixfocus", NULL };
-static const char *ffmerge[] = { "ffmerge", NULL };
-static const char *ytfzf[] = { "yt", NULL };
-static const char *nmdmenu[] = { "networkmanager_dmenu", NULL };
-#define CALCULATOR TUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then trap exit HUP; qalc; else exec bc -qi; fi")
+#define CALCULATOR SHTUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then trap exit HUP; qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 /**/
 #define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
@@ -222,36 +191,36 @@ notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; d
 #pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY,                       XK_p,      spawn,          {.v = gimme } },
+	{ MODKEY,                       XK_p,      spawn,          CMD("gimme", "-m") },
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
-	{ MODKEY,                       XK_b,      spawn,          BROWSER },
+	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
 	{ MODKEY,                       XK_c,      spawn,          CALCULATOR },
 
-	{ ControlMask,                  XK_space,  spawn,          {.v = dunst_close } },
-	{ ControlMask,                  XK_grave,  spawn,          {.v = dunst_history } },
-	{ ControlMask|ShiftMask,        XK_period, spawn,          {.v = dunst_context } },
+	{ ControlMask,                  XK_space,  spawn,          CMD("dunstctl", "close") },
+	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
+	{ ControlMask|ShiftMask,        XK_period, spawn,          CMD("dunstctl", "context") },
 
-	{ MODKEY,                       XK_u,      spawn,          BASHMOUNT },
-	{ MODKEY,                       XK_n,      spawn,          NEWSBOAT },
-	{ MODKEY|ShiftMask,             XK_n,      spawn,          NEOMUTT },
-	{ MODKEY|ControlMask,           XK_n,      spawn,          {.v = unread } },
-	{ MODKEY,                       XK_m,      spawn,          NCMPCPP },
-	{ MODKEY|ShiftMask,             XK_m,      spawn,          PULSEMIXER },
-	{ MODKEY,                       XK_d,      spawn,          ARIA2P },
-	{ MODKEY|ShiftMask,             XK_t,      spawn,          TREMC },
-	{ MODKEY,                       XK_v,      spawn,          EDITOR },
-	{ MODKEY|ControlMask|ShiftMask, XK_d,      spawn,          DICTFZF },
-	{ MODKEY,                       XK_y,      spawn,          {.v = ytfzf } },
+	{ MODKEY,                       XK_u,      spawn,          TUI("bashmount") },
+	{ MODKEY,                       XK_n,      spawn,          TUI("newsboat") },
+	{ MODKEY|ShiftMask,             XK_n,      spawn,          TUI("neomutt") },
+	{ MODKEY|ControlMask,           XK_n,      spawn,          CMD("unread") },
+	{ MODKEY,                       XK_m,      spawn,          TUI("ncmpcpp") },
+	{ MODKEY|ShiftMask,             XK_m,      spawn,          TUI("pulsemixer") },
+	{ MODKEY,                       XK_d,      spawn,          TUI("aria2p") },
+	{ MODKEY|ShiftMask,             XK_t,      spawn,          TUI("tremc") },
+	{ MODKEY,                       XK_v,      spawn,          SHTUI("exec ${EDITOR:-nvim}") },
+	{ MODKEY|ControlMask|ShiftMask, XK_d,      spawn,          TUI("dictfzf") },
+	{ MODKEY,                       XK_y,      spawn,          CMD("yt") },
 
-	{ MODKEY,                       XK_q,      spawn,          {.v = sysact } },
-	{ MODKEY,                       XK_e,      spawn,          {.v = lock } },
-	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = suspend } },
-	{ MODKEY|Mod1Mask,              XK_s,      spawn,          {.v = dshot } },
-	{ MODKEY|ShiftMask,             XK_b,      spawn,          {.v = bookmarks } },
-	{ MODKEY|ControlMask,           XK_p,      spawn,          {.v = dpass } },
-	{ MODKEY|ShiftMask,             XK_d,      spawn,          {.v = daria2 } },
-	{ MODKEY|ShiftMask,             XK_r,      spawn,          {.v = nmdmenu } },
+	{ MODKEY,                       XK_q,      spawn,          CMD("sysact") },
+	{ MODKEY,                       XK_e,      spawn,          CMD("loginctl", "lock-session") },
+	{ MODKEY|ShiftMask,             XK_e,      spawn,          CMD("sysact", "sleep") },
+	{ MODKEY|Mod1Mask,              XK_s,      spawn,          CMD("dshot") },
+	{ MODKEY|ShiftMask,             XK_b,      spawn,          CMD("bm", "-m") },
+	{ MODKEY|ControlMask,           XK_p,      spawn,          CMD("dpass") },
+	{ MODKEY|ShiftMask,             XK_d,      spawn,          CMD("daria2") },
+	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("networkmanager_dmenu") },
 	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
 	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
@@ -269,7 +238,7 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioMicMute,                   spawn,          TOGGLE_MIC_MUTE },
 	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
 
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_p,      spawn,          {.v = music } },
+	{ MODKEY|Mod1Mask|ShiftMask,    XK_p,      spawn,          CMD("mpc", "toggle") },
 	{ MODKEY|Mod1Mask,              XK_p,      spawn,          MEDIA_PLAYPAUSE },
 	{ 0,XF86XK_AudioPlay,                      spawn,          MEDIA_PLAYPAUSE },
 	{ MODKEY|Mod1Mask,              XK_h,      spawn,          MEDIA_SEEK_BACK },
@@ -289,8 +258,8 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,  XK_bracketright,      spawn,          LIGHTINC(1)  },
 	{ MODKEY|ShiftMask,  XK_bracketleft,       spawn,          LIGHTDEC(1)  },
 
-	{ ControlMask|ShiftMask,        XK_m,      spawn,          {.v = ffmerge } },
-	{ ControlMask|ShiftMask,        XK_b,      spawn,          {.v = fffixfocus } },
+	{ ControlMask|ShiftMask,        XK_m,      spawn,          CMD("ffmerge") },
+	{ ControlMask|ShiftMask,        XK_b,      spawn,          CMD("fffixfocus") },
 	{ MODKEY,                       XK_r,      spawn,          CLIPLISTEN },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
