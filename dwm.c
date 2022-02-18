@@ -276,7 +276,6 @@ static void tagmon(const Arg *arg);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
 static void togglefullscr(const Arg *arg);
-static void togglestairs(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void transfer(const Arg *arg);
@@ -2282,25 +2281,6 @@ togglefullscr(const Arg *arg)
 {
   if(selmon->sel)
     setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
-}
-
-void
-togglestairs(const Arg *arg)
-{
-	static int nmaster = 0;
-	if (selmon->lt[selmon->sellt]->arrange != stairs || selmon->nmaster != 0) {
-		nmaster = selmon->nmaster;
-		selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag] = 0;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-		Arg a = {.v = stairs};
-#pragma GCC diagnostic pop
-		setlayout(&a);
-	} else {
-		selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag] = nmaster;
-		Arg a = {0};
-		setlayout(&a);
-	}
 }
 
 void
