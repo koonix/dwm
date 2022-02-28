@@ -169,7 +169,6 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 #define LIGHTDEC(n) { .v = (const char*[]){ "light", "-U", #n, NULL } }
 
 /* other */
-#define CALCULATOR SHTUI("echo Calculator; printf '\\033[6 q'; if command -v qalc >/dev/null; then trap exit HUP; qalc; else exec bc -qi; fi")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 /**/
 #define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
@@ -195,7 +194,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
-	{ MODKEY,                       XK_c,      spawn,          CALCULATOR },
+	{ MODKEY,                       XK_c,      spawn,          TUI("calc") },
 
 	{ ControlMask,                  XK_space,  spawn,          CMD("dunstctl", "close") },
 	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
