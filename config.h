@@ -142,6 +142,7 @@ static const char *terminal[] = { TERM, NULL };
 /* audio */
 #define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
 #define VOLDEC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-d", #n, NULL } }
+#define MPCVOL(n) { .v = (const char*[]){ "mpc", "volume", #n, NULL } }
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 /**/
@@ -232,6 +233,8 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_j,      spawn,          VOLDEC(5) },
 	{ MODKEY|Mod1Mask|ShiftMask,    XK_k,      spawn,          VOLINC(20) },
 	{ MODKEY|Mod1Mask|ShiftMask,    XK_j,      spawn,          VOLDEC(20) },
+	{ MODKEY|Mod1Mask|ControlMask,  XK_k,      spawn,          MPCVOL(+10) },
+	{ MODKEY|Mod1Mask|ControlMask,  XK_j,      spawn,          MPCVOL(-10) },
 	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
 	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
 	{ MODKEY|Mod1Mask|ShiftMask,    XK_m,      spawn,          TOGGLE_MIC_MUTE },
