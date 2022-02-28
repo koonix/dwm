@@ -172,10 +172,10 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 /**/
 #define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
-sh -c 'notify-send -u low \"Listening to Clipboard...\"; \
+sh -c 'notify-send -t 1000 -u low \"Listening to Clipboard...\"; \
 while :; do echo PipeURL | xclip -selection clipboard; clipnotify || exit 1; \
 clip=$(xclip -o -selection clipboard); [ \"$clip\" = PipeURL ] && continue; \
-notify-send -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; done'")
+notify-send -t 1000 -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; done'")
 /**/
 
 /* library for XF86XK_Audio keys */
