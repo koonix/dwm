@@ -195,12 +195,13 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
 	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
-	{ MODKEY,                       XK_c,      spawn,          TUI("calc") },
+	{ MODKEY,                       XK_g,      spawn,          SHCMD("usv down unclutter; xmouseless; usv up unclutter") },
 
 	{ ControlMask,                  XK_space,  spawn,          CMD("dunstctl", "close") },
 	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
 	{ ControlMask|ShiftMask,        XK_period, spawn,          CMD("dunstctl", "context") },
 
+	{ MODKEY,                       XK_c,      spawn,          TUI("calc") },
 	{ MODKEY|ShiftMask,             XK_c,      spawn,          TUI("htop") },
 	{ MODKEY,                       XK_u,      spawn,          TUI("bashmount") },
 	{ MODKEY,                       XK_n,      spawn,          TUI("nboat") },
