@@ -36,7 +36,6 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xproto.h>
-#include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
 #ifdef XINERAMA
@@ -68,30 +67,6 @@
 #define TAGSLENGTH              (LENGTH(tags))
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define ColFloat                3
-
-#define XCOLORS \
-	void xrdbcolors(XrmDatabase xrdb) { \
-		char *type; \
-		XrmValue value;
-
-#define XCOLORS_END }
-
-#define XLOAD(V,R) \
-	if (XrmGetResource(xrdb, R, NULL, &type, &value) == True) { \
-		if (value.addr != NULL && strnlen(value.addr, 8) == 7 && value.addr[0] == '#') { \
-			int i = 1; \
-			for (; i <= 6; i++) { \
-				if (value.addr[i] < 48) break; \
-				if (value.addr[i] > 57 && value.addr[i] < 65) break; \
-				if (value.addr[i] > 70 && value.addr[i] < 97) break; \
-				if (value.addr[i] > 102) break; \
-			} \
-			if (i == 7) { \
-				strncpy(V, value.addr, 7); \
-				V[7] = '\0'; \
-			} \
-		} \
-	}
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -301,8 +276,6 @@ static void gototag(const Arg* arg);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
-static void xrdb(const Arg *arg);
-static void xrdbread(void);
 static void zoom(const Arg *arg);
 
 static pid_t getparentprocess(pid_t p);
@@ -2974,37 +2947,6 @@ xerrorstart(Display *dpy, XErrorEvent *ee)
 }
 
 void
-xrdbread()
-{
-	Display *display;
-	char * resm;
-	XrmDatabase xrdb;
-
-	display = XOpenDisplay(NULL);
-	if (display != NULL) {
-		resm = XResourceManagerString(display);
-		if (resm != NULL) {
-			xrdb = XrmGetStringDatabase(resm);
-			if (xrdb != NULL) {
-				xrdbcolors(xrdb);
-			}
-		}
-	}
-	XCloseDisplay(display);
-}
-
-void
-xrdb(const Arg *arg)
-{
-	xrdbread();
-	int i;
-	for (i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], 3);
-	focus(NULL);
-	arrange(NULL);
-}
-
-void
 zoom(const Arg *arg)
 {
 	Client *c = selmon->sel;
@@ -3033,7 +2975,6 @@ main(int argc, char *argv[])
 		die("dwm: cannot get xcb connection\n");
 	checkotherwm();
 	XrmInitialize();
-	xrdbread();
 	setup();
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath proc exec ps", NULL) == -1)

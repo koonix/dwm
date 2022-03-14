@@ -26,16 +26,16 @@ static const char *fonts[] = {
 };
 
 /* colors */
-static char null[]       = "#000000";
-static char bg[]         = "#000000";
-static char normfg[]     = "#555555";
-static char normborder[] = "#333333";
-static char selfg[]      = "#9d9d9d";
-static char selborder[]  = "#a8a8a8";
-static char titlefg[]    = "#9d9d9d";
-static char urgborder[]  = "#ff0000";
+static const char null[]       = "#000000";
+static const char bg[]         = "#000000";
+static const char normfg[]     = "#555555";
+static const char normborder[] = "#333333";
+static const char selfg[]      = "#9d9d9d";
+static const char selborder[]  = "#a8a8a8";
+static const char titlefg[]    = "#9d9d9d";
+static const char urgborder[]  = "#ff0000";
 
-static char *colors[][4]      = {
+static const char *colors[][4]      = {
 	/*               fg        bg   border    */
 	[SchemeNorm]  = { normfg,  bg,  normborder },
 	[SchemeSel]   = { selfg,   bg,  selborder  },
@@ -44,15 +44,7 @@ static char *colors[][4]      = {
 };
 
 /* colors that can be used by the statusbar */
-static char *statuscolors[] = { normfg, selfg };
-
-/* specify colors to read from xrdb */
-XCOLORS
-	XLOAD( bg,         "*.background"  );
-	XLOAD( normfg,     "*.color2"      );
-	XLOAD( selfg,      "*.color6"      );
-	XLOAD( titlefg,    "*.color2"      );
-XCOLORS_END
+static const char *statuscolors[] = { normfg, selfg };
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -225,7 +217,6 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          CMD("daria2") },
 	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("networkmanager_dmenu") },
 	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
-	{ MODKEY,                       XK_F12,    xrdb,           {0} },
 
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          VOLINC(5) },
 	{ 0,XF86XK_AudioLowerVolume,               spawn,          VOLDEC(5) },
