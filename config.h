@@ -185,6 +185,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_p,      spawn,          CMD("gimme", "-m") },
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_t,      spawn,          CMD(TERM) },
+	{ MODKEY|ShiftMask,             XK_t,      spawn,          CMD("cwdrun", TERM) },
 	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
 	{ MODKEY,                       XK_g,      spawn,          SHCMD("usv down unclutter; xmouseless; usv up unclutter") },
 
