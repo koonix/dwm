@@ -212,6 +212,7 @@ static Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_s,      spawn,          CMD("dshot") },
 	{ MODKEY|ShiftMask,             XK_b,      spawn,          CMD("bm", "-m") },
 	{ MODKEY,                       XK_i,      spawn,          CMD("bm", "-m") },
+	{ MODKEY|ShiftMask,             XK_i,      spawn,          CMD("cwds") },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          CMD("dpass") },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          CMD("daria2") },
 	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("networkmanager_dmenu") },
