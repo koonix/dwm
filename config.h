@@ -129,7 +129,6 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
-static const char *terminal[] = { TERM, NULL };
 
 /* audio */
 #define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
@@ -185,7 +184,7 @@ static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          CMD("gimme", "-m") },
 	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
-	{ MODKEY,                       XK_t,      spawn,          {.v = terminal } },
+	{ MODKEY,                       XK_t,      spawn,          CMD(TERM) },
 	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
 	{ MODKEY,                       XK_g,      spawn,          SHCMD("usv down unclutter; xmouseless; usv up unclutter") },
 
@@ -316,7 +315,7 @@ static Button buttons[] = {
 	{ ClkLtSymbol,          0,              Button2,        setlayout,      {.v = &layouts[0]} },
 	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[1]} },
 	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
-	{ ClkStatusText,        0,              Button2,        spawn,          {.v = terminal } },
+	{ ClkStatusText,        0,              Button2,        spawn,          CMD(TERM) },
 	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
 	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
 	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
