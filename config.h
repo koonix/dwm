@@ -306,7 +306,6 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 };
-#pragma GCC diagnostic pop
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
@@ -342,5 +341,6 @@ static Button buttons[] = {
 	{ ClkStatusText,        MODKEY,         Button4,        spawn,          VOLINC(5) },
 	{ ClkStatusText,        MODKEY,         Button5,        spawn,          VOLDEC(5) },
 };
+#pragma GCC diagnostic pop
 
 // vim:noexpandtab
