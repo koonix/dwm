@@ -280,9 +280,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
 static pid_t getparentprocess(pid_t p);
-static int isdescprocess(pid_t parent, pid_t child);
-static int isatmuxserver(pid_t pid);
-static long gettmuxclientpid(long shellpid);
+static int isdescprocess(pid_t p, pid_t c);
 static Client *swallowingclient(Window w);
 static Client *termforwin(const Client *c);
 static pid_t winpid(Window w);
@@ -2804,49 +2802,11 @@ getparentprocess(pid_t p)
 }
 
 int
-isdescprocess(pid_t parent, pid_t child)
+isdescprocess(pid_t p, pid_t c)
 {
-	pid_t parent_tmp;
-	while (child != parent && child != 0) {
-		parent_tmp = getparentprocess(child);
-		if (isatmuxserver(parent_tmp))
-			child = gettmuxclientpid(child);
-		else
-			child = parent_tmp;
-	}
-	return (int)child;
-}
-
-int
-isatmuxserver(pid_t pid)
-{
-	char path[256];
-	char name[15];
-	FILE* stat;
-
-	snprintf(path, sizeof(path) - 1, "/proc/%u/stat", (unsigned)pid);
-
-	if (!(stat = fopen(path, "r")))
-		return 0;
-
-	fscanf(stat, "%*u (%12[^)])", name);
-	fclose(stat);
-	return (strcmp(name, "tmux: server") == 0);
-}
-
-/* parameter "shellpid" is the pid of a direct child
- * of the tmux's server process, which usually is a shell process. */
-long
-gettmuxclientpid(long shellpid)
-{
-	long volatile panepid, clientpid;
-	FILE* list = popen("tmux list-clients -F '#{pane_pid} #{client_pid}'", "r");
-	if (!list)
-		return 0;
-	while (!feof(list) && panepid != shellpid)
-		fscanf(list, "%ld %ld\n", &panepid, &clientpid);
-	pclose(list);
-	return clientpid;
+	while (c != p && c != 0)
+		c = getparentprocess(c);
+	return (int)c;
 }
 
 Client *
