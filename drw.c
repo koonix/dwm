@@ -204,7 +204,7 @@ drw_clr_create(Drw *drw, Clr *dest, const char *clrname)
 	                       clrname, dest))
 		die("error, cannot allocate color '%s'", clrname);
 
-    dest->pixel |= 0xff << 24;
+	dest->pixel |= 0xff << 24;
 }
 
 /* Wrapper to create color schemes. The caller has to call free(3) on the
@@ -436,3 +436,5 @@ drw_cur_free(Drw *drw, Cur *cursor)
 	XFreeCursor(drw->dpy, cursor->cursor);
 	free(cursor);
 }
+
+// vim:noexpandtab
