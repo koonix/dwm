@@ -163,13 +163,6 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 
 /* other */
 #define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
-/**/
-#define CLIPLISTEN SHCMD("flock -eno /tmp/cliplisten timeout 30 \
-sh -c 'notify-send -t 1000 -u low \"Listening to Clipboard...\"; \
-while :; do echo PipeURL | xclip -selection clipboard; clipnotify || exit 1; \
-clip=$(xclip -o -selection clipboard); [ \"$clip\" = PipeURL ] && continue; \
-notify-send -t 1000 -u low \"Got it.\"; pipeurl \"${clip:?}\" >/dev/null 2>&1 & break; done'")
-/**/
 
 /* library for XF86XK_Audio keys */
 #include <X11/XF86keysym.h>
@@ -216,7 +209,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_i,      spawn,          CMD("cwds") },
 	{ MODKEY|ControlMask,           XK_p,      spawn,          CMD("dpass") },
 	{ MODKEY|ShiftMask,             XK_d,      spawn,          CMD("daria2") },
-	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("networkmanager_dmenu") },
+	{ MODKEY|ShiftMask,             XK_u,      spawn,          CMD("networkmanager_dmenu") },
 	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
 
 	{ 0,XF86XK_AudioRaiseVolume,               spawn,          VOLINC(5) },
@@ -257,7 +250,8 @@ static Key keys[] = {
 
 	{ ControlMask|ShiftMask,        XK_m,      spawn,          CMD("ffmerge") },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          CMD("fffixfocus") },
-	{ MODKEY,                       XK_r,      spawn,          CLIPLISTEN },
+	{ MODKEY,                       XK_r,      spawn,          CMD("pipeurl", "-l") },
+	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("pipeurl", "-l", "-d") },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
