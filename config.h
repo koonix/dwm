@@ -27,25 +27,25 @@ static const char *fonts[] = {
 };
 
 /* colors */
-static const char null[]       = "#000000";
-static const char bg[]         = "#000000";
-static const char normfg[]     = "#555555";
-static const char normborder[] = "#333333";
-static const char selfg[]      = "#9d9d9d";
-static const char selborder[]  = "#a8a8a8";
-static const char titlefg[]    = "#9d9d9d";
-static const char urgborder[]  = "#ff0000";
+static const char col_null[]       = "#000000";
+static const char col_bg[]         = "#000000";
+static const char col_normfg[]     = "#555555";
+static const char col_normborder[] = "#333333";
+static const char col_selfg[]      = "#9d9d9d";
+static const char col_selborder[]  = "#a8a8a8";
+static const char col_titlefg[]    = "#9d9d9d";
+static const char col_urgborder[]  = "#ff0000";
 
 static const char *colors[][4]      = {
 	/*               fg        bg   border    */
-	[SchemeNorm]  = { normfg,  bg,  normborder },
-	[SchemeSel]   = { selfg,   bg,  selborder  },
-	[SchemeTitle] = { titlefg, bg,  null       },
-	[SchemeUrg]   = { normfg,  bg,  urgborder  },
+	[SchemeNorm]  = { col_normfg,  col_bg,  col_normborder },
+	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  },
+	[SchemeTitle] = { col_titlefg, col_bg,  col_null       },
+	[SchemeUrg]   = { col_normfg,  col_bg,  col_urgborder  },
 };
 
 /* colors that can be used by the statusbar */
-static const char *statuscolors[] = { normfg, selfg };
+static const char *statuscolors[] = { col_normfg, col_selfg };
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
