@@ -195,7 +195,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_m,      spawn,          TUI("ncmpcpp") },
 	{ MODKEY|ShiftMask,             XK_m,      spawn,          TUI("pulsemixer") },
 	{ MODKEY|ControlMask,           XK_m,      spawn,          TUI("neomutt") },
-	{ MODKEY|ControlMask|Mod1Mask,  XK_m,      spawn,          CMD("unread") },
+	{ MODKEY|ControlMask|ShiftMask, XK_m,      spawn,          CMD("unread") },
 	{ MODKEY,                       XK_d,      spawn,          TUI("aria2p") },
 	{ MODKEY,                       XK_v,      spawn,          SHTUI("exec ${EDITOR:-nvim}") },
 	{ MODKEY|ControlMask|ShiftMask, XK_d,      spawn,          TUI("dictfzf") },
