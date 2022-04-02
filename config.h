@@ -21,7 +21,7 @@ static const unsigned char defxkblayout = 0;    /* the default keyboard layout n
 /* fonts */
 static const char *fonts[] = {
 	"peep:size=12",
-	"Vazirmatn NL:size=11",
+	"Vazirmatn NL:size=10",
 	"Symbols Nerd Font:size=10",
 	"JoyPixels:size=16",
 };
