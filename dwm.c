@@ -1170,9 +1170,10 @@ focus(Client *c)
 	}
 	selmon->sel = c;
 	Client *at;
-	for (at = selmon->clients; at; at = at->next)
-		if (at != c && at->isfullscreen && ISVISIBLE(at))
-			setfullscreen(at, 0);
+	if (c && !c->isfloating)
+		for (at = selmon->clients; at; at = at->next)
+			if (at != c && at->isfullscreen && ISVISIBLE(at))
+				setfullscreen(at, 0);
 	drawbars();
 }
 
