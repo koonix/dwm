@@ -54,13 +54,14 @@ static const Rule rules[] = {
 	/* xprop(1):
 	 * WM_CLASS(STRING) = instance, class
 	 * WM_NAME(STRING) = title */
-	/* class, instance, title, tags mask, isfloating, isterminal, noswallow, monitor */
-	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, -1 }, /* keep qalculate floating */
-	{ "Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, -1 }, /* don't tile safeeyes */
+	/* class, instance, title, tags mask, isfloating, sametagid, parentsametagid, isterminal, noswallow, monitor */
+	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, 0, 0, -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, 0, 0, -1 }, /* keep qalculate floating */
+	{ "Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, 0, 0, -1 }, /* don't tile safeeyes */
+	{ ".exe", NULL, NULL, 0, 0, 1, 1, 0, 0, -1 },
 	/* swallowing rules: */
-	{ TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1 },
-	{ NULL, NULL, "Event Tester", 0, 0, 0, 1, -1 },
+	{ TERMCLASS, NULL, NULL, 0, 0, 0, 0, 1, 0, -1 },
+	{ NULL, NULL, "Event Tester", 0, 0, 0, 0, 0, 1, -1 },
 };
 
 /* layout(s) */

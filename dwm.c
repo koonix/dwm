@@ -113,6 +113,8 @@ struct Client {
 	Monitor *mon;
 	Window win;
 	unsigned char xkblayout;
+	Client *sametagnext;
+	unsigned int sametagid, parentsametagid;
 };
 
 typedef struct {
@@ -160,6 +162,8 @@ typedef struct {
 	const char *title;
 	unsigned int tags;
 	int isfloating;
+	unsigned int sametagid;
+	unsigned int parentsametagid;
 	int isterminal;
 	int noswallow;
 	int monitor;
@@ -168,6 +172,10 @@ typedef struct {
 /* function declarations */
 static void applyfribidi(char *str);
 static void applyrules(Client *c);
+static void sametagapply(Client *c);
+static void sametagcleanup(Client *c);
+static void sametagattach(Client *c);
+static void sametagdetach(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
@@ -320,6 +328,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static Client *sametagstacks[128];
 
 static xcb_connection_t *xcon;
 
@@ -379,6 +388,8 @@ applyrules(Client *c)
 		&& (!r->class || strstr(class, r->class))
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
+			c->sametagid       = r->sametagid;
+			c->parentsametagid = r->parentsametagid;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
 			c->isfloating = r->isfloating;
@@ -393,6 +404,42 @@ applyrules(Client *c)
 	if (ch.res_name)
 		XFree(ch.res_name);
 	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
+}
+
+void
+sametagapply(Client *c)
+{
+	const Client *p = NULL;
+	if (c->sametagid)
+		sametagattach(c);
+	if (c->parentsametagid && (p = sametagstacks[c->parentsametagid])) {
+		c->tags = p->tags;
+		c->mon  = p->mon;
+		if (!ISVISIBLE(c))
+			seturgent(c, 1);
+	}
+}
+
+void
+sametagcleanup(Client *c)
+{
+	if (c->sametagid)
+		sametagdetach(c);
+}
+
+void
+sametagattach(Client *c)
+{
+	c->sametagnext = sametagstacks[c->sametagid];
+	sametagstacks[c->sametagid] = c;
+}
+
+void
+sametagdetach(Client *c)
+{
+	Client **tc;
+	for (tc = &sametagstacks[c->sametagid]; *tc && *tc != c; tc = &(*tc)->sametagnext);
+	*tc = c->sametagnext;
 }
 
 int
@@ -1403,6 +1450,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
 	c->cfact = 1.0;
+	c->sametagid = c->parentsametagid = 0;
 
 	updatetitle(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
@@ -1412,6 +1460,7 @@ manage(Window w, XWindowAttributes *wa)
 		c->mon = selmon;
 		applyrules(c);
 		term = termforwin(c);
+		sametagapply(c);
 	}
 
 	if (c->x + WIDTH(c) > c->mon->mx + c->mon->mw)
@@ -2368,6 +2417,8 @@ unmanage(Client *c, int destroyed)
 		focus(NULL);
 		return;
 	}
+
+	sametagcleanup(c);
 
 	detach(c);
 	detachstack(c);
