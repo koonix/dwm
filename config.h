@@ -16,8 +16,11 @@ static const unsigned int gappov    = 20;       /* vert outer gap between window
 static       int smartgaps          = 0;        /* 1 means no outer gap when there is only one window */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const unsigned char defxkblayout = 0;    /* the default keyboard layout number (starts from 0) */
-static const unsigned int blockinputmsec = 500;  /* the default input block time of new windows (in milliseconds) */
+static const unsigned char xkblayout = 0;       /* the default keyboard layout number (starts from 0) */
+
+/* the default input block time of new windows (in milliseconds).
+ * see rules below for explanation. */
+static const unsigned int blockinputmsec = 500;
 
 /* fonts */
 static const char *fonts[] = {
@@ -51,18 +54,33 @@ static const char *statuscolors[] = { col_normfg, col_selfg };
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
+/* hint for rules
+ *
+ * blockinput:
+ *   sometimes you're typing and all of a sudden a window pops out of nowhere,
+ *   steals yours input focus and receives some bogus input. this rule is here to stop that.
+ *   this rule blocks the input of newly opened windows for the specified amount of time
+ *   in milliseconds. set to 0 to disable. swallowing windows won't be input-blocked
+ *   because they don't steal the focus.
+ *
+ * sametagid, parentsametagid:
+ *   with these rules you can have some windows open in the same tag and monitor
+ *   as other windows. ex. if window A has a sametagid of 10, and window B has a
+ *   parentsametagid of 10, window B will be opened next to window A.
+ *
+ *  xprop(1):
+ *    WM_CLASS(STRING) = instance, class
+ *    WM_NAME(STRING) = title
+ */
 static const Rule rules[] = {
-	/* xprop(1):
-	 * WM_CLASS(STRING) = instance, class
-	 * WM_NAME(STRING) = title */
 	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, parentsametagid, isterminal, noswallow, monitor */
-	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, 0, 0, 0, -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL, 0, 1, -1, 0, 0, 0, 0, -1 }, /* keep qalculate floating */
-	{ "Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, 0, 0, 0, -1 }, /* don't tile safeeyes */
-	{ ".exe", NULL, NULL, 0, 0, -1, 1, 1, 0, 0, -1 },
+	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
+	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
+	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to eachother */
 	/* swallowing rules: */
-	{ TERMCLASS, NULL, NULL, 0, 0, 0, 0, 0, 1, 0, -1 },
-	{ NULL, NULL, "Event Tester", 0, 0, 0, 0, 0, 0, 1, -1 },
+	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
+	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
 };
 
 /* layout(s) */
@@ -72,24 +90,25 @@ static const int resizehints = 1;    /* 1 means respect size hints in tiled resi
 static const int lockfullscreen = 0; /* 1 will force focus on the fullscreen window */
 
 /* hint for attachdirection
-  0 - default
-  1 - attach above:
-    Make new clients attach above the selected client,
-    instead of always becoming the new master. This behaviour is known from xmonad.
-  2 - attach aside:
-    Make new clients get attached and focused in the stacking area,
-    instead of always becoming the new master. It's basically an attachabove modification.
-  3 - attach below:
-    Make new clients attach below the selected client,
-    instead of always becoming the new master. Inspired heavily by attachabove.
-  4 - attach bottom:
-    New clients attach at the bottom of the stack instead of the top.
-  5 - attach top:
-    New client attaches below the last master/on top of the stack.
-    Behavior feels very intuitive as it doesn't disrupt existing masters,
-    no matter the amount of them, it only pushes the clients in stack down.
-    In case of nmaster = 1 feels like attachaside */
-static const int attachdirection = 5;
+ * attach:
+ *   the default behavior; new clients go in the master area.
+ * attachabove:
+ *   make new clients attach above the selected client,
+ *   instead of always becoming the new master. this behavior is known from xmonad.
+ * attachaside:
+ *   make new clients get attached and focused in the stacking area,
+ *   instead of always becoming the new master. it's basically an attachabove modification.
+ * attachbelow:
+ *   make new clients attach below the selected client,
+ *   instead of always becoming the new master. inspired heavily by attachabove.
+ * attachbottom:
+ *   new clients attach at the bottom of the stack instead of the top.
+ * attachtop:
+ *   new client attaches below the last master/on top of the stack.
+ *   behavior feels very intuitive as it doesn't disrupt existing masters,
+ *   no matter the amount of them, it only pushes the clients in stack down.
+ *   in case of nmaster = 1 feels like attachaside. */
+static void (*attachdirection)(Client *c) = attachtop;
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
@@ -164,16 +183,13 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 #define LIGHTDEC(n) { .v = (const char*[]){ "light", "-U", #n, NULL } }
 
 /* other */
-#define NOTIFY_SONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
+#define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
+#define XMOUSELESS  SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 
-/* library for XF86XK_Audio keys */
-#include <X11/XF86keysym.h>
-
-/* the logic behind the bindings:
-	- all of the audio and music related stuff start with super+alt
-	- all of the layouts start with super+control
-	- most bindings that have a similar function only differ in shift */
-
+/* binding logic:
+ * - audio and music related bindings start with super+alt
+ * - layout bindigns start with super+control
+ * - most bindings that have a similar function only differ in the shift key */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
@@ -183,7 +199,7 @@ static Key keys[] = {
 	{ MODKEY,                       XK_t,      spawn,          CMD(TERM) },
 	{ MODKEY|ShiftMask,             XK_t,      spawn,          CMD("cwdrun", TERM) },
 	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
-	{ MODKEY,                       XK_g,      spawn,          SHCMD("usv down unclutter; xmouseless; usv up unclutter") },
+	{ MODKEY,                       XK_g,      spawn,          XMOUSELESS },
 
 	{ ControlMask,                  XK_space,  spawn,          CMD("dunstctl", "close") },
 	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
@@ -239,7 +255,7 @@ static Key keys[] = {
 	{ 0,XF86XK_AudioPrev,                      spawn,          MEDIA_PREV },
 	{ MODKEY|Mod1Mask|ShiftMask,    XK_l,      spawn,          MEDIA_NEXT },
 	{ 0,XF86XK_AudioNext,                      spawn,          MEDIA_NEXT },
-	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFY_SONG },
+	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFYSONG },
 
 	{ 0,XF86XK_MonBrightnessUp,                spawn,          LIGHTINC(10) },
 	{ 0,XF86XK_MonBrightnessDown,              spawn,          LIGHTDEC(10) },

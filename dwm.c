@@ -38,6 +38,7 @@
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
+#include <X11/XF86keysym.h>
 #ifdef XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif /* XINERAMA */
@@ -548,6 +549,8 @@ attach(Client *c)
 	c->mon->clients = c;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 void
 attachabove(Client *c)
 {
@@ -614,6 +617,7 @@ attachtop(Client *c)
 	else
 		c->mon->clients = c;
 }
+#pragma GCC diagnostic push
 
 void
 attachstack(Client *c)
@@ -1459,8 +1463,9 @@ manage(Window w, XWindowAttributes *wa)
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
 	c->cfact = 1.0;
-	c->sametagid = c->parentsametagid = 0;
+	c->sametagid  = c->parentsametagid = 0;
 	c->blockinput = blockinputmsec;
+	c->xkblayout  = xkblayout;
 
 	updatetitle(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
@@ -1490,50 +1495,40 @@ manage(Window w, XWindowAttributes *wa)
 	updatewindowtype(c);
 	updatesizehints(c);
 	updatewmhints(c);
+	updateclientdesktop(c);
+
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+	grabbuttons(c, 0);
+
 	if (c->blockinput && ISVISIBLE(c))
 		blockinput(w, c->blockinput);
-	grabbuttons(c, 0);
+
 	if (!c->isfloating)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
+
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
-	switch(attachdirection){
-		case 1:
-			attachabove(c);
-			break;
-		case 2:
-			attachaside(c);
-			break;
-		case 3:
-			attachbelow(c);
-			break;
-		case 4:
-			attachbottom(c);
-			break;
-		case 5:
-			attachtop(c);
-			break;
-		default:
-			attach(c);
-	}
 
+	attachdirection(c);
 	attachstack(c);
+
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
 		(unsigned char *) &(c->win), 1);
+
 	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
 	setclientstate(c, NormalState);
+
 	if (c->mon == selmon)
 		unfocus(selmon->sel, 0);
 	c->mon->sel = c;
-	c->xkblayout = defxkblayout;
+
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
+
 	if (term)
 		swallow(term, c);
+
 	focus(NULL);
-	/* set clients tag as current desktop (_NET_WM_DESKTOP) */
-	updateclientdesktop(c);
 }
 
 void
@@ -1972,25 +1967,7 @@ sendmon(Client *c, Monitor *m)
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
 	updateclientdesktop(c);
-	switch(attachdirection){
-		case 1:
-			attachabove(c);
-			break;
-		case 2:
-			attachaside(c);
-			break;
-		case 3:
-			attachbelow(c);
-			break;
-		case 4:
-			attachbottom(c);
-			break;
-		case 5:
-			attachtop(c);
-			break;
-		default:
-			attach(c);
-	}
+	attachdirection(c);
 	attachstack(c);
 	focus(NULL);
 	arrange(NULL);
@@ -2436,7 +2413,7 @@ unfocus(Client *c, int setfocus)
 	XkbStateRec xkbstate;
 	XkbGetState(dpy, XkbUseCoreKbd, &xkbstate);
 	c->xkblayout = xkbstate.group;
-	XkbLockGroup(dpy, XkbUseCoreKbd, defxkblayout);
+	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
 }
 
 void
@@ -2445,7 +2422,7 @@ unmanage(Client *c, int destroyed)
 	Monitor *m = c->mon;
 	XWindowChanges wc;
 
-	XkbLockGroup(dpy, XkbUseCoreKbd, defxkblayout);
+	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
 
 	if (c->swallowing) {
 		unswallow(c);
@@ -2616,25 +2593,7 @@ updategeom(void)
 					m->clients = c->next;
 					detachstack(c);
 					c->mon = mons;
-					switch(attachdirection){
-					case 1:
-						attachabove(c);
-						break;
-					case 2:
-						attachaside(c);
-						break;
-					case 3:
-						attachbelow(c);
-						break;
-					case 4:
-						attachbottom(c);
-						break;
-					case 5:
-						attachtop(c);
-						break;
-					default:
-						attach(c);
-					}
+					attachdirection(c);
 					attachstack(c);
 				}
 				if (m == selmon)
