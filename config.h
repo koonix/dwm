@@ -268,8 +268,8 @@ static Key keys[] = {
 
 	{ ControlMask|ShiftMask,        XK_m,      spawn,          CMD("ffmerge") },
 	{ ControlMask|ShiftMask,        XK_b,      spawn,          CMD("fffixfocus") },
-	{ MODKEY,                       XK_r,      spawn,          CMD("pipeurl", "-l") },
-	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("pipeurl", "-l", "-d") },
+	{ MODKEY,                       XK_r,      spawn,          CMD("pipeurl", "-c", "ask") },
+	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("pipeurl", "history") },
 
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
