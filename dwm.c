@@ -49,6 +49,7 @@
 #include <kvm.h>
 #endif /* __OpenBSD */
 #include <fribidi.h>
+#include <sys/time.h>
 
 #include "drw.h"
 #include "util.h"
@@ -68,6 +69,7 @@
 #define TAGSLENGTH              (LENGTH(tags))
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define ColFloat                3
+#define NSECPERMSEC             1000000L
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -106,6 +108,7 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow;
+	unsigned int blockinput;
 	pid_t pid;
 	Client *next;
 	Client *snext;
@@ -162,6 +165,7 @@ typedef struct {
 	const char *title;
 	unsigned int tags;
 	int isfloating;
+	int blockinput;
 	unsigned int sametagid;
 	unsigned int parentsametagid;
 	int isterminal;
@@ -287,6 +291,8 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
+static void blockinput(Window w, int msec);
+static void unblockinput(int unused);
 
 static pid_t getparentprocess(pid_t p);
 static int isdescprocess(pid_t p, pid_t c);
@@ -328,6 +334,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static volatile Window blockedwin = 0;
 static Client *sametagstacks[128];
 
 static xcb_connection_t *xcon;
@@ -390,6 +397,7 @@ applyrules(Client *c)
 		{
 			c->sametagid       = r->sametagid;
 			c->parentsametagid = r->parentsametagid;
+			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
 			c->isfloating = r->isfloating;
@@ -640,6 +648,7 @@ swallow(Client *p, Client *c)
 	arrange(p->mon);
 	configure(p);
 	updateclientlist();
+	unblockinput(0);
 }
 
 void
@@ -1451,6 +1460,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->oldbw = wa->border_width;
 	c->cfact = 1.0;
 	c->sametagid = c->parentsametagid = 0;
+	c->blockinput = blockinputmsec;
 
 	updatetitle(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
@@ -1481,6 +1491,8 @@ manage(Window w, XWindowAttributes *wa)
 	updatesizehints(c);
 	updatewmhints(c);
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+	if (c->blockinput && ISVISIBLE(c))
+		blockinput(w, c->blockinput);
 	grabbuttons(c, 0);
 	if (!c->isfloating)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
@@ -1504,7 +1516,7 @@ manage(Window w, XWindowAttributes *wa)
 			break;
 		default:
 			attach(c);
- 	}
+	}
 
 	attachstack(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
@@ -1522,6 +1534,37 @@ manage(Window w, XWindowAttributes *wa)
 	focus(NULL);
 	/* set clients tag as current desktop (_NET_WM_DESKTOP) */
 	updateclientdesktop(c);
+}
+
+void
+blockinput(Window w, int msec)
+{
+	unblockinput(0);
+	XSetErrorHandler(xerrordummy);
+	XGrabKey(dpy, AnyKey, AnyModifier, w, False, GrabModeAsync, GrabModeAsync);
+	XSetErrorHandler(xerror);
+	blockedwin = w;
+	pid_t ppid = getpid();
+	if (signal(SIGUSR1, unblockinput) == SIG_ERR)
+		die("can't install SIGUSR1 handler:");
+	if (fork() == 0) {
+		struct timespec sleep = {.tv_sec = 0, .tv_nsec = msec * NSECPERMSEC};
+		nanosleep(&sleep, NULL);
+		kill(ppid, SIGUSR1);
+		exit(EXIT_SUCCESS);
+	}
+}
+
+void
+unblockinput(int unused)
+{
+	if (blockedwin) {
+		XSetErrorHandler(xerrordummy);
+		XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
+		XSetErrorHandler(xerror);
+		XFlush(dpy);
+		blockedwin = 0;
+	}
 }
 
 void

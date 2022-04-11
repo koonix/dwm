@@ -13,6 +13,7 @@ static       int smartgaps          = 0;        /* 1 means no outer gap when the
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const unsigned char defxkblayout = 0;    /* the default keyboard layout number (starts from 0) */
+static const unsigned int blockinputdef = 500;  /* the default input block time of new windows (in milliseconds) */
 static const char *fonts[]          = { "monospace:size=10" };
 static const char dmenufont[]       = "monospace:size=10";
 static const char col_gray1[]       = "#222222";
@@ -37,11 +38,11 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class     instance  title           tags mask  isfloating  sametagid  parentsametagid  isterminal  noswallow  monitor */
-	{ "Gimp",    NULL,     NULL,           0,         1,          0,         0,               0,           0,        -1 },
-	{ "Firefox", NULL,     NULL,           1 << 8,    0,          0,         0,               0,          -1,        -1 },
-	{ "St",      NULL,     NULL,           0,         0,          0,         0,               1,           0,        -1 },
-	{ NULL,      NULL,     "Event Tester", 0,         0,          0,         0,               0,           1,        -1 }, /* xev */
+	/* class     instance  title           tags mask  isfloating  blockinput  sametagid  parentsametagid  isterminal  noswallow  monitor */
+	{ "Gimp",    NULL,     NULL,           0,         1,          -1,         0,         0,               0,           0,        -1 },
+	{ "Firefox", NULL,     NULL,           1 << 8,    0,          -1,         0,         0,               0,          -1,        -1 },
+	{ "St",      NULL,     NULL,           0,         0,           0,         0,         0,               1,           0,        -1 },
+	{ NULL,      NULL,     "Event Tester", 0,         0,           0,         0,         0,               0,           1,        -1 }, /* xev */
 };
 
 /* layout(s) */
