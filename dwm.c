@@ -69,7 +69,7 @@
 #define TAGSLENGTH              (LENGTH(tags))
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define ColFloat                3
-#define NSECPERMSEC 1000000L
+#define NSECPERMSEC             1000000L
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -107,7 +107,8 @@ struct Client {
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 	int bw, oldbw;
 	unsigned int tags;
-	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, blockinput, isterminal, noswallow;
+	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow;
+	unsigned int blockinput;
 	pid_t pid;
 	Client *next;
 	Client *snext;
@@ -283,7 +284,7 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 static void blockinput(Window w, int msec);
-static void sigusr1(int unused);
+static void unblockinput(int unused);
 
 static pid_t getparentprocess(pid_t p);
 static int isdescprocess(pid_t p, pid_t c);
@@ -325,7 +326,7 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
-static volatile Window grabbedwin = 0;
+static volatile Window blockedwin = 0;
 
 static xcb_connection_t *xcon;
 
@@ -375,7 +376,6 @@ applyrules(Client *c)
 	/* rule matching */
 	c->isfloating = 0;
 	c->tags = 0;
-	c->blockinput = 0;
 	XGetClassHint(dpy, c->win, &ch);
 	class    = ch.res_class ? ch.res_class : broken;
 	instance = ch.res_name  ? ch.res_name  : broken;
@@ -386,7 +386,7 @@ applyrules(Client *c)
 		&& (!r->class || strstr(class, r->class))
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
-			c->blockinput = r->blockinput;
+			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
 			c->isfloating = r->isfloating;
@@ -601,6 +601,7 @@ swallow(Client *p, Client *c)
 	arrange(p->mon);
 	configure(p);
 	updateclientlist();
+	unblockinput(0);
 }
 
 void
@@ -1411,6 +1412,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
 	c->cfact = 1.0;
+	c->blockinput = blockinputmsec;
 
 	updatetitle(c);
 	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
@@ -1440,7 +1442,7 @@ manage(Window w, XWindowAttributes *wa)
 	updatesizehints(c);
 	updatewmhints(c);
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
-	if (c->blockinput)
+	if (c->blockinput && ISVISIBLE(c))
 		blockinput(w, c->blockinput);
 	grabbuttons(c, 0);
 	if (!c->isfloating)
@@ -1488,12 +1490,13 @@ manage(Window w, XWindowAttributes *wa)
 void
 blockinput(Window w, int msec)
 {
-	if (grabbedwin)
-		XUngrabKey(dpy, AnyKey, AnyModifier, grabbedwin);
+	unblockinput(0);
+	XSetErrorHandler(xerrordummy);
 	XGrabKey(dpy, AnyKey, AnyModifier, w, False, GrabModeAsync, GrabModeAsync);
+	XSetErrorHandler(xerror);
+	blockedwin = w;
 	pid_t ppid = getpid();
-	grabbedwin = w;
-	if (signal(SIGUSR1, sigusr1) == SIG_ERR)
+	if (signal(SIGUSR1, unblockinput) == SIG_ERR)
 		die("can't install SIGUSR1 handler:");
 	if (fork() == 0) {
 		struct timespec sleep = {.tv_sec = 0, .tv_nsec = msec * NSECPERMSEC};
@@ -1504,10 +1507,15 @@ blockinput(Window w, int msec)
 }
 
 void
-sigusr1(int unused)
+unblockinput(int unused)
 {
-	XUngrabKey(dpy, AnyKey, AnyModifier, grabbedwin);
-	grabbedwin = 0;
+	if (blockedwin) {
+		XSetErrorHandler(xerrordummy);
+		XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
+		XSetErrorHandler(xerror);
+		XFlush(dpy);
+		blockedwin = 0;
+	}
 }
 
 void

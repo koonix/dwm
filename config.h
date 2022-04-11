@@ -17,6 +17,7 @@ static       int smartgaps          = 0;        /* 1 means no outer gap when the
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const unsigned char defxkblayout = 0;    /* the default keyboard layout number (starts from 0) */
+static const unsigned int blockinputmsec = 500;  /* the default input block time of new windows (in milliseconds) */
 
 /* fonts */
 static const char *fonts[] = {
@@ -54,11 +55,10 @@ static const Rule rules[] = {
 	/* xprop(1):
 	 * WM_CLASS(STRING) = instance, class
 	 * WM_NAME(STRING) = title */
-	/* class, instance, title, tags mask, isfloating, blockinput, isterminal, noswallow, monitor */
+	/* class, instance, title, tags mask, isfloating, blockinput(-1: default, 0: disable), isterminal, noswallow, monitor */
 	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0, 1, 0, 0, 0, -1 }, /* keep telegram's media viewer floating */
-	{ "Qalculate-gtk", NULL, NULL, 0, 1, 0, 0, 0, -1 }, /* keep qalculate floating */
+	{ "Qalculate-gtk", NULL, NULL, 0, 1, -1, 0, 0, -1 }, /* keep qalculate floating */
 	{ "Safeeyes", "safeeyes", "safeeyes", 0, 1, 0, 0, 0, -1 }, /* keep safeeyes floating */
-	{ "mpv", NULL, NULL, 0, 0, 500, 0, 0, -1 },
 	/* swallowing rules: */
 	{ TERMCLASS, NULL, NULL, 0, 0, 0, 1, 0, -1 },
 	{ NULL, NULL, "Event Tester", 0, 0, 0, 0, 1, -1 },
