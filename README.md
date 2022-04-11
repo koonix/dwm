@@ -7,13 +7,15 @@ this is my build of dwm, the tiling window manager:
 
 ## patches
 
-utility:
-
 - [swallow](https://dwm.suckless.org/patches/swallow)
-(patched to support tmux)
+
+- [pertag](https://dwm.suckless.org/patches/pertag)
+
+- [sametagrule](https://github.com/soystemd/dwm/commit/fb1e103)
+
+- [blockinputrule](https://github.com/soystemd/dwm/compare/36f4be5...b4d681d)
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
-(improved it's visiblity a little bit)
 
 - [push](https://dwm.suckless.org/patches/push)
 
@@ -21,23 +23,27 @@ utility:
 
 - [transfer](https://dwm.suckless.org/patches/transfer)
 
-- the stairs layout (on the second screenshot)
+- [actualfullscreen](https://dwm.suckless.org/patches/actualfullscreen)
 
-- [ewmhtags](https://dwm.suckless.org/patches/ewmhtags) + [_NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
+- [pwkl](https://dwm.suckless.org/patches/pwkl)
 
-vanity:
+- [urgentborder](https://dwm.suckless.org/patches/urgentborder)
 
-- [clientindicators](https://dwm.suckless.org/patches/clientindicators)
-(the "hide vacant" variant)
+- [winview](https://dwm.suckless.org/patches/winview)
 
-- [status2d](https://dwm.suckless.org/patches/status2d)
-(and it's "swap-save-restore" patch)
+- [ewmhtags](https://dwm.suckless.org/patches/ewmhtags)
+
+- [NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
+
+- [clientindicatorshidevacant](https://dwm.suckless.org/patches/clientindicators)
+
+- [status2d + swap-save-restore](https://dwm.suckless.org/patches/status2d)
 
 - [vanitygaps-cfacts](https://dwm.suckless.org/patches/vanitygaps)
 
-- [float-border-color](https://dwm.suckless.org/patches/float_border_color)
-
 - [titlecolor](https://dwm.suckless.org/patches/titlecolor)
+
+- the stairs layout
 
 ## requires libxft-bgra
 
