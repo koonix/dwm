@@ -57,7 +57,8 @@
 
 /* macros */
 #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
-#define CLEANMASK(mask)         (mask & ~(numlockmask|LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
+#define CLEANMASK(mask)         (mask & ~(numlockmask|LockMask) & \
+                                (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
 #define INTERSECT(x,y,w,h,m)    (MAX(0, MIN((x)+(w),(m)->wx+(m)->ww) - MAX((x),(m)->wx)) \
                                * MAX(0, MIN((y)+(h),(m)->wy+(m)->wh) - MAX((y),(m)->wy)))
 #define ISVISIBLEONTAG(C, T)    ((C->tags & T))
@@ -77,7 +78,8 @@ enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
 enum { SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType, NetWMDesktop,
-       NetWMWindowTypeDialog, NetClientList, NetDesktopNames, NetDesktopViewport, NetNumberOfDesktops, NetCurrentDesktop, NetLast }; /* EWMH atoms */
+       NetWMWindowTypeDialog, NetClientList, NetDesktopNames, NetDesktopViewport,
+	   NetNumberOfDesktops, NetCurrentDesktop, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
@@ -568,10 +570,10 @@ attachabove(Client *c)
 void
 attachaside(Client *c) {
 	Client *at = nexttagged(c);
-	if(!at) {
+	if (!at) {
 		attach(c);
 		return;
-		}
+	}
 	c->next = at->next;
 	at->next = c;
 }
@@ -579,7 +581,7 @@ attachaside(Client *c) {
 void
 attachbelow(Client *c)
 {
-	if(c->mon->sel == NULL || c->mon->sel == c || c->mon->sel->isfloating) {
+	if (c->mon->sel == NULL || c->mon->sel == c || c->mon->sel->isfloating) {
 		attach(c);
 		return;
 	}
@@ -1681,7 +1683,7 @@ movemouse(const Arg *arg)
 Client *
 nexttagged(Client *c) {
 	Client *walked = c->mon->clients;
-	for(;
+	for (;
 		walked && (walked->isfloating || !ISVISIBLEONTAG(walked, c->tags));
 		walked = walked->next
 	);
@@ -1708,8 +1710,8 @@ Client *
 prevtiled(Client *c) {
 	Client *p, *r;
 
-	for(p = selmon->clients, r = NULL; p && p != c; p = p->next)
-		if(!p->isfloating && ISVISIBLE(p))
+	for (p = selmon->clients, r = NULL; p && p != c; p = p->next)
+		if (!p->isfloating && ISVISIBLE(p))
 			r = p;
 	return r;
 }
@@ -1755,9 +1757,9 @@ void
 pushdown(const Arg *arg) {
 	Client *sel = selmon->sel, *c;
 
-	if(!sel || sel->isfloating)
+	if (!sel || sel->isfloating)
 		return;
-	if((c = nexttiled(sel->next))) {
+	if ((c = nexttiled(sel->next))) {
 		detach(sel);
 		sel->next = c->next;
 		c->next = sel;
@@ -1773,19 +1775,19 @@ void
 pushup(const Arg *arg) {
 	Client *sel = selmon->sel, *c;
 
-	if(!sel || sel->isfloating)
+	if (!sel || sel->isfloating)
 		return;
-	if((c = prevtiled(sel))) {
+	if ((c = prevtiled(sel))) {
 		detach(sel);
 		sel->next = c;
-		if(selmon->clients == c)
+		if (selmon->clients == c)
 			selmon->clients = sel;
 		else {
-			for(c = selmon->clients; c->next != sel->next; c = c->next);
+			for (c = selmon->clients; c->next != sel->next; c = c->next);
 			c->next = sel;
 		}
 	} else {
-		for(c = sel; c->next; c = c->next);
+		for (c = sel; c->next; c = c->next);
 		detach(sel);
 		sel->next = NULL;
 		c->next = sel;
@@ -1985,7 +1987,8 @@ void
 setcurrentdesktop(void)
 {
 	long data[] = { 0 };
-	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL,
+	                32, PropModeReplace, (unsigned char *)data, 1);
 }
 
 void
@@ -2024,7 +2027,8 @@ sendevent(Client *c, Atom proto)
 void
 setnumdesktops(void){
 	long data[] = { TAGSLENGTH };
-	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
+	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL,
+	                32, PropModeReplace, (unsigned char *)data, 1);
 }
 
 void
@@ -2101,12 +2105,12 @@ setcfact(const Arg *arg) {
 
 	c = selmon->sel;
 
-	if(!arg || !c || !selmon->lt[selmon->sellt]->arrange)
+	if (!arg || !c || !selmon->lt[selmon->sellt]->arrange)
 		return;
 	f = arg->f + c->cfact;
-	if(arg->f == 0.0)
+	if (arg->f == 0.0)
 		f = 1.0;
-	else if(f < 0.25 || f > 4.0)
+	else if (f < 0.25 || f > 4.0)
 		return;
 	c->cfact = f;
 	arrange(selmon);
@@ -2209,7 +2213,8 @@ setup(void)
 void
 setviewport(void){
 	long data[] = { 0, 0 };
-	XChangeProperty(dpy, root, netatom[NetDesktopViewport], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 2);
+	XChangeProperty(dpy, root, netatom[NetDesktopViewport], XA_CARDINAL,
+	                32, PropModeReplace, (unsigned char *)data, 2);
 }
 
 
@@ -2342,7 +2347,7 @@ togglefloating(const Arg *arg)
 void
 togglefullscr(const Arg *arg)
 {
-	if(selmon->sel)
+	if (selmon->sel)
 	setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
 }
 
@@ -2540,7 +2545,8 @@ updatecurrentdesktop(void)
 	while (*rawdata >> (i+1))
 		i++;
 	long data[] = { i };
-	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32, PropModeReplace, (unsigned char *)data, 1);
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL,
+	                32, PropModeReplace, (unsigned char *)data, 1);
 }
 
 int
@@ -2812,8 +2818,9 @@ winpid(Window w)
 	unsigned char *prop;
 	pid_t ret;
 
-	if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1, False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
-		   return 0;
+	if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1,
+		False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
+		return 0;
 
 	ret = *(pid_t*)prop;
 	XFree(prop);
