@@ -646,6 +646,7 @@ swallow(Client *p, Client *c)
 	p->swallowing = c;
 	c->mon = p->mon;
 
+	setfullscreen(c, p->isfullscreen);
 	Window w = p->win;
 	p->win = c->win;
 	c->win = w;
@@ -662,11 +663,10 @@ unswallow(Client *c)
 {
 	c->win = c->swallowing->win;
 
+	setfullscreen(c->swallowing, c->isfullscreen);
 	free(c->swallowing);
 	c->swallowing = NULL;
 
-	/* unfullscreen the client */
-	setfullscreen(c, 0);
 	updatetitle(c);
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
