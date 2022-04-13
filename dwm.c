@@ -1116,6 +1116,8 @@ drawbar(Monitor *m)
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
+	unsigned int n;
+	char indi[32];
 	Client *c;
 
 	if (!m->showbar)
@@ -1151,6 +1153,19 @@ drawbar(Monitor *m)
 
 		x += w;
 	}
+
+	if (m->lt[m->sellt]->arrange == monocle) {
+		for (c = m->clients, n = 0; c && n < sizeof(indi); c = c->next)
+			if (ISVISIBLE(c))
+				indi[n++] = c == m->sel ? 'O' : '*';
+		indi[n] = '\0';
+		if (n > 0) {
+			w = blw = TEXTW(indi);
+			drw_setscheme(drw, scheme[SchemeNorm]);
+			x = drw_text(drw, x, 0, w, bh, lrpad / 2, indi, 0);
+		}
+	}
+
 	w = blw = TEXTW(m->ltsymbol);
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
@@ -1591,14 +1606,7 @@ maprequest(XEvent *e)
 void
 monocle(Monitor *m)
 {
-	unsigned int n = 0;
 	Client *c;
-
-	for (c = m->clients; c; c = c->next)
-		if (ISVISIBLE(c))
-			n++;
-	if (n > 0) /* override layout symbol */
-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 }
