@@ -421,13 +421,14 @@ void
 sametagapply(Client *c)
 {
 	const Client *p = NULL;
-	if (c->sametagid)
-		sametagattach(c);
 	if (c->parentsametagid && (p = sametagstacks[c->parentsametagid])) {
 		c->tags = p->tags;
 		c->mon  = p->mon;
 		if (!ISVISIBLE(c))
 			seturgent(c, 1);
+	}
+	if (c->sametagid) {
+		sametagattach(c);
 	}
 }
 
