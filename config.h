@@ -19,7 +19,7 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 static const unsigned char xkblayout = 0;       /* the default keyboard layout number (starts from 0) */
 
 /* the default input block time of new windows (in milliseconds).
- * see rules below for explanation. */
+ * see the rules below for explanation. */
 static const unsigned int blockinputmsec = 500;
 
 /* fonts */
@@ -78,16 +78,17 @@ static const Rule rules[] = {
 	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
 	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
 	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to eachother */
+	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
 	/* swallowing rules: */
 	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
 	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
-static const int nmaster     = 1;    /* number of clients in master area */
-static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
-static const int lockfullscreen = 0; /* 1 will force focus on the fullscreen window */
+static const float mfact        = 0.5;  /* factor of master area size [0.05..0.95] */
+static const int nmaster        = 1;    /* number of clients in master area */
+static const int resizehints    = 1;    /* 1 means respect size hints in tiled resizals */
+static const int lockfullscreen = 0;    /* 1 will force focus on the fullscreen window */
 
 /* hint for attachdirection
  * attach:
