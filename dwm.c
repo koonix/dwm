@@ -1093,7 +1093,7 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 			}
 
 			text = text + i + 1;
-			i=-1;
+			i = -1;
 			isCode = 0;
 		}
 	}
@@ -2550,7 +2550,7 @@ void
 updatecurrentdesktop(void)
 {
 	long rawdata[] = { selmon->tagset[selmon->seltags] };
-	int i=0;
+	int i = 0;
 	while (*rawdata >> (i+1))
 		i++;
 	long data[] = { i };
