@@ -177,6 +177,7 @@ typedef struct {
 } Rule;
 
 /* function declarations */
+static void gotourgent();
 static void applyfribidi(char *str);
 static void applyrules(Client *c);
 static void sametagapply(Client *c);
@@ -2238,6 +2239,22 @@ seturgent(Client *c, int urg)
 	wmh->flags = urg ? (wmh->flags | XUrgencyHint) : (wmh->flags & ~XUrgencyHint);
 	XSetWMHints(dpy, c->win, wmh);
 	XFree(wmh);
+}
+
+void
+gotourgent()
+{
+	Monitor *m;
+	Client *c;
+	Arg a;
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			if (c->isurgent && !c->neverfocus) {
+				a.ui = c->tags;
+				view(&a);
+				focus(c);
+				return;
+			}
 }
 
 void
