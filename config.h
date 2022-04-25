@@ -236,6 +236,7 @@ static const char *cycle[] = { "pacycle", NULL };
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define KEY(a, ...) { .v = (const char*[]){ "xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__, NULL } }
 #define KEYREP(a, b) KEY(a, b,b,b,b,b,b,b,b,b,b)
+#define TERMINCWD SHCMD("d=$(xcwd) && cd \"$d\" && " TERM)
 
 /* binding logic:
  * - audio and music related bindings start with super+alt
@@ -246,7 +247,7 @@ static Key keys[] = {
     { Mod,              XK_p,           spawn,          CMD("gimme", "-m") },
     { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
-    { ModShift,         XK_t,           spawn,          CMD("cwdrun", TERM) },
+    { ModShift,         XK_t,           spawn,          TERMINCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
     { ModShift,         XK_b,           spawn,          CMD("ffdo") },
     { Mod,              XK_g,           spawn,          XMOUSELESS },
