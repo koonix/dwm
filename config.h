@@ -6,7 +6,7 @@
 
 /* appearance */
 static const unsigned int stairpx   = 50;       /* depth of stairs layout */
-static const unsigned int borderpx  = 4;        /* border pixel of windows */
+static const unsigned int borderpx  = 6;        /* border pixel of windows */
 static const unsigned int snap      = 20;       /* snap pixel */
 static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
 static const unsigned int gappih    = 20;       /* horiz inner gap between windows */
@@ -35,10 +35,11 @@ static const char col_null[]       = "#000000";
 static const char col_bg[]         = "#000000";
 static const char col_normfg[]     = "#555555";
 static const char col_normborder[] = "#333333";
-static const char col_selfg[]      = "#9d9d9d";
+static const char col_selfg[]      = "#bfbfbf";
 static const char col_selborder[]  = "#a8a8a8";
 static const char col_titlefg[]    = "#9d9d9d";
 static const char col_urgborder[]  = "#ff0000";
+static const char col_status[]     = "#9d9d9d";
 
 static const char *colors[][4]      = {
 	/*               fg        bg   border    */
@@ -49,39 +50,54 @@ static const char *colors[][4]      = {
 };
 
 /* colors that can be used by the statusbar */
-static const char *statuscolors[] = { col_normfg, col_selfg };
+static const char *statuscolors[] = { col_normfg, col_status };
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+
+/* helper macros for rules */
+#define SYMBOL(c, s)     { c, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, -1, s }
+#define TSYMBOL(t, s) { TERMCLASS, NULL, t, 0, 0, 0, 0, 0, 1, 0, -1, s }
 
 /* hint for rules
  *
  * blockinput:
  *   sometimes you're typing and all of a sudden a window pops out of nowhere,
  *   steals yours input focus and receives some bogus input. this rule is here to stop that.
- *   this rule blocks the input of newly opened windows for the specified amount of time
- *   in milliseconds. set to 0 to disable. swallowing windows won't be input-blocked
- *   because they don't steal the focus.
+ *   this rule blocks the input of newly opened windows for the specified amount of time in milliseconds.
+ *   set to 0 to disable, set to a negative value to use the default value (blockinputmsec).
+ *   swallowing windows won't be input-blocked because they don't steal the focus.
  *
- * sametagid, parentsametagid:
+ * sametagid, sametagchildof:
  *   with these rules you can have some windows open in the same tag and monitor
  *   as other windows. ex. if window A has a sametagid of 10, and window B has a
- *   parentsametagid of 10, window B will be opened next to window A.
+ *   sametagchildof of 10, window B will be opened next to window A.
+ *   can be an integer between 0 and 127. a value of zero disables this feature.
+ *
+ * clientsymbol:
+ *   the string that represents the window in clientsymbols.
  *
  *  xprop(1):
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  */
 static const Rule rules[] = {
-	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, parentsametagid, isterminal, noswallow, monitor */
-	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
-	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
-	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to eachother */
-	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
+	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, sametagchildof, isterminal, noswallow, monitor, clientsymbol */
+	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1, NULL }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1, ""  }, /* don't tile qalculate */
+	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1, NULL }, /* don't tile safeeyes */
+	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1, ""  }, /* spawn wine programs next to eachother */
+	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1, ""  }, /* don't block firefox's input */
 	/* swallowing rules: */
-	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
-	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
+	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1, "" },
+	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1, NULL  },
+	/* symbol rules: */
+	TSYMBOL("vim", ""),             TSYMBOL("lf", ""),             TSYMBOL("bashmount", ""),
+	TSYMBOL("newsboat", ""),        TSYMBOL("ncmpcpp", ""),        TSYMBOL("calculator", ""),
+	TSYMBOL("pulsemixer", "蓼"),     TSYMBOL("aria2p", ""),         TSYMBOL("tremc", ""),
+	TSYMBOL("man", "ﲉ"),
+	SYMBOL("TelegramDesktop", ""),  SYMBOL("mpv", ""),             SYMBOL("Zathura", ""),
+	SYMBOL("Foliate", ""),          SYMBOL("Sxiv", ""),
 };
 
 /* layout(s) */
@@ -109,7 +125,7 @@ static const int lockfullscreen = 0;    /* 1 will force focus on the fullscreen 
  *   behavior feels very intuitive as it doesn't disrupt existing masters,
  *   no matter the amount of them, it only pushes the clients in stack down.
  *   in case of nmaster = 1 feels like attachaside. */
-static void (*attachdirection)(Client *c) = attachtop;
+static void (*attachdirection)(Client *c) = attachbelow;
 
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
@@ -136,12 +152,38 @@ static const Layout layouts[] = {
 };
 
 /* key definitions */
-#define MODKEY Mod4Mask
+#define Mod           Mod4Mask
+#define ModShift      Mod|ShiftMask
+#define ModCtrl       Mod|ControlMask
+#define ModAlt        Mod|Mod1Mask
+#define ModCtrlShift  ModCtrl|ShiftMask
+#define ModAltShift   ModAlt|ShiftMask
+#define ModAltCtrl    ModAlt|ControlMask
+#define ModCtrlAlt    ModAltCtrl
+#define CtrlShift     ControlMask|ShiftMask
+#define AltCtrl       Mod1Mask|ControlMask
+#define AltCtrlShift  AltCtrl|ShiftMask
+
+/* key pair definition */
+#define K1(k1, k2) k1
+#define K2(k1, k2) k2
+#define KP(mod, kp, fn, arg1, arg2) \
+	{ mod, K1(kp), fn, arg1 }, \
+	{ mod, K2(kp), fn, arg2 }
+
+/* common key pairs */
+#define KP_JK            XK_j, XK_k
+#define KP_HL            XK_h, XK_l
+#define KP_COMMAPERIOD   XK_comma, XK_period
+#define KP_BRACKET       XK_bracketleft, XK_bracketright
+#define KP_VOL           XF86XK_AudioLowerVolume,  XF86XK_AudioRaiseVolume
+#define KP_BRIGHTNESS    XF86XK_MonBrightnessDown, XF86XK_MonBrightnessUp
+
 #define TAGKEYS(KEY,TAG) \
-	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
-	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
-	{ MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
-	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
+	{ Mod,              KEY,      view,           {.ui = 1 << TAG} }, \
+	{ ModCtrl,          KEY,      toggleview,     {.ui = 1 << TAG} }, \
+	{ ModShift,         KEY,      tag,            {.ui = 1 << TAG} }, \
+	{ ModCtrlShift,     KEY,      toggletag,      {.ui = 1 << TAG} }
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
@@ -160,23 +202,29 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
 /**/
-#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { \
-pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && \
-notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { \
-pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && \
-notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
+"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
+"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { " \
+"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
+"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
 /**/
 
 /* media */
-#define MEDIA_NEXT SHCMD("(mpc | grep -q '^\\[playing' && mpc next) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl next -p")
-#define MEDIA_PREV SHCMD("(mpc | grep -q '^\\[playing' && mpc prev) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl previous -p")
-#define MEDIA_SEEK_FWD SHCMD("(mpc | grep -q '^\\[playing' && mpc seek +10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10+ -p")
-#define MEDIA_SEEK_BACK SHCMD("(mpc | grep -q '^\\[playing' && mpc seek -10) & playerctl -a status -f '{{playerInstance}}	{{status}}' | grep Playing | cut -f1 | xargs -rL1 playerctl position 10- -p")
-/**/
-#define MEDIA_PLAYPAUSE SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/playpause; \
-p=$(playerctl -a status -f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { \
-printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || \
-cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
+#define MEDIA_PLAYPAUSE \
+	SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
+	"-f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
+	"printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || " \
+	"cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
+
+#define MEDIACMD(a, b) \
+	SHCMD("(mpc | grep -q '^\\[playing' && mpc " a ") & " \
+	"playerctl -a status -f '{{playerInstance}}	{{status}}' | " \
+	"grep Playing | cut -f1 | xargs -rL1 playerctl " b " -p")
+
+#define MEDIA_NEXT MEDIACMD("next", "next")
+#define MEDIA_PREV MEDIACMD("prev", "previous")
+#define MEDIA_SEEK_FWD  MEDIACMD("seek +10", "position 10+")
+#define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
 /**/
 
 /* backlight */
@@ -185,7 +233,9 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 
 /* other */
 #define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
-#define XMOUSELESS  SHCMD("usv down unclutter; xmouseless; usv up unclutter")
+#define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
+#define KEY(a, ...) { .v = (const char*[]){ "xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__, NULL } }
+#define KEYREP(a, b) KEY(a, b,b,b,b,b,b,b,b,b,b)
 
 /* binding logic:
  * - audio and music related bindings start with super+alt
@@ -194,166 +244,145 @@ cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
-	/* modifier                     key        function        argument */
-	{ MODKEY,                       XK_p,      spawn,          CMD("gimme", "-m") },
-	{ MODKEY|ShiftMask,             XK_p,      spawn,          {.v = dmenucmd } },
-	{ MODKEY,                       XK_t,      spawn,          CMD(TERM) },
-	{ MODKEY|ShiftMask,             XK_t,      spawn,          CMD("cwdrun", TERM) },
-	{ MODKEY,                       XK_b,      spawn,          SHCMD("exec $BROWSER") },
-	{ MODKEY,                       XK_g,      spawn,          XMOUSELESS },
+    /* modifier                     key        function        argument */
+    { Mod,              XK_p,           spawn,          CMD("gimme", "-m") },
+    { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
+    { Mod,              XK_t,           spawn,          CMD(TERM) },
+    { ModShift,         XK_t,           spawn,          CMD("cwdrun", TERM) },
+    { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
+    { ModShift,         XK_b,           spawn,          CMD("ffdo") },
+    { Mod,              XK_g,           spawn,          XMOUSELESS },
+    { ControlMask,      XK_space,       spawn,          CMD("dunstctl", "close") },
+    { ControlMask,      XK_grave,       spawn,          CMD("dunstctl", "history-pop") },
+    { CtrlShift,        XK_period,      spawn,          CMD("dunstctl", "context") },
+    { Mod,              XK_c,           spawn,          TUI("calc") },
+    { Mod,              XK_v,           spawn,          SHTUI("exec ${EDITOR:-nvim}") },
+    { Mod,              XK_q,           spawn,          CMD("sysact") },
+    { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
+    { ModShift,         XK_e,           spawn,          CMD("sysact", "sleep") },
+    { Mod,              XK_i,           spawn,          CMD("bm", "-m") },
+    { ModShift,         XK_i,           spawn,          CMD("cwds") },
+    { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
+    { ModAlt,           XK_F4,          quit,           {0} },
 
-	{ ControlMask,                  XK_space,  spawn,          CMD("dunstctl", "close") },
-	{ ControlMask,                  XK_grave,  spawn,          CMD("dunstctl", "history-pop") },
-	{ ControlMask|ShiftMask,        XK_period, spawn,          CMD("dunstctl", "context") },
+  KP( 0,                KP_VOL,         spawn,          VOLDEC(5),   VOLINC(5)   ),
+  KP( ShiftMask,        KP_VOL,         spawn,          VOLDEC(20),  VOLINC(20)  ),
+  KP( ModAlt,           KP_JK,          spawn,          VOLDEC(5),   VOLINC(5)   ),
+  KP( ModAltShift,      KP_JK,          spawn,          VOLDEC(20),  VOLINC(20)  ),
+  KP( ModAltCtrl,       KP_JK,          spawn,          MPCVOL(-10), MPCVOL(+10) ),
+    { ModAlt,           XK_m,           spawn,          {.v = mute } },
+    { ModAltShift,      XK_m,           spawn,          TOGGLE_MIC_MUTE },
+    { ModCtrl,          XK_s,           spawn,          {.v = cycle } },
+    { 0,        XF86XK_AudioMute,       spawn,          {.v = mute } },
+    { 0,        XF86XK_AudioMicMute,    spawn,          TOGGLE_MIC_MUTE },
 
-	{ MODKEY,                       XK_c,      spawn,          TUI("calc") },
-	{ MODKEY|ShiftMask,             XK_c,      spawn,          TUI("htop") },
-	{ MODKEY|ShiftMask,             XK_b,      spawn,          TUI("bashmount") },
-	{ MODKEY,                       XK_n,      spawn,          TUI("nboat") },
-	{ MODKEY|ShiftMask,             XK_n,      spawn,          TUI("tremc") },
-	{ MODKEY,                       XK_m,      spawn,          TUI("ncmpcpp") },
-	{ MODKEY|ShiftMask,             XK_m,      spawn,          TUI("pulsemixer") },
-	{ MODKEY|ControlMask,           XK_m,      spawn,          TUI("neomutt") },
-	{ MODKEY|ControlMask|ShiftMask, XK_m,      spawn,          CMD("unread") },
-	{ MODKEY,                       XK_d,      spawn,          TUI("aria2p") },
-	{ MODKEY,                       XK_v,      spawn,          SHTUI("exec ${EDITOR:-nvim}") },
-	{ MODKEY|ControlMask|ShiftMask, XK_d,      spawn,          TUI("dictfzf") },
-	{ MODKEY,                       XK_y,      spawn,          CMD("yt") },
+    { ModAltShift,      XK_p,           spawn,          CMD("mpc", "toggle") },
+    { ModAlt,           XK_p,           spawn,          MEDIA_PLAYPAUSE },
+  KP( ModAlt,           KP_HL,          spawn,          MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
+  KP( ModAltShift,      KP_HL,          spawn,          MEDIA_PREV,      MEDIA_NEXT     ),
+    { ModAlt,           XK_n,           spawn,          NOTIFYSONG },
+    { 0,        XF86XK_AudioPlay,       spawn,          MEDIA_PLAYPAUSE },
+    { 0,        XF86XK_AudioPrev,       spawn,          MEDIA_PREV },
+    { 0,        XF86XK_AudioNext,       spawn,          MEDIA_NEXT },
 
-	{ MODKEY,                       XK_q,      spawn,          CMD("sysact") },
-	{ MODKEY,                       XK_e,      spawn,          CMD("loginctl", "lock-session") },
-	{ MODKEY|ShiftMask,             XK_e,      spawn,          CMD("sysact", "sleep") },
-	{ MODKEY|Mod1Mask,              XK_s,      spawn,          CMD("dshot") },
-	{ MODKEY,                       XK_i,      spawn,          CMD("bm", "-m") },
-	{ MODKEY|ShiftMask,             XK_i,      spawn,          CMD("cwds") },
-	{ MODKEY|ControlMask,           XK_p,      spawn,          CMD("dpass") },
-	{ MODKEY|ShiftMask,             XK_d,      spawn,          CMD("daria2") },
-	{ MODKEY|ShiftMask,             XK_u,      spawn,          CMD("networkmanager_dmenu") },
-	{ MODKEY|Mod1Mask,              XK_F4,     quit,           {0} },
+  KP( 0,                KP_BRIGHTNESS,  spawn,          LIGHTINC(10), LIGHTDEC(10) ),
+  KP( ShiftMask,        KP_BRIGHTNESS,  spawn,          LIGHTINC(1),  LIGHTDEC(1)  ),
+  KP( Mod,              KP_BRACKET,     spawn,          LIGHTINC(10), LIGHTDEC(10) ),
+  KP( ModShift,         KP_BRACKET,     spawn,          LIGHTINC(1),  LIGHTDEC(1)  ),
 
-	{ 0,XF86XK_AudioRaiseVolume,               spawn,          VOLINC(5) },
-	{ 0,XF86XK_AudioLowerVolume,               spawn,          VOLDEC(5) },
-	{ ShiftMask,XF86XK_AudioRaiseVolume,       spawn,          VOLINC(20) },
-	{ ShiftMask,XF86XK_AudioLowerVolume,       spawn,          VOLDEC(20) },
-	{ MODKEY|Mod1Mask,              XK_k,      spawn,          VOLINC(5) },
-	{ MODKEY|Mod1Mask,              XK_j,      spawn,          VOLDEC(5) },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_k,      spawn,          VOLINC(20) },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_j,      spawn,          VOLDEC(20) },
-	{ MODKEY|Mod1Mask|ControlMask,  XK_k,      spawn,          MPCVOL(+10) },
-	{ MODKEY|Mod1Mask|ControlMask,  XK_j,      spawn,          MPCVOL(-10) },
-	{ MODKEY|Mod1Mask,              XK_m,      spawn,          {.v = mute } },
-	{ 0,XF86XK_AudioMute,                      spawn,          {.v = mute } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_m,      spawn,          TOGGLE_MIC_MUTE },
-	{ 0,XF86XK_AudioMicMute,                   spawn,          TOGGLE_MIC_MUTE },
-	{ MODKEY|ControlMask,           XK_s,      spawn,          {.v = cycle } },
+    { Mod,              XK_r,           spawn,          CMD("pipeurl", "-c", "ask") },
+    { ModShift,         XK_r,           spawn,          CMD("pipeurl", "history") },
 
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_p,      spawn,          CMD("mpc", "toggle") },
-	{ MODKEY|Mod1Mask,              XK_p,      spawn,          MEDIA_PLAYPAUSE },
-	{ 0,XF86XK_AudioPlay,                      spawn,          MEDIA_PLAYPAUSE },
-	{ MODKEY|Mod1Mask,              XK_h,      spawn,          MEDIA_SEEK_BACK },
-	{ MODKEY|Mod1Mask,              XK_l,      spawn,          MEDIA_SEEK_FWD },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_h,      spawn,          MEDIA_PREV },
-	{ 0,XF86XK_AudioPrev,                      spawn,          MEDIA_PREV },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_l,      spawn,          MEDIA_NEXT },
-	{ 0,XF86XK_AudioNext,                      spawn,          MEDIA_NEXT },
-	{ MODKEY|Mod1Mask,              XK_n,      spawn,          NOTIFYSONG },
+  KP( Mod,              KP_JK,          focusstack,     {.i = +1 },    {.i = -1} ),
+  KP( ModShift,         KP_JK,          push,           {.i = +1 },    {.i = -1} ),
+  KP( Mod,              KP_HL,          setmfact,       {.f = -0.05 }, {.f = +0.05 } ),
+  KP( Mod,              KP_HL,          setcfact,       {.f = -0.25 }, {.f = +0.25 } ),
+    { ModShift,         XK_o,           setcfact,       {.f =  0.00 } },
+    { Mod,              XK_s,           switchcol,      {0} },
+    { Mod,              XK_space,       zoom,           {0} },
+    { ModShift,         XK_space,       transfer,       {0} },
+    { Mod,              XK_u,           view,           {0} },
+    { Mod,              XK_u,           gotourgent,     {0} },
+    { Mod,              XK_w,           killclient,     {0} },
+    { ModCtrl,          XK_b,           togglebar,      {0} },
+    { Mod,              XK_f,           togglefullscr,  {0} },
+    { Mod,              XK_o,           gototag,        {0} },
+    { ModCtrl,          XK_t,           setlayout,      {.v = tile } },
+    { ModCtrl,          XK_d,           setlayout,      {.v = stairs } },
+    { ModCtrl,          XK_f,           setlayout,      {.v = monocle } },
+    { ModCtrl,          XK_g,           setlayout,      {.v = gaplessgrid } },
+    { ModCtrl,          XK_c,           setlayout,      {.v = centeredmaster } },
+    { ModCtrlShift,     XK_c,           setlayout,      {.v = centeredfloatingmaster } },
+    { ModCtrl,          XK_a,           setlayout,      {.v = bstack } },
+    { ModCtrl,          XK_x,           setlayout,      {.v = dwindle } },
+  /* KP( ModCtrl,                      KP_JK,     incnmaster,  {.i = +1 }, {.i = -1} ), */
+  KP( AltCtrl,          KP_JK,          spawn,          KEY("j", "Down"),    KEY("k", "Up") ),
+  KP( AltCtrl,          KP_HL,          spawn,          KEY("h", "Left"),    KEY("l", "Right") ),
+  KP( AltCtrlShift,     KP_JK,          spawn,          KEYREP("j", "Down"), KEYREP("k", "Up") ),
+  KP( AltCtrlShift,     KP_HL,          spawn,          KEYREP("h", "Left"), KEYREP("l", "Right") ),
+    { AltCtrl,          XK_g,           spawn,          KEY("g", "Home") },
+    { AltCtrlShift,     XK_g,           spawn,          KEY("g", "End") },
+    { AltCtrl,          XK_b,           spawn,          KEY("b", "Page_Up") },
+    { AltCtrl,          XK_f,           spawn,          KEY("f", "Page_Down") },
 
-	{ 0,XF86XK_MonBrightnessUp,                spawn,          LIGHTINC(10) },
-	{ 0,XF86XK_MonBrightnessDown,              spawn,          LIGHTDEC(10) },
-	{ ShiftMask,XF86XK_MonBrightnessUp,        spawn,          LIGHTINC(1)  },
-	{ ShiftMask,XF86XK_MonBrightnessDown,      spawn,          LIGHTDEC(1)  },
-	{ MODKEY,            XK_bracketright,      spawn,          LIGHTINC(10) },
-	{ MODKEY,            XK_bracketleft,       spawn,          LIGHTDEC(10) },
-	{ MODKEY|ShiftMask,  XK_bracketright,      spawn,          LIGHTINC(1)  },
-	{ MODKEY|ShiftMask,  XK_bracketleft,       spawn,          LIGHTDEC(1)  },
+    { ModShift,         XK_f,           togglefloating, {0} },
+    { Mod,              XK_0,           view,           {.ui = ~0 } },
+    { Mod,              XK_0,           setlayout,      {.v = gaplessgrid } },
+    { ModShift,         XK_0,           tag,            {.ui = ~0 } },
 
-	{ ControlMask|ShiftMask,        XK_m,      spawn,          CMD("ffmerge") },
-	{ ControlMask|ShiftMask,        XK_b,      spawn,          CMD("fffixfocus") },
-	{ MODKEY,                       XK_r,      spawn,          CMD("pipeurl", "-c", "ask") },
-	{ MODKEY|ShiftMask,             XK_r,      spawn,          CMD("pipeurl", "history") },
+  KP( Mod,              KP_COMMAPERIOD, focusmon,       {.i = +1}, {.i = -1}),
+  KP( ModShift,         KP_COMMAPERIOD, tagmon,         {.i = +1}, {.i = -1}),
 
-	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
-	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
-	{ MODKEY|ShiftMask,             XK_j,      pushdown,       {.i = -1 } },
-	{ MODKEY|ShiftMask,             XK_k,      pushup,         {.i = -1 } },
-	{ MODKEY,                       XK_s,      switchcol,      {0} },
-	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05 } },
-	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05 } },
-	{ MODKEY|ShiftMask,             XK_h,      setcfact,       {.f = -0.25 } },
-	{ MODKEY|ShiftMask,             XK_l,      setcfact,       {.f = +0.25 } },
-	{ MODKEY|ShiftMask,             XK_o,      setcfact,       {.f =  0.00 } },
-	{ MODKEY,                       XK_space,  zoom,           {0} },
-	{ MODKEY|ShiftMask,             XK_space,  transfer,       {0} },
-	{ MODKEY,                       XK_u,      view,           {0} },
-	{ MODKEY,                       XK_w,      killclient,     {0} },
-	{ MODKEY|ControlMask,           XK_b,      togglebar,      {0} },
-	{ MODKEY,                       XK_f,      togglefullscr,  {0} },
-	{ MODKEY,                       XK_o,      gototag,        {0} },
-	{ MODKEY|ControlMask,           XK_t,      setlayout,      {.v = tile } },
-	{ MODKEY|ControlMask,           XK_d,      setlayout,      {.v = stairs } },
-	{ MODKEY|ControlMask,           XK_f,      setlayout,      {.v = monocle } },
-	{ MODKEY|ControlMask,           XK_g,      setlayout,      {.v = gaplessgrid } },
-	{ MODKEY|ControlMask,           XK_c,      setlayout,      {.v = centeredmaster } },
-	{ MODKEY|ControlMask|ShiftMask, XK_c,      setlayout,      {.v = centeredfloatingmaster } },
-	{ MODKEY|ControlMask,           XK_a,      setlayout,      {.v = bstack } },
-	{ MODKEY|ControlMask,           XK_x,      setlayout,      {.v = dwindle } },
+    { Mod,              XK_comma,       focusmon,       {.i = -1 } },
+    { Mod,              XK_period,      focusmon,       {.i = +1 } },
+    { ModShift,         XK_comma,       tagmon,         {.i = -1 } },
+    { ModShift,         XK_period,      tagmon,         {.i = +1 } },
 
-	{ MODKEY|ControlMask,           XK_k,      incnmaster,     {.i = +1 } },
-	{ MODKEY|ControlMask,           XK_j,      incnmaster,     {.i = -1 } },
-
-	{ MODKEY|ShiftMask,             XK_f,      togglefloating, {0} },
-	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
-	{ MODKEY,                       XK_0,      setlayout,      {.v = gaplessgrid } },
-	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
-	{ MODKEY,                       XK_comma,  focusmon,       {.i = -1 } },
-	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
-	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
-	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
-
-	TAGKEYS(                        XK_1,                      0)
-	TAGKEYS(                        XK_2,                      1)
-	TAGKEYS(                        XK_3,                      2)
-	TAGKEYS(                        XK_4,                      3)
-	TAGKEYS(                        XK_5,                      4)
-	TAGKEYS(                        XK_6,                      5)
-	TAGKEYS(                        XK_7,                      6)
-	TAGKEYS(                        XK_8,                      7)
-	TAGKEYS(                        XK_9,                      8)
+    TAGKEYS(XK_1, 0), TAGKEYS(XK_2, 1), TAGKEYS(XK_3, 2),
+    TAGKEYS(XK_4, 3), TAGKEYS(XK_5, 4), TAGKEYS(XK_6, 5),
+    TAGKEYS(XK_7, 6), TAGKEYS(XK_8, 7), TAGKEYS(XK_9, 8),
 };
+
+/* macro for defining scroll actions for when the cursor is on any window or the root window */
+#define ROOTSCROLL(mod, fn, arg_up, arg_down) \
+	{ ClkRootWin,   mod, Button4, fn, arg_up }, \
+	{ ClkRootWin,   mod, Button5, fn, arg_down }, \
+	{ ClkClientWin, mod, Button4, fn, arg_up }, \
+	{ ClkClientWin, mod, Button5, fn, arg_down }
+
+/* same as above, but for clicking instead of scrolling */
+#define ROOTCLICK(mod, fn, arg) \
+	{ ClkRootWin,   mod, Button1, fn, arg }, \
+	{ ClkClientWin, mod, Button1, fn, arg }
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {
 	/* click                event mask      button          function        argument */
-	{ ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
-	{ ClkLtSymbol,          0,              Button2,        setlayout,      {.v = tile } },
-	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = stairs } },
-	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
-	{ ClkStatusText,        0,              Button2,        spawn,          CMD(TERM) },
-	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
-	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
-	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
-	{ ClkTagBar,            0,              Button1,        view,           {0} },
-	{ ClkTagBar,            0,              Button3,        toggleview,     {0} },
-	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
-	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
-	{ ClkRootWin,           MODKEY,         Button4,        focusstack,     {.i = -1 } },
-	{ ClkRootWin,           MODKEY,         Button5,        focusstack,     {.i = +1 } },
-	{ ClkClientWin,         MODKEY,         Button4,        focusstack,     {.i = -1 } },
-	{ ClkClientWin,         MODKEY,         Button5,        focusstack,     {.i = +1 } },
-	{ ClkRootWin,       MODKEY|ShiftMask,   Button4,        setmfact,       {.f = +0.05 } },
-	{ ClkRootWin,       MODKEY|ShiftMask,   Button5,        setmfact,       {.f = -0.05 } },
-	{ ClkClientWin,     MODKEY|ShiftMask,   Button4,        setmfact,       {.f = +0.05 } },
-	{ ClkClientWin,     MODKEY|ShiftMask,   Button5,        setmfact,       {.f = -0.05 } },
-	{ ClkClientWin,     MODKEY|ControlMask, Button1,        setcfact,       {.f =  0.00 } },
-	{ ClkRootWin,       MODKEY|ControlMask, Button4,        setcfact,       {.f = +0.25 } },
-	{ ClkRootWin,       MODKEY|ControlMask, Button5,        setcfact,       {.f = -0.25 } },
-	{ ClkClientWin,     MODKEY|ControlMask, Button4,        setcfact,       {.f = +0.25 } },
-	{ ClkClientWin,     MODKEY|ControlMask, Button5,        setcfact,       {.f = -0.25 } },
-	{ ClkStatusText,        MODKEY,         Button1,        spawn,          {.v = mute } },
-	{ ClkStatusText,        MODKEY,         Button3,        spawn,          {.v = cycle } },
-	{ ClkStatusText,        MODKEY,         Button4,        spawn,          VOLINC(5) },
-	{ ClkStatusText,        MODKEY,         Button5,        spawn,          VOLDEC(5) },
+	{ ClkLtSymbol,      0,      Button1,    setlayout,      {0} },
+	{ ClkLtSymbol,      0,      Button2,    setlayout,      {.v = tile } },
+	{ ClkLtSymbol,      0,      Button3,    setlayout,      {.v = stairs } },
+	{ ClkWinTitle,      0,      Button2,    zoom,           {0} },
+	{ ClkStatusText,    0,      Button2,    spawn,          CMD(TERM) },
+	{ ClkClientWin,     Mod,    Button1,    movemouse,      {0} },
+	{ ClkClientWin,     Mod,    Button2,    togglefloating, {0} },
+	{ ClkClientWin,     Mod,    Button3,    resizemouse,    {0} },
+	{ ClkTagBar,        0,      Button1,    view,           {0} },
+	{ ClkTagBar,        0,      Button3,    toggleview,     {0} },
+	{ ClkTagBar,        Mod,    Button1,    tag,            {0} },
+	{ ClkTagBar,        Mod,    Button3,    toggletag,      {0} },
+	{ ClkStatusText,    0,      Button1,    spawn,          {.v = mute } },
+	{ ClkStatusText,    0,      Button3,    spawn,          {.v = cycle } },
+	{ ClkStatusText,    0,      Button4,    spawn,          VOLINC(5) },
+	{ ClkStatusText,    0,      Button5,    spawn,          VOLDEC(5) },
+	{ ClkClientSymbol,  0,      Button4,    focusstack,     {.i = -1} },
+	{ ClkClientSymbol,  0,      Button5,    focusstack,     {.i = +1} },
+
+	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
+	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
+	ROOTSCROLL( ModCtrl,    setmfact,         {.f = +0.05},  {.f = -0.05} ), /* super+control+scroll:  change mfact */
+	ROOTSCROLL( ModAlt,     setcfact,         {.f = +0.25},  {.f = -0.25} ), /* super+alt+scroll:      change cfact */
+	ROOTCLICK(  ModAlt,     setcfact,         {.f = 0.00} ),                 /* super+alt+click:       reset cfact */
 };
 #pragma GCC diagnostic pop
 

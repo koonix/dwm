@@ -754,7 +754,7 @@ buttonpress(XEvent *e)
 				click = ClkWinTitle;
 		}
 	} else if ((c = wintoclient(ev->window))) {
-		if (!(ev->state & MODKEY)) {
+		if (!(ev->state & Mod)) {
 			focus(c);
 			restack(selmon);
 		}
