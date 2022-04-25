@@ -244,7 +244,7 @@ static const char *cycle[] = { "pacycle", NULL };
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
-    /* modifier                     key        function        argument */
+  /*  modifier          key             function        argument */
     { Mod,              XK_p,           spawn,          CMD("gimme", "-m") },
     { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
