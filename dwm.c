@@ -177,7 +177,7 @@ typedef struct {
 } Rule;
 
 /* function declarations */
-static void gotourgent();
+static void gotourgent(const Arg *arg);
 static void applyfribidi(char *str);
 static void applyrules(Client *c);
 static void sametagapply(Client *c);
@@ -2242,19 +2242,27 @@ seturgent(Client *c, int urg)
 }
 
 void
-gotourgent()
+gotourgent(const Arg *arg)
 {
 	Monitor *m;
 	Client *c;
 	Arg a;
-	for (m = mons; m; m = m->next)
-		for (c = m->clients; c; c = c->next)
+	for (m = mons; m; m = m->next) {
+		for (c = m->clients; c; c = c->next) {
 			if (c->isurgent && !c->neverfocus) {
 				a.ui = c->tags;
+				if (c->mon != selmon) {
+					unfocus(selmon->sel, 0);
+					selmon = c->mon;
+					focus(NULL);
+				}
 				view(&a);
 				focus(c);
+				restack(c->mon);
 				return;
 			}
+		}
+	}
 }
 
 void
