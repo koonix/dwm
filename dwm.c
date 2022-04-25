@@ -2971,12 +2971,17 @@ termforwin(const Client *w)
 	if (!w->pid || w->isterminal)
 		return NULL;
 
-	for (m = mons; m; m = m->next) {
-		for (c = m->clients; c; c = c->next) {
-			if (c->isterminal && !c->swallowing && c->pid && isdescprocess(c->pid, w->pid))
+	/* the chance of the selected client being the terminal
+	 * we're looking for is higher, so check that first */
+	if ((c = selmon->sel) && c->isterminal &&
+	   !c->swallowing && c->pid && isdescprocess(c->pid, w->pid))
+		return c;
+
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			if (c != selmon->sel && c->isterminal &&
+			    !c->swallowing && c->pid && isdescprocess(c->pid, w->pid))
 				return c;
-		}
-	}
 
 	return NULL;
 }
