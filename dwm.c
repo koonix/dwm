@@ -183,7 +183,6 @@ typedef struct {
 static void gotourgent(const Arg *arg);
 static void applyfribidi(char *str);
 static int applyrules(Client *c);
-static void updateclientsymbol(Client *c);
 static void sametagapply(Client *c);
 static void sametagcleanup(Client *c);
 static int sametagisattached(Client *c);
@@ -405,7 +404,7 @@ applyrules(Client *c)
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
 			found = 1;
-			c->sametagid       = r->sametagid;
+			c->sametagid  = r->sametagid;
 			c->sametagchildof = r->sametagchildof;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
