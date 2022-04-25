@@ -179,7 +179,7 @@ typedef struct {
 /* function declarations */
 static void gotourgent(const Arg *arg);
 static void applyfribidi(char *str);
-static void applyrules(Client *c);
+static int applyrules(Client *c);
 static void sametagapply(Client *c);
 static void sametagcleanup(Client *c);
 static void sametagattach(Client *c);
@@ -284,6 +284,7 @@ static int updategeom(void);
 static void updatenumlockmask(void);
 static void updatesizehints(Client *c);
 static void updatestatus(void);
+static void updaterules(Client *c);
 static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
@@ -377,7 +378,7 @@ applyfribidi(char *str)
 	}
 }
 
-void
+int
 applyrules(Client *c)
 {
 	const char *class, *instance;
@@ -385,10 +386,9 @@ applyrules(Client *c)
 	const Rule *r;
 	Monitor *m;
 	XClassHint ch = { NULL, NULL };
+	int found = 0;
 
 	/* rule matching */
-	c->isfloating = 0;
-	c->tags = 0;
 	XGetClassHint(dpy, c->win, &ch);
 	class    = ch.res_class ? ch.res_class : broken;
 	instance = ch.res_name  ? ch.res_name  : broken;
@@ -399,13 +399,15 @@ applyrules(Client *c)
 		&& (!r->class || strstr(class, r->class))
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
+			found = 1;
 			c->sametagid       = r->sametagid;
 			c->parentsametagid = r->parentsametagid;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
-			c->isfloating = r->isfloating;
 			c->tags |= r->tags;
+			if (!c->isfullscreen)
+				c->isfloating = r->isfloating;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
 				c->mon = m;
@@ -416,6 +418,7 @@ applyrules(Client *c)
 	if (ch.res_name)
 		XFree(ch.res_name);
 	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
+	return found;
 }
 
 void
@@ -1482,6 +1485,9 @@ manage(Window w, XWindowAttributes *wa)
 	c->h = c->oldh = wa->height;
 	c->oldbw = wa->border_width;
 	c->cfact = 1.0;
+	c->tags = 0;
+	c->isfloating = 0;
+	c->isfullscreen = 0;
 	c->sametagid  = c->parentsametagid = 0;
 	c->blockinput = blockinputmsec;
 	c->xkblayout  = xkblayout;
@@ -1755,6 +1761,7 @@ propertynotify(XEvent *e)
 		}
 		if (ev->atom == XA_WM_NAME || ev->atom == netatom[NetWMName]) {
 			updatetitle(c);
+			updaterules(c);
 			if (c == c->mon->sel)
 				drawbar(c->mon);
 		}
@@ -2726,6 +2733,15 @@ updatestatus(void)
 	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
 		strcpy(stext, "dwm-"VERSION);
 	drawbar(selmon);
+}
+
+void
+updaterules(Client *c)
+{
+	if (!applyrules(c))
+		return;
+	sametagapply(c);
+	arrange(NULL);
 }
 
 void
