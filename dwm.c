@@ -193,11 +193,11 @@ static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interac
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
-static void attachabove(Client *c);
-static void attachaside(Client *c);
-static void attachbelow(Client *c);
-static void attachbottom(Client *c);
-static void attachtop(Client *c);
+static void attachabove(Client *c) __attribute__((unused));
+static void attachaside(Client *c) __attribute__((unused));
+static void attachbelow(Client *c) __attribute__((unused));
+static void attachbottom(Client *c) __attribute__((unused));
+static void attachtop(Client *c) __attribute__((unused));
 static void attachstack(Client *c);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
@@ -568,8 +568,6 @@ attach(Client *c)
 	c->mon->clients = c;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 void
 attachabove(Client *c)
 {
@@ -636,7 +634,6 @@ attachtop(Client *c)
 	else
 		c->mon->clients = c;
 }
-#pragma GCC diagnostic push
 
 void
 attachstack(Client *c)
