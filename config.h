@@ -301,7 +301,7 @@ static Key keys[] = {
     { Mod,              XK_s,           switchcol,      {0} },
     { Mod,              XK_space,       zoom,           {0} },
     { ModShift,         XK_space,       transfer,       {0} },
-    { Mod,              XK_u,           view,           {0} },
+    { Mod,              XK_Tab,         view,           {0} },
     { Mod,              XK_u,           gotourgent,     {0} },
     { Mod,              XK_w,           killclient,     {0} },
     { ModCtrl,          XK_b,           togglebar,      {0} },
