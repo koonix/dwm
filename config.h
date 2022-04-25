@@ -241,8 +241,6 @@ static const char *cycle[] = { "pacycle", NULL };
  * - audio and music related bindings start with super+alt
  * - layout bindigns start with super+control
  * - most bindings that have a similar function only differ in the shift key */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
 static Key keys[] = {
   /*  modifier          key             function        argument */
     { Mod,              XK_p,           spawn,          CMD("gimme", "-m") },
@@ -307,14 +305,14 @@ static Key keys[] = {
     { ModCtrl,          XK_b,           togglebar,      {0} },
     { Mod,              XK_f,           togglefullscr,  {0} },
     { Mod,              XK_o,           gototag,        {0} },
-    { ModCtrl,          XK_t,           setlayout,      {.v = tile } },
-    { ModCtrl,          XK_d,           setlayout,      {.v = stairs } },
-    { ModCtrl,          XK_f,           setlayout,      {.v = monocle } },
-    { ModCtrl,          XK_g,           setlayout,      {.v = gaplessgrid } },
-    { ModCtrl,          XK_c,           setlayout,      {.v = centeredmaster } },
-    { ModCtrlShift,     XK_c,           setlayout,      {.v = centeredfloatingmaster } },
-    { ModCtrl,          XK_a,           setlayout,      {.v = bstack } },
-    { ModCtrl,          XK_x,           setlayout,      {.v = dwindle } },
+    { ModCtrl,          XK_t,           setlayout,      {.l = tile } },
+    { ModCtrl,          XK_d,           setlayout,      {.l = stairs } },
+    { ModCtrl,          XK_f,           setlayout,      {.l = monocle } },
+    { ModCtrl,          XK_g,           setlayout,      {.l = gaplessgrid } },
+    { ModCtrl,          XK_c,           setlayout,      {.l = centeredmaster } },
+    { ModCtrlShift,     XK_c,           setlayout,      {.l = centeredfloatingmaster } },
+    { ModCtrl,          XK_a,           setlayout,      {.l = bstack } },
+    { ModCtrl,          XK_x,           setlayout,      {.l = dwindle } },
   /* KP( ModCtrl,                      KP_JK,     incnmaster,  {.i = +1 }, {.i = -1} ), */
   KP( AltCtrl,          KP_JK,          spawn,          KEY("j", "Down"),    KEY("k", "Up") ),
   KP( AltCtrl,          KP_HL,          spawn,          KEY("h", "Left"),    KEY("l", "Right") ),
@@ -327,7 +325,7 @@ static Key keys[] = {
 
     { ModShift,         XK_f,           togglefloating, {0} },
     { Mod,              XK_0,           view,           {.ui = ~0 } },
-    { Mod,              XK_0,           setlayout,      {.v = gaplessgrid } },
+    { Mod,              XK_0,           setlayout,      {.l = gaplessgrid } },
     { ModShift,         XK_0,           tag,            {.ui = ~0 } },
 
   KP( Mod,              KP_COMMAPERIOD, focusmon,       {.i = +1}, {.i = -1}),
@@ -360,8 +358,8 @@ static Key keys[] = {
 static Button buttons[] = {
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,      0,      Button1,    setlayout,      {0} },
-	{ ClkLtSymbol,      0,      Button2,    setlayout,      {.v = tile } },
-	{ ClkLtSymbol,      0,      Button3,    setlayout,      {.v = stairs } },
+	{ ClkLtSymbol,      0,      Button2,    setlayout,      {.l = tile } },
+	{ ClkLtSymbol,      0,      Button3,    setlayout,      {.l = stairs } },
 	{ ClkWinTitle,      0,      Button2,    zoom,           {0} },
 	{ ClkStatusText,    0,      Button2,    spawn,          CMD(TERM) },
 	{ ClkClientWin,     Mod,    Button1,    movemouse,      {0} },
@@ -384,6 +382,5 @@ static Button buttons[] = {
 	ROOTSCROLL( ModAlt,     setcfact,         {.f = +0.25},  {.f = -0.25} ), /* super+alt+scroll:      change cfact */
 	ROOTCLICK(  ModAlt,     setcfact,         {.f = 0.00} ),                 /* super+alt+click:       reset cfact */
 };
-#pragma GCC diagnostic pop
 
 // vim:noexpandtab

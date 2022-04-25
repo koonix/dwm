@@ -84,10 +84,12 @@ enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms *
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast, ClkClientSymbol }; /* clicks */
 
+typedef struct Monitor Monitor;
 typedef union {
 	int i;
 	unsigned int ui;
 	float f;
+	void (*l)(Monitor *m);
 	const void *v;
 } Arg;
 
@@ -99,7 +101,6 @@ typedef struct {
 	const Arg arg;
 } Button;
 
-typedef struct Monitor Monitor;
 typedef struct Client Client;
 struct Client {
 	char name[256];
@@ -555,10 +556,7 @@ arrange(Monitor *m)
 void
 arrangemon(Monitor *m)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
 	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
-#pragma GCC diagnostic pop
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 }
@@ -2145,23 +2143,17 @@ void
 setlayout(const Arg *arg)
 {
 	const Layout *lt = NULL;
-	if (arg && arg->v) {
+	if (arg && arg->l) {
 		int n;
 		int nlayouts = sizeof(layouts) / sizeof(layouts[1]);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-		for (n = 0; n < nlayouts && layouts[n].arrange != arg->v; n++);
-#pragma GCC diagnostic pop
+		for (n = 0; n < nlayouts && layouts[n].arrange != arg->l; n++);
 		lt = &layouts[n];
 	}
-	if (!arg || !arg->v || lt != selmon->lt[selmon->sellt])
+	if (!arg || !arg->l || lt != selmon->lt[selmon->sellt])
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag] ^= 1;
-	if (arg && arg->v)
+	if (arg && arg->l)
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt] = lt;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
 	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
-#pragma GCC diagnostic pop
 	if (selmon->sel)
 		arrange(selmon);
 	else
