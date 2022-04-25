@@ -684,6 +684,7 @@ unswallow(Client *c)
 	c->swallowing = NULL;
 
 	updatetitle(c);
+	updaterules(c);
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
 	XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
