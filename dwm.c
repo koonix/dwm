@@ -1181,7 +1181,7 @@ drawbar(Monitor *m)
 	for (i = 0; i < LENGTH(tags); i++) {
 		/* do not draw vacant tags */
 		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
-		continue;
+			continue;
 
 		indn = 0;
 		w = TEXTW(tags[i]);
@@ -2293,7 +2293,6 @@ setviewport(void){
 	                32, PropModeReplace, (unsigned char *)data, 2);
 }
 
-
 void
 seturgent(Client *c, int urg)
 {
@@ -2448,7 +2447,7 @@ void
 togglefullscr(const Arg *arg)
 {
 	if (selmon->sel)
-	setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
+		setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
 }
 
 void
