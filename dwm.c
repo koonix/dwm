@@ -120,7 +120,7 @@ struct Client {
 	Window win;
 	unsigned char xkblayout;
 	Client *sametagnext;
-	unsigned int sametagid, parentsametagid;
+	unsigned int sametagid, sametagchildof;
 };
 
 typedef struct {
@@ -170,7 +170,7 @@ typedef struct {
 	int isfloating;
 	int blockinput;
 	unsigned int sametagid;
-	unsigned int parentsametagid;
+	unsigned int sametagchildof;
 	int isterminal;
 	int noswallow;
 	int monitor;
@@ -182,6 +182,7 @@ static void applyfribidi(char *str);
 static int applyrules(Client *c);
 static void sametagapply(Client *c);
 static void sametagcleanup(Client *c);
+static int sametagisattached(Client *c);
 static void sametagattach(Client *c);
 static void sametagdetach(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
@@ -401,7 +402,7 @@ applyrules(Client *c)
 		{
 			found = 1;
 			c->sametagid       = r->sametagid;
-			c->parentsametagid = r->parentsametagid;
+			c->sametagchildof = r->sametagchildof;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
@@ -425,14 +426,15 @@ void
 sametagapply(Client *c)
 {
 	const Client *p = NULL;
-	if (c->parentsametagid && (p = sametagstacks[c->parentsametagid])) {
+	if (c->sametagchildof && (p = sametagstacks[c->sametagchildof])) {
 		c->tags = p->tags;
 		c->mon  = p->mon;
 		if (!ISVISIBLE(c))
 			seturgent(c, 1);
 	}
 	if (c->sametagid) {
-		sametagattach(c);
+		if (!sametagisattached(c))
+			sametagattach(c);
 	}
 }
 
@@ -441,6 +443,14 @@ sametagcleanup(Client *c)
 {
 	if (c->sametagid)
 		sametagdetach(c);
+}
+
+int
+sametagisattached(Client *c)
+{
+	Client *i;
+	for (i = sametagstacks[c->sametagid]; i && i != c; i = i->sametagnext);
+	return i ? 1 : 0;
 }
 
 void
@@ -1488,7 +1498,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->tags = 0;
 	c->isfloating = 0;
 	c->isfullscreen = 0;
-	c->sametagid  = c->parentsametagid = 0;
+	c->sametagid  = c->sametagchildof = 0;
 	c->blockinput = blockinputmsec;
 	c->xkblayout  = xkblayout;
 
