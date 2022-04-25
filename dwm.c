@@ -82,7 +82,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
 	   NetNumberOfDesktops, NetCurrentDesktop, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
-       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+       ClkClientWin, ClkRootWin, ClkLast, ClkClientSymbol }; /* clicks */
 
 typedef union {
 	int i;
@@ -121,6 +121,7 @@ struct Client {
 	unsigned char xkblayout;
 	Client *sametagnext;
 	unsigned int sametagid, sametagchildof;
+	char *symbol;
 };
 
 typedef struct {
@@ -174,12 +175,14 @@ typedef struct {
 	int isterminal;
 	int noswallow;
 	int monitor;
+	char *symbol;
 } Rule;
 
 /* function declarations */
 static void gotourgent(const Arg *arg);
 static void applyfribidi(char *str);
 static int applyrules(Client *c);
+static void updateclientsymbol(Client *c);
 static void sametagapply(Client *c);
 static void sametagcleanup(Client *c);
 static int sametagisattached(Client *c);
@@ -407,6 +410,7 @@ applyrules(Client *c)
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
+			c->symbol = r->symbol;
 			c->tags |= r->tags;
 			if (!c->isfullscreen)
 				c->isfloating = r->isfloating;
@@ -666,6 +670,9 @@ swallow(Client *p, Client *c)
 	Window w = p->win;
 	p->win = c->win;
 	c->win = w;
+	char *s = p->symbol;
+	p->symbol = c->symbol;
+	c->symbol = s;
 	updatetitle(p);
 	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
 	arrange(p->mon);
@@ -678,7 +685,7 @@ void
 unswallow(Client *c)
 {
 	c->win = c->swallowing->win;
-
+	c->symbol = c->swallowing->symbol;
 	setfullscreen(c->swallowing, c->isfullscreen);
 	free(c->swallowing);
 	c->swallowing = NULL;
@@ -700,6 +707,7 @@ buttonpress(XEvent *e)
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
+	char *symbol;
 
 	click = ClkRootWin;
 	/* focus monitor if necessary */
@@ -721,12 +729,31 @@ buttonpress(XEvent *e)
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else if (ev->x < x + blw)
-			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - (int)TEXTW(stext))
-			click = ClkStatusText;
-		else
-			click = ClkWinTitle;
+		} else {
+			i = 1;
+			if (m->lt[m->sellt]->arrange == monocle || m->lt[m->sellt]->arrange == stairs) {
+				c = m->clients;
+				do {
+					if (!c || c->isfloating || !ISVISIBLE(c))
+						continue;
+					symbol = c->isurgent ? "!" : c->symbol ? c->symbol : "*";
+					x += drw_fontset_getwidth(drw, symbol) + lrpad / 1.5;
+				} while ((ev->x >= x || (i = 0)) && c && (c = c->next));
+			}
+			if (i == 0) {
+				if (ev->button == Button1) {
+					focus(c);
+					restack(selmon);
+				}
+				click = ClkClientSymbol;
+			}
+			else if (ev->x < x + blw)
+				click = ClkLtSymbol;
+			else if (ev->x > selmon->ww - (int)TEXTW(stext))
+				click = ClkStatusText;
+			else
+				click = ClkWinTitle;
+		}
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
@@ -1132,9 +1159,8 @@ drawbar(Monitor *m)
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
-	unsigned int n;
-	char indi[32];
 	Client *c;
+	char *symbol;
 
 	if (!m->showbar)
 		return;
@@ -1170,15 +1196,15 @@ drawbar(Monitor *m)
 		x += w;
 	}
 
-	if (m->lt[m->sellt]->arrange == monocle) {
-		for (c = m->clients, n = 0; c && n < sizeof(indi); c = c->next)
-			if (ISVISIBLE(c))
-				indi[n++] = c == m->sel ? 'O' : '*';
-		indi[n] = '\0';
-		if (n > 0) {
-			w = blw = TEXTW(indi);
-			drw_setscheme(drw, scheme[SchemeNorm]);
-			x = drw_text(drw, x, 0, w, bh, lrpad / 2, indi, 0);
+	if (m->lt[m->sellt]->arrange == monocle || m->lt[m->sellt]->arrange == stairs) {
+		for (c = m->clients; c; c = c->next) {
+			if (c->isfloating || !ISVISIBLE(c))
+				continue;
+			symbol = c->isurgent ? "!" : c->symbol ? c->symbol : "*";
+			w = drw_fontset_getwidth(drw, symbol) + lrpad / 1.5;
+			drw_setscheme(drw, scheme[c == m->sel ? SchemeSel : SchemeNorm]);
+			drw_text(drw, x, 0, w, bh, lrpad / 3, symbol, 0);
+			x += w;
 		}
 	}
 
