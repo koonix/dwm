@@ -217,6 +217,7 @@ static void focus(Client *c);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
+static void focusstacktiled(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
@@ -1312,6 +1313,26 @@ focusstack(const Arg *arg)
 			for (; i; i = i->next)
 				if (ISVISIBLE(i))
 					c = i;
+	}
+	if (c) {
+		focus(c);
+		restack(selmon);
+	}
+}
+
+void
+focusstacktiled(const Arg *arg)
+{
+	Client *c = NULL;
+
+	if (!selmon->sel || (selmon->sel->isfullscreen && lockfullscreen))
+		return;
+	if (arg->i > 0) {
+		if (!(c = nexttiled(selmon->sel->next)))
+			c = nexttiled(selmon->clients);
+	} else {
+		if (!(c = prevtiled(selmon->sel)))
+			c = prevtiled(NULL);
 	}
 	if (c) {
 		focus(c);
