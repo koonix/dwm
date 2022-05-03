@@ -9,8 +9,6 @@ this is my build of dwm, the tiling window manager:
 
 - [swallow](https://dwm.suckless.org/patches/swallow)
 
-- [pertag](https://dwm.suckless.org/patches/pertag)
-
 - [sametagrule](https://github.com/soystemd/dwm/commit/fb1e103)
 
 - [blockinputrule](https://github.com/soystemd/dwm/compare/36f4be5...b4d681d)
@@ -29,8 +27,6 @@ this is my build of dwm, the tiling window manager:
 
 - [urgentborder](https://dwm.suckless.org/patches/urgentborder)
 
-- [winview](https://dwm.suckless.org/patches/winview)
-
 - [ewmhtags](https://dwm.suckless.org/patches/ewmhtags)
 
 - [NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
@@ -39,11 +35,9 @@ this is my build of dwm, the tiling window manager:
 
 - [status2d + swap-save-restore](https://dwm.suckless.org/patches/status2d)
 
-- [vanitygaps-cfacts](https://dwm.suckless.org/patches/vanitygaps)
-
 - [titlecolor](https://dwm.suckless.org/patches/titlecolor)
 
-- the stairs layout
+- [stairs](https://dwm.suckless.org/patches/stairs)
 
 ## requires libxft-bgra
 

@@ -5,22 +5,28 @@
 #define TERMCLASS "st-256color"
 
 /* appearance */
-static const unsigned int stairpx   = 50;       /* depth of stairs layout */
-static const unsigned int borderpx  = 6;        /* border pixel of windows */
-static const unsigned int snap      = 20;       /* snap pixel */
-static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
-static const unsigned int gappih    = 20;       /* horiz inner gap between windows */
-static const unsigned int gappiv    = 20;       /* vert inner gap between windows */
-static const unsigned int gappoh    = 20;       /* horiz outer gap between windows and screen edge */
-static const unsigned int gappov    = 20;       /* vert outer gap between windows and screen edge */
-static       int smartgaps          = 0;        /* 1 means no outer gap when there is only one window */
-static const int showbar            = 1;        /* 0 means no bar */
-static const int topbar             = 1;        /* 0 means bottom bar */
-static const unsigned char xkblayout = 0;       /* the default keyboard layout number (starts from 0) */
+static const unsigned int borderpx   = 3;   /* border pixel of windows */
+static const unsigned int gappx      = 10;  /* gaps between windows */
+static const unsigned int snap       = 32;  /* snap pixel */
+static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
+static const int nmaster             = 0;   /* number of clients in master area */
+static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
+static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
+static const int showbar             = 1;   /* 0 means no bar */
+static const int topbar              = 1;   /* 0 means bottom bar */
+static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
+static const unsigned int stairpx    = 40;  /* depth of the stairs layout */
+static const int stairsdirection     = 1;   /* 0: left-aligned, 1: right-aligned */
+static const int stairssamesize      = 0;   /* 1 means shrink all the staired windows to the same size */
+static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
 
 /* the default input block time of new windows (in milliseconds).
  * see the rules below for explanation. */
 static const unsigned int blockinputmsec = 500;
+
+/* show clientsymbols only in these layouts.
+ * to show on all layouts, set the first element to NULL. */
+static void (*clientsymbollts[])(Monitor *) = { monocle };
 
 /* fonts */
 static const char *fonts[] = {
@@ -36,13 +42,14 @@ static const char col_bg[]         = "#000000";
 static const char col_normfg[]     = "#555555";
 static const char col_normborder[] = "#333333";
 static const char col_selfg[]      = "#bfbfbf";
-static const char col_selborder[]  = "#a8a8a8";
+static const char col_selborder[]  = "#ffffff";
 static const char col_titlefg[]    = "#9d9d9d";
 static const char col_urgborder[]  = "#ff0000";
 static const char col_status[]     = "#9d9d9d";
+/* static const char col_selborder[]  = "#a8a8a8"; */
 
-static const char *colors[][4]      = {
-	/*               fg        bg   border    */
+static const char *colors[][4] = {
+	/*                fg           bg       border         */
 	[SchemeNorm]  = { col_normfg,  col_bg,  col_normborder },
 	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  },
 	[SchemeTitle] = { col_titlefg, col_bg,  col_null       },
@@ -54,6 +61,15 @@ static const char *statuscolors[] = { col_normfg, col_status };
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+
+/* layout array. first entry is default. */
+static const Layout layouts[] = {
+	/* symbol     arrange function */
+	{ "[S]",      stairs },
+	{ "[]=",      tile },
+	{ "[M]",      monocle },
+	{ "><>",      NULL },    /* no layout function means floating behavior */
+};
 
 /* helper macros for rules */
 #define SYMBOL(c, s)     { c, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, -1, s }
@@ -97,14 +113,8 @@ static const Rule rules[] = {
 	TSYMBOL("pulsemixer", "蓼"),     TSYMBOL("aria2p", ""),         TSYMBOL("tremc", ""),
 	TSYMBOL("man", "ﲉ"),
 	SYMBOL("TelegramDesktop", ""),  SYMBOL("mpv", ""),             SYMBOL("Zathura", ""),
-	SYMBOL("Foliate", ""),          SYMBOL("Sxiv", ""),
+	SYMBOL("Foliate", ""),          SYMBOL("Sxiv", ""),            SYMBOL("TeamSpeak", ""),
 };
-
-/* layout(s) */
-static const float mfact        = 0.5;  /* factor of master area size [0.05..0.95] */
-static const int nmaster        = 1;    /* number of clients in master area */
-static const int resizehints    = 1;    /* 1 means respect size hints in tiled resizals */
-static const int lockfullscreen = 0;    /* 1 will force focus on the fullscreen window */
 
 /* hint for attachdirection
  * attach:
@@ -127,29 +137,9 @@ static const int lockfullscreen = 0;    /* 1 will force focus on the fullscreen 
  *   in case of nmaster = 1 feels like attachaside. */
 static void (*attachdirection)(Client *c) = attachbelow;
 
-#define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
-#include "vanitygaps.c"
-
-/* layout array. first entry is default. */
-static const Layout layouts[] = {
-	/* symbol     arrange function */
-	{ "[]=",      tile },
-	{ "H==",      stairs },
-	{ "[M]",      monocle },
-	{ ":::",      gaplessgrid },
-	{ "|M|",      centeredmaster },
-	{ ">M>",      centeredfloatingmaster },
-	{ "TTT",      bstack },
-	{ "[\\]",     dwindle },
-	{ "[@]",      spiral },
-	{ "H[]",      deck },
-	{ "HHH",      grid },
-	{ "###",      nrowgrid },
-	{ "---",      horizgrid },
-	{ "===",      bstackhoriz },
-	{ "><>",      NULL },    /* no layout function means floating behavior */
-	{ NULL,       NULL },
-};
+/* ======== */
+/* = KEYS = */
+/* ======== */
 
 /* key definitions */
 #define Mod           Mod4Mask
@@ -180,10 +170,10 @@ static const Layout layouts[] = {
 #define KP_BRIGHTNESS    XF86XK_MonBrightnessDown, XF86XK_MonBrightnessUp
 
 #define TAGKEYS(KEY,TAG) \
-	{ Mod,              KEY,      view,           {.ui = 1 << TAG} }, \
-	{ ModCtrl,          KEY,      toggleview,     {.ui = 1 << TAG} }, \
-	{ ModShift,         KEY,      tag,            {.ui = 1 << TAG} }, \
-	{ ModCtrlShift,     KEY,      toggletag,      {.ui = 1 << TAG} }
+	{ Mod,              KEY,    view,           {.ui = 1 << TAG} }, \
+	{ ModCtrl,          KEY,    toggleview,     {.ui = 1 << TAG} }, \
+	{ ModShift,         KEY,    tag,            {.ui = 1 << TAG} }, \
+	{ ModCtrlShift,     KEY,    toggletag,      {.ui = 1 << TAG} }
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
@@ -195,21 +185,19 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 
-/* audio */
+/* audio and media */
 #define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
 #define VOLDEC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-d", #n, NULL } }
 #define MPCVOL(n) { .v = (const char*[]){ "mpc", "volume", #n, NULL } }
 static const char *mute[] = { "pamixer", "-t", NULL };
 static const char *cycle[] = { "pacycle", NULL };
-/**/
-#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
-"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
-"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { " \
-"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
-"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
-/**/
 
-/* media */
+#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
+	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
+	"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { " \
+	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
+	"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+
 #define MEDIA_PLAYPAUSE \
 	SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
 	"-f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
@@ -235,8 +223,7 @@ static const char *cycle[] = { "pacycle", NULL };
 #define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define KEY(a, ...) { .v = (const char*[]){ "xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__, NULL } }
-#define KEYREP(a, b) KEY(a, b,b,b,b,b,b,b,b,b,b)
-#define TERMINCWD SHCMD("d=$(xcwd) && cd \"$d\" && " TERM)
+#define TERMINCWD SHCMD("cd \"$(xcwd)\" && " TERM)
 
 /* binding logic:
  * - audio and music related bindings start with super+alt
@@ -254,13 +241,13 @@ static Key keys[] = {
     { ControlMask,      XK_space,       spawn,          CMD("dunstctl", "close") },
     { ControlMask,      XK_grave,       spawn,          CMD("dunstctl", "history-pop") },
     { CtrlShift,        XK_period,      spawn,          CMD("dunstctl", "context") },
-    { Mod,              XK_c,           spawn,          TUI("calc") },
     { Mod,              XK_v,           spawn,          SHTUI("exec ${EDITOR:-nvim}") },
     { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
     { ModShift,         XK_e,           spawn,          CMD("sysact", "sleep") },
-    { Mod,              XK_i,           spawn,          CMD("bm", "-m") },
-    { ModShift,         XK_i,           spawn,          CMD("cwds") },
+    { Mod,              XK_i,           spawn,          CMD("freq", "--menu") },
+    { ModShift,         XK_i,           spawn,          CMD("bm", "-m") },
+    { ModCtrl,          XK_i,           spawn,          CMD("cwds") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
     { ModAlt,           XK_F4,          quit,           {0} },
 
@@ -295,9 +282,7 @@ static Key keys[] = {
   KP( Mod,              KP_JK,          focusstack,     {.i = +1 },    {.i = -1} ),
   KP( ModShift,         KP_JK,          push,           {.i = +1 },    {.i = -1} ),
   KP( Mod,              KP_HL,          setmfact,       {.f = -0.05 }, {.f = +0.05 } ),
-  KP( Mod,              KP_HL,          setcfact,       {.f = -0.25 }, {.f = +0.25 } ),
-    { ModShift,         XK_o,           setcfact,       {.f =  0.00 } },
-    { Mod,              XK_s,           switchcol,      {0} },
+    { Mod,              XK_c,           switchcol,      {0} },
     { Mod,              XK_space,       zoom,           {0} },
     { ModShift,         XK_space,       transfer,       {0} },
     { Mod,              XK_Tab,         view,           {0} },
@@ -305,32 +290,17 @@ static Key keys[] = {
     { Mod,              XK_w,           killclient,     {0} },
     { ModCtrl,          XK_b,           togglebar,      {0} },
     { Mod,              XK_f,           togglefullscr,  {0} },
-    { Mod,              XK_o,           gototag,        {0} },
     { ModCtrl,          XK_t,           setlayout,      {.l = tile } },
-    { ModCtrl,          XK_d,           setlayout,      {.l = stairs } },
-    { ModCtrl,          XK_f,           setlayout,      {.l = monocle } },
-    { ModCtrl,          XK_g,           setlayout,      {.l = gaplessgrid } },
-    { ModCtrl,          XK_c,           setlayout,      {.l = centeredmaster } },
-    { ModCtrlShift,     XK_c,           setlayout,      {.l = centeredfloatingmaster } },
-    { ModCtrl,          XK_a,           setlayout,      {.l = bstack } },
-    { ModCtrl,          XK_x,           setlayout,      {.l = dwindle } },
-  /* KP( ModCtrl,                      KP_JK,     incnmaster,  {.i = +1 }, {.i = -1} ), */
-  KP( AltCtrl,          KP_JK,          spawn,          KEY("j", "Down"),    KEY("k", "Up") ),
-  KP( AltCtrl,          KP_HL,          spawn,          KEY("h", "Left"),    KEY("l", "Right") ),
-  KP( AltCtrlShift,     KP_JK,          spawn,          KEYREP("j", "Down"), KEYREP("k", "Up") ),
-  KP( AltCtrlShift,     KP_HL,          spawn,          KEYREP("h", "Left"), KEYREP("l", "Right") ),
-    { AltCtrl,          XK_g,           spawn,          KEY("g", "Home") },
-    { AltCtrlShift,     XK_g,           spawn,          KEY("g", "End") },
-    { AltCtrl,          XK_b,           spawn,          KEY("b", "Page_Up") },
-    { AltCtrl,          XK_f,           spawn,          KEY("f", "Page_Down") },
+    { Mod,              XK_m,           setlayout,      {.l = monocle } },
+    { Mod,              XK_s,           setlayout,      {.l = stairs } },
+  KP( ModCtrl,          KP_JK,          incnmaster,     {.i = -1 }, {.i = +1} ),
 
     { ModShift,         XK_f,           togglefloating, {0} },
     { Mod,              XK_0,           view,           {.ui = ~0 } },
-    { Mod,              XK_0,           setlayout,      {.l = gaplessgrid } },
     { ModShift,         XK_0,           tag,            {.ui = ~0 } },
 
-  KP( Mod,              KP_COMMAPERIOD, focusmon,       {.i = +1}, {.i = -1}),
-  KP( ModShift,         KP_COMMAPERIOD, tagmon,         {.i = +1}, {.i = -1}),
+  KP( Mod,              KP_COMMAPERIOD, focusmon,       {.i = +1}, {.i = -1} ),
+  KP( ModShift,         KP_COMMAPERIOD, tagmon,         {.i = +1}, {.i = -1} ),
 
     { Mod,              XK_comma,       focusmon,       {.i = -1 } },
     { Mod,              XK_period,      focusmon,       {.i = +1 } },
@@ -380,8 +350,6 @@ static Button buttons[] = {
 	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
 	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
 	ROOTSCROLL( ModCtrl,    setmfact,         {.f = +0.05},  {.f = -0.05} ), /* super+control+scroll:  change mfact */
-	ROOTSCROLL( ModAlt,     setcfact,         {.f = +0.25},  {.f = -0.25} ), /* super+alt+scroll:      change cfact */
-	ROOTCLICK(  ModAlt,     setcfact,         {.f = 0.00} ),                 /* super+alt+click:       reset cfact */
 };
 
 // vim:noexpandtab
