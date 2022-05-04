@@ -33,7 +33,6 @@ static const char *fonts[] = {
 	"peep:size=12",
 	"Vazirmatn NL:size=10",
 	"Symbols Nerd Font:size=10",
-	"JoyPixels:size=16",
 };
 
 /* colors */
@@ -46,7 +45,6 @@ static const char col_selborder[]  = "#ffffff";
 static const char col_titlefg[]    = "#9d9d9d";
 static const char col_urgborder[]  = "#ff0000";
 static const char col_status[]     = "#9d9d9d";
-/* static const char col_selborder[]  = "#a8a8a8"; */
 
 static const char *colors[][4] = {
 	/*                fg           bg       border         */
