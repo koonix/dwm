@@ -1,6 +1,6 @@
 # dwm
 
-this is my build of dwm, the tiling window manager:
+this is my build of dwm, a tiling window manager:
 [dwm.suckless.org](https://dwm.suckless.org)
 
 ![screenshot](sc.jpg)
@@ -38,14 +38,6 @@ this is my build of dwm, the tiling window manager:
 - [titlecolor](https://dwm.suckless.org/patches/titlecolor)
 
 - [stairs](https://dwm.suckless.org/patches/stairs)
-
-## requires libxft-bgra
-
-This build of dwm does not block color emoji in the status/info bar,
-so you must install libxft-bgra from the AUR,
-which fixes a libxft color emoji rendering problem,
-otherwise dwm will crash upon trying to render one.
-Hopefully this fix will be in all libxft soon enough.
 
 ## related stuff
 
