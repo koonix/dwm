@@ -269,10 +269,10 @@ static Key keys[] = {
     { 0,        XF86XK_AudioPrev,       spawn,          MEDIA_PREV },
     { 0,        XF86XK_AudioNext,       spawn,          MEDIA_NEXT },
 
-  KP( 0,                KP_BRIGHTNESS,  spawn,          LIGHTINC(10), LIGHTDEC(10) ),
-  KP( ShiftMask,        KP_BRIGHTNESS,  spawn,          LIGHTINC(1),  LIGHTDEC(1)  ),
-  KP( Mod,              KP_BRACKET,     spawn,          LIGHTINC(10), LIGHTDEC(10) ),
-  KP( ModShift,         KP_BRACKET,     spawn,          LIGHTINC(1),  LIGHTDEC(1)  ),
+  KP( 0,                KP_BRIGHTNESS,  spawn,          LIGHTDEC(10), LIGHTINC(10) ),
+  KP( ShiftMask,        KP_BRIGHTNESS,  spawn,          LIGHTDEC(1),  LIGHTINC(1)  ),
+  KP( Mod,              KP_BRACKET,     spawn,          LIGHTDEC(10), LIGHTINC(10) ),
+  KP( ModShift,         KP_BRACKET,     spawn,          LIGHTDEC(1),  LIGHTINC(1)  ),
 
     { Mod,              XK_r,           spawn,          CMD("pipeurl", "-c", "ask") },
     { ModShift,         XK_r,           spawn,          CMD("pipeurl", "history") },
