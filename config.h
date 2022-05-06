@@ -26,7 +26,7 @@ static const int nmasterbias = 1;
 
 /* the default input block time of new windows (in milliseconds).
  * see the rules below for explanation. */
-static const unsigned int blockinputmsec = 500;
+static const unsigned int blockinputmsec = 1000;
 
 /* show clientsymbols only in these layouts.
  * to show on all layouts, set the first element to NULL. */
