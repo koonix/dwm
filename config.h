@@ -20,6 +20,10 @@ static const int stairsdirection     = 1;   /* 0: left-aligned, 1: right-aligned
 static const int stairssamesize      = 0;   /* 1 means shrink all the staired windows to the same size */
 static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
 
+/* if nmaster is bigger than this number, killing a focused master
+ * will decrease nmaster by 1. set to a negative value to disable. */
+static const int nmasterbias = 1;
+
 /* the default input block time of new windows (in milliseconds).
  * see the rules below for explanation. */
 static const unsigned int blockinputmsec = 500;

@@ -2461,7 +2461,7 @@ unmanage(Client *c, int destroyed)
 		return;
 	}
 
-	if (c == selmon->sel) {
+	if (nmasterbias > 0 && c == selmon->sel && selmon->nmaster > nmasterbias) {
 		for (i = 0, t = nexttiled(m->clients); t && t != c; t = nexttiled(t->next), i++);
 		if (i < m->nmaster)
 		selmon->nmaster = MAX(selmon->nmaster - 1, 0);
