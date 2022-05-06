@@ -9,7 +9,7 @@ static const unsigned int borderpx   = 3;   /* border pixel of windows */
 static const unsigned int gappx      = 10;  /* gaps between windows */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
-static const int nmaster             = 0;   /* number of clients in master area */
+static const int nmaster             = 1;   /* number of clients in master area */
 static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
 static const int showbar             = 1;   /* 0 means no bar */
@@ -67,9 +67,9 @@ static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "[S]",      stairs },
 	{ "[]=",      tile },
 	{ "[M]",      monocle },
+	{ "[S]",      stairs },
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 };
 
