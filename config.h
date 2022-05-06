@@ -243,9 +243,7 @@ static Key keys[] = {
     { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
     { ModShift,         XK_e,           spawn,          CMD("sysact", "sleep") },
-    { Mod,              XK_i,           spawn,          CMD("freq", "--menu") },
-    { ModShift,         XK_i,           spawn,          CMD("bm", "-m") },
-    { ModCtrl,          XK_i,           spawn,          CMD("cwds") },
+    { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
     { ModAlt,           XK_F4,          quit,           {0} },
 
