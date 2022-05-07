@@ -247,7 +247,7 @@ static Key keys[] = {
     { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
     { ModShift,         XK_e,           spawn,          CMD("sysact", "sleep") },
-    { Mod,              XK_o,           spawn,          CMD("freq", "-m") },
+    { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
     { ModAlt,           XK_F4,          quit,           {0} },
 
@@ -292,7 +292,7 @@ static Key keys[] = {
     { Mod,              XK_f,           togglefullscr,  {0} },
     { Mod,              XK_n,           setlayout,      {.l = tile } },
     { Mod,              XK_m,           setlayout,      {.l = monocle } },
-    { Mod,              XK_i,           setlayout,      {.l = stairs } },
+    { Mod,              XK_semicolon,   setlayout,      {.l = stairs } },
   KP( ModCtrl,          KP_JK,          incnmaster,     {.i = -1 }, {.i = +1} ),
 
     { ModShift,         XK_f,           togglefloating, {0} },
