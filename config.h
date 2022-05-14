@@ -233,7 +233,7 @@ static const char *cycle[] = { "pacycle", NULL };
  * - most bindings that have a similar function only differ in the shift key */
 static Key keys[] = {
   /*  modifier          key             function        argument */
-    { Mod,              XK_p,           spawn,          CMD("gimme", "-m") },
+    { Mod,              XK_p,           spawn,          CMD("stuff", "-m") },
     { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
     { ModShift,         XK_t,           spawn,          TERMINCWD },
