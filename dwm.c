@@ -72,6 +72,7 @@
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define ColFloat                3
 #define NSECPERMSEC             1000000L
+#define MSECPERSEC              1000
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -605,7 +606,10 @@ blockinput(Window w, int msec)
 	if (signal(SIGUSR1, unblockinput) == SIG_ERR)
 		die("can't install SIGUSR1 handler:");
 	if (fork() == 0) {
-		struct timespec sleep = {.tv_sec = 0, .tv_nsec = msec * NSECPERMSEC};
+		struct timespec sleep = {
+			.tv_sec = (int)(msec / MSECPERSEC),
+			.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
+		};
 		nanosleep(&sleep, NULL);
 		kill(ppid, SIGUSR1);
 		exit(EXIT_SUCCESS);
@@ -1530,7 +1534,7 @@ manage(Window w, XWindowAttributes *wa)
 	updateclientdesktop(c);
 
 	if (c->blockinput && ISVISIBLE(c))
-		blockinput(w, c->blockinput);
+		blockinput(c->win, c->blockinput);
 
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);

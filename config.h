@@ -74,7 +74,7 @@ static const Layout layouts[] = {
 };
 
 /* helper macros for rules */
-#define SYMBOL(c, s)     { c, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, -1, s }
+#define SYMBOL(c, s)     { c, NULL, NULL, 0, 0, -1, 0, 0, 0, 0, -1, s }
 #define TSYMBOL(t, s) { TERMCLASS, NULL, t, 0, 0, 0, 0, 0, 1, 0, -1, s }
 
 /* hint for rules
