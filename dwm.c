@@ -2311,14 +2311,6 @@ switchcol(const Arg *arg)
 }
 
 void
-notif(int n)
-{
-	char text[32];
-	sprintf(text, "notify-send -t 800 %d", n);
-	system(text);
-}
-
-void
 tag(const Arg *arg)
 {
 	if (selmon->sel && arg->ui & TAGMASK) {
