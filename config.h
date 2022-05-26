@@ -278,6 +278,7 @@ static Key keys[] = {
 
     { Mod,              XK_r,           spawn,          CMD("pipeurl", "-c", "ask") },
     { ModShift,         XK_r,           spawn,          CMD("pipeurl", "history") },
+    { Mod,              XK_y,           spawn,          CMD("qrsend") },
 
   KP( Mod,              KP_JK,          focusstack,     {.i = +1 },    {.i = -1} ),
   KP( ModShift,         KP_JK,          push,           {.i = +1 },    {.i = -1} ),
