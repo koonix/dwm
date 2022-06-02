@@ -83,7 +83,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetNumberOfDesktops, NetCurrentDesktop, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
-       ClkClientWin, ClkRootWin, ClkLast, ClkClientSymbol }; /* clicks */
+       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
 enum { StrTopLeft, StrTopRight, StrTopRightFull, StrTopLeftFull, StrBotLeft, StrBotRight }; /* stairs layout directions */
 
 typedef struct Monitor Monitor;
@@ -123,7 +123,6 @@ struct Client {
 	unsigned char xkblayout;
 	Client *sametagnext;
 	unsigned int sametagid, sametagchildof;
-	char *symbol;
 };
 
 typedef struct {
@@ -172,12 +171,12 @@ typedef struct {
 	int isterminal;
 	int noswallow;
 	int monitor;
-	char *symbol;
 } Rule;
 
 /* function declarations */
+static void allowenternotify(int unused);
 static void applyfribidi(char *str);
-static int applyrules(Client *c);
+static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
@@ -221,7 +220,6 @@ static void gotourgent(const Arg *arg);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
 static void incnmaster(const Arg *arg);
-static int mustshowclientsymbols(Monitor *m);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
 static void manage(Window w, XWindowAttributes *wa);
@@ -286,7 +284,6 @@ static int updategeom(void);
 static void updatenumlockmask(void);
 static void updatesizehints(Client *c);
 static void updatestatus(void);
-static void updaterules(Client *c);
 static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
@@ -351,6 +348,7 @@ static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
 static volatile Window blockedwin = 0;
 static Client *sametagstacks[128];
+static unsigned int noenternotify = 0;
 
 static xcb_connection_t *xcon;
 
@@ -379,7 +377,7 @@ applyfribidi(char *str)
 	}
 }
 
-int
+void
 applyrules(Client *c)
 {
 	const char *class, *instance;
@@ -387,7 +385,6 @@ applyrules(Client *c)
 	const Rule *r;
 	Monitor *m;
 	XClassHint ch = { NULL, NULL };
-	int found = 0;
 
 	/* rule matching */
 	XGetClassHint(dpy, c->win, &ch);
@@ -400,16 +397,13 @@ applyrules(Client *c)
 		&& (!r->class || strstr(class, r->class))
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
-			found = 1;
 			c->sametagid  = r->sametagid;
 			c->sametagchildof = r->sametagchildof;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
-			c->symbol = r->symbol;
+			c->isfloating = r->isfloating;
 			c->tags |= r->tags;
-			if (!c->isfullscreen)
-				c->isfloating = r->isfloating;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
 				c->mon = m;
@@ -420,7 +414,6 @@ applyrules(Client *c)
 	if (ch.res_name)
 		XFree(ch.res_name);
 	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
-	return found;
 }
 
 int
@@ -636,7 +629,6 @@ buttonpress(XEvent *e)
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
-	char *symbol;
 
 	click = ClkRootWin;
 	/* focus monitor if necessary */
@@ -658,31 +650,12 @@ buttonpress(XEvent *e)
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else {
-			i = 1;
-			if (mustshowclientsymbols(m)) {
-				c = m->clients;
-				do {
-					if (!c || c->isfloating || !ISVISIBLE(c))
-						continue;
-					symbol = c->isurgent ? "!" : c->symbol ? c->symbol : "*";
-					x += drw_fontset_getwidth(drw, symbol) + lrpad / 1.5;
-				} while ((ev->x >= x || (i = 0)) && c && (c = c->next));
-			}
-			if (i == 0) {
-				if (ev->button == Button1) {
-					focus(c);
-					restack(selmon);
-				}
-				click = ClkClientSymbol;
-			}
-			else if (ev->x < x + blw)
-				click = ClkLtSymbol;
-			else if (ev->x > selmon->ww - (int)TEXTW(stext))
-				click = ClkStatusText;
-			else
-				click = ClkWinTitle;
-		}
+		} else if (ev->x < x + blw)
+			click = ClkLtSymbol;
+		else if (ev->x > selmon->ww - (int)TEXTW(stext))
+			click = ClkStatusText;
+		else
+			click = ClkWinTitle;
 	} else if ((c = wintoclient(ev->window))) {
 		if (!(ev->state & Mod)) {
 			focus(c);
@@ -1073,7 +1046,6 @@ drawbar(Monitor *m)
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
-	char *symbol;
 
 	if (!m->showbar)
 		return;
@@ -1107,18 +1079,6 @@ drawbar(Monitor *m)
 		}
 
 		x += w;
-	}
-
-	if (mustshowclientsymbols(m)) {
-		for (c = m->clients; c; c = c->next) {
-			if (c->isfloating || !ISVISIBLE(c))
-				continue;
-			symbol = c->isurgent ? "!" : c->symbol ? c->symbol : "*";
-			w = drw_fontset_getwidth(drw, symbol) + lrpad / 1.5;
-			drw_setscheme(drw, scheme[c == m->sel ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w, bh, lrpad / 3, symbol, 0);
-			x += w;
-		}
 	}
 
 	w = blw = TEXTW(m->ltsymbol);
@@ -1156,6 +1116,8 @@ enternotify(XEvent *e)
 	Monitor *m;
 	XCrossingEvent *ev = &e->xcrossing;
 
+	if (noenternotify)
+		return;
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
 	c = wintoclient(ev->window);
@@ -1415,18 +1377,6 @@ incnmaster(const Arg *arg)
 	arrange(selmon);
 }
 
-int
-mustshowclientsymbols(Monitor *m)
-{
-	unsigned int i;
-	for (i = 0;
-	     i < LENGTH(clientsymbollts) &&
-	     clientsymbollts[i] &&
-	     m->lt[m->sellt]->arrange != clientsymbollts[i];
-	     i++);
-	return !clientsymbollts[0] || i < LENGTH(clientsymbollts) ? 1 : 0;
-}
-
 #ifdef XINERAMA
 static int
 isuniquegeom(XineramaScreenInfo *unique, size_t n, XineramaScreenInfo *info)
@@ -1519,7 +1469,6 @@ manage(Window w, XWindowAttributes *wa)
 	XSetWindowBorder(dpy, w, scheme[SchemeNorm][ColBorder].pixel);
 	configure(c); /* propagates border_width, if size doesn't change */
 	updatewindowtype(c);
-	updatesizehints(c);
 	updatewmhints(c);
 
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
@@ -1531,6 +1480,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (swallow(c))
 		return;
 
+	updatesizehints(c);
 	updateclientdesktop(c);
 
 	if (c->blockinput && ISVISIBLE(c))
@@ -1584,7 +1534,14 @@ maprequest(XEvent *e)
 void
 monocle(Monitor *m)
 {
+	unsigned int n = 0;
 	Client *c;
+
+	for (c = m->clients; c; c = c->next)
+		if (ISVISIBLE(c))
+			n++;
+	if (n > 0) /* override layout symbol */
+		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 }
@@ -1705,7 +1662,6 @@ propertynotify(XEvent *e)
 		}
 		if (ev->atom == XA_WM_NAME || ev->atom == netatom[NetWMName]) {
 			updatetitle(c);
-			updaterules(c);
 			if (c == c->mon->sel)
 				drawbar(c->mon);
 		}
@@ -2671,6 +2627,9 @@ updatesizehints(Client *c)
 	long msize;
 	XSizeHints size;
 
+	if (c->swallowing)
+		return;
+
 	if (!XGetWMNormalHints(dpy, c->win, &size, &msize))
 		/* size is uninitialized, ensure that size.flags aren't used */
 		size.flags = PSize;
@@ -2715,15 +2674,6 @@ updatestatus(void)
 	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
 		strcpy(stext, "dwm-"VERSION);
 	drawbar(selmon);
-}
-
-void
-updaterules(Client *c)
-{
-	if (!applyrules(c))
-		return;
-	sametagapply(c);
-	arrange(NULL);
 }
 
 void
@@ -2944,9 +2894,6 @@ swallow(Client *c)
 	Window w = p->win;
 	p->win = c->win;
 	c->win = w;
-	char *s = p->symbol;
-	p->symbol = c->symbol;
-	c->symbol = s;
 	updatetitle(p);
 	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
 	arrange(p->mon);
@@ -2955,20 +2902,33 @@ swallow(Client *c)
 	XMapWindow(dpy, p->win);
 	if (p->mon->stack == p)
 		focus(p);
+	noenternotify = 1;
+	pid_t ppid = getpid();
+	if (signal(SIGUSR2, allowenternotify) == SIG_ERR)
+		die("can't install SIGUSR2 handler:");
+	if (fork() == 0) {
+		struct timespec sleep = { .tv_sec = 0, .tv_nsec = 50000000 };
+		nanosleep(&sleep, NULL);
+		kill(ppid, SIGUSR2);
+		exit(EXIT_SUCCESS);
+	}
 	return 1;
+}
+
+void allowenternotify(int unused)
+{
+	noenternotify = 0;
 }
 
 void
 unswallow(Client *c)
 {
 	c->win = c->swallowing->win;
-	c->symbol = c->swallowing->symbol;
 	setfullscreen(c->swallowing, c->isfullscreen);
 	free(c->swallowing);
 	c->swallowing = NULL;
 
 	updatetitle(c);
-	updaterules(c);
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
 	XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);

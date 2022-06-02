@@ -28,10 +28,6 @@ static const int nmasterbias = 1;
  * see the rules below for explanation. */
 static const unsigned int blockinputmsec = 1000;
 
-/* show clientsymbols only in these layouts.
- * to show on all layouts, set the first element to NULL. */
-static void (*clientsymbollts[])(Monitor *) = { monocle };
-
 /* fonts */
 static const char *fonts[] = {
 	"peep:size=12",
@@ -73,10 +69,6 @@ static const Layout layouts[] = {
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 };
 
-/* helper macros for rules */
-#define SYMBOL(c, s)     { c, NULL, NULL, 0, 0, -1, 0, 0, 0, 0, -1, s }
-#define TSYMBOL(t, s) { TERMCLASS, NULL, t, 0, 0, 0, 0, 0, 1, 0, -1, s }
-
 /* hint for rules
  *
  * blockinput:
@@ -101,21 +93,14 @@ static const Layout layouts[] = {
  */
 static const Rule rules[] = {
 	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, sametagchildof, isterminal, noswallow, monitor, clientsymbol */
-	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1, NULL }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1, ""  }, /* don't tile qalculate */
-	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1, NULL }, /* don't tile safeeyes */
-	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1, ""  }, /* spawn wine programs next to eachother */
-	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1, ""  }, /* don't block firefox's input */
+	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
+	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
+	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to eachother */
+	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
 	/* swallowing rules: */
-	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1, "" },
-	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1, NULL  },
-	/* symbol rules: */
-	TSYMBOL("vim", ""),             TSYMBOL("lf", ""),             TSYMBOL("bashmount", ""),
-	TSYMBOL("newsboat", ""),        TSYMBOL("ncmpcpp", ""),        TSYMBOL("calculator", ""),
-	TSYMBOL("pulsemixer", "蓼"),     TSYMBOL("aria2p", ""),         TSYMBOL("tremc", ""),
-	TSYMBOL("man", "ﲉ"),
-	SYMBOL("TelegramDesktop", ""),  SYMBOL("mpv", ""),             SYMBOL("Zathura", ""),
-	SYMBOL("Foliate", ""),          SYMBOL("Sxiv", ""),            SYMBOL("TeamSpeak", ""),
+	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
+	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
 };
 
 /* hint for attachdirection
@@ -345,8 +330,6 @@ static Button buttons[] = {
 	{ ClkStatusText,    0,      Button3,    spawn,          {.v = cycle } },
 	{ ClkStatusText,    0,      Button4,    spawn,          VOLINC(5) },
 	{ ClkStatusText,    0,      Button5,    spawn,          VOLDEC(5) },
-	{ ClkClientSymbol,  0,      Button4,    focusstack,     {.i = -1} },
-	{ ClkClientSymbol,  0,      Button5,    focusstack,     {.i = +1} },
 
 	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
 	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
