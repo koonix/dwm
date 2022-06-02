@@ -174,6 +174,7 @@ typedef struct {
 } Rule;
 
 /* function declarations */
+static void allowenternotify(int unused);
 static void applyfribidi(char *str);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
@@ -347,6 +348,7 @@ static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
 static volatile Window blockedwin = 0;
 static Client *sametagstacks[128];
+static unsigned int noenternotify = 0;
 
 static xcb_connection_t *xcon;
 
@@ -1114,6 +1116,8 @@ enternotify(XEvent *e)
 	Monitor *m;
 	XCrossingEvent *ev = &e->xcrossing;
 
+	if (noenternotify)
+		return;
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
 	c = wintoclient(ev->window);
@@ -1465,7 +1469,6 @@ manage(Window w, XWindowAttributes *wa)
 	XSetWindowBorder(dpy, w, scheme[SchemeNorm][ColBorder].pixel);
 	configure(c); /* propagates border_width, if size doesn't change */
 	updatewindowtype(c);
-	updatesizehints(c);
 	updatewmhints(c);
 
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
@@ -1477,6 +1480,7 @@ manage(Window w, XWindowAttributes *wa)
 	if (swallow(c))
 		return;
 
+	updatesizehints(c);
 	updateclientdesktop(c);
 
 	if (c->blockinput && ISVISIBLE(c))
@@ -2623,6 +2627,9 @@ updatesizehints(Client *c)
 	long msize;
 	XSizeHints size;
 
+	if (c->swallowing)
+		return;
+
 	if (!XGetWMNormalHints(dpy, c->win, &size, &msize))
 		/* size is uninitialized, ensure that size.flags aren't used */
 		size.flags = PSize;
@@ -2895,7 +2902,22 @@ swallow(Client *c)
 	XMapWindow(dpy, p->win);
 	if (p->mon->stack == p)
 		focus(p);
+	noenternotify = 1;
+	pid_t ppid = getpid();
+	if (signal(SIGUSR2, allowenternotify) == SIG_ERR)
+		die("can't install SIGUSR2 handler:");
+	if (fork() == 0) {
+		struct timespec sleep = { .tv_sec = 0, .tv_nsec = 50000000 };
+		nanosleep(&sleep, NULL);
+		kill(ppid, SIGUSR2);
+		exit(EXIT_SUCCESS);
+	}
 	return 1;
+}
+
+void allowenternotify(int unused)
+{
+	noenternotify = 0;
 }
 
 void
