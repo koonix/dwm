@@ -96,7 +96,7 @@ static const Rule rules[] = {
 	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
 	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
 	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
-	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to eachother */
+	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to each other */
 	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
 	/* swallowing rules: */
 	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
@@ -173,11 +173,11 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 
 /* audio and media */
-#define VOLINC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-i", #n, NULL } }
-#define VOLDEC(n) { .v = (const char*[]){ "pamixer", "--allow-boost", "-d", #n, NULL } }
-#define MPCVOL(n) { .v = (const char*[]){ "mpc", "volume", #n, NULL } }
-static const char *mute[] = { "pamixer", "-t", NULL };
-static const char *cycle[] = { "pacycle", NULL };
+#define VOLINC(n) CMD("pamixer", "--allow-boost", "-i", #n)
+#define VOLDEC(n) CMD("pamixer", "--allow-boost", "-d", #n)
+#define MPCVOL(n) CMD("mpc", "volume", #n)
+#define MUTE CMD("pamixer", "-t")
+#define PACYCLE CMD("pacycle")
 
 #define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
 	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
@@ -203,14 +203,15 @@ static const char *cycle[] = { "pacycle", NULL };
 /**/
 
 /* backlight */
-#define LIGHTINC(n) { .v = (const char*[]){ "light", "-A", #n, NULL } }
-#define LIGHTDEC(n) { .v = (const char*[]){ "light", "-U", #n, NULL } }
+#define LIGHTINC(n) CMD("light", "-A", #n)
+#define LIGHTDEC(n) CMD("light", "-U", #n)
 
 /* other */
+#define PIPEURL CMD("pipeurl", "--clipboard", "ask")
 #define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
-#define KEY(a, ...) { .v = (const char*[]){ "xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__, NULL } }
-#define TERMINCWD SHCMD("cd \"$(xcwd)\" && " TERM)
+#define KEY(a, ...) CMD("xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__)
+#define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
 
 /* binding logic:
  * - audio and music related bindings start with super+alt
@@ -221,9 +222,8 @@ static Key keys[] = {
     { Mod,              XK_p,           spawn,          CMD("stuff", "-m") },
     { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
-    { ModShift,         XK_t,           spawn,          TERMINCWD },
+    { ModShift,         XK_t,           spawn,          TERMCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
-    { ModShift,         XK_b,           spawn,          CMD("ffdo") },
     { Mod,              XK_g,           spawn,          XMOUSELESS },
     { ControlMask,      XK_space,       spawn,          CMD("dunstctl", "close") },
     { ControlMask,      XK_grave,       spawn,          CMD("dunstctl", "history-pop") },
@@ -241,10 +241,10 @@ static Key keys[] = {
   KP( ModAlt,           KP_JK,          spawn,          VOLDEC(5),   VOLINC(5)   ),
   KP( ModAltShift,      KP_JK,          spawn,          VOLDEC(20),  VOLINC(20)  ),
   KP( ModAltCtrl,       KP_JK,          spawn,          MPCVOL(-10), MPCVOL(+10) ),
-    { ModAlt,           XK_m,           spawn,          {.v = mute } },
+    { ModAlt,           XK_m,           spawn,          MUTE },
     { ModAltShift,      XK_m,           spawn,          TOGGLE_MIC_MUTE },
-    { ModCtrl,          XK_s,           spawn,          {.v = cycle } },
-    { 0,        XF86XK_AudioMute,       spawn,          {.v = mute } },
+    { ModCtrl,          XK_s,           spawn,          PACYCLE },
+    { 0,        XF86XK_AudioMute,       spawn,          MUTE },
     { 0,        XF86XK_AudioMicMute,    spawn,          TOGGLE_MIC_MUTE },
 
     { ModAltShift,      XK_p,           spawn,          CMD("mpc", "toggle") },
@@ -261,7 +261,7 @@ static Key keys[] = {
   KP( Mod,              KP_BRACKET,     spawn,          LIGHTDEC(10), LIGHTINC(10) ),
   KP( ModShift,         KP_BRACKET,     spawn,          LIGHTDEC(1),  LIGHTINC(1)  ),
 
-    { Mod,              XK_r,           spawn,          CMD("pipeurl", "-c", "ask") },
+    { Mod,              XK_r,           spawn,          PIPEURL },
     { ModShift,         XK_r,           spawn,          CMD("pipeurl", "history") },
     { Mod,              XK_y,           spawn,          CMD("qrsend") },
 
@@ -314,22 +314,22 @@ static Key keys[] = {
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static Button buttons[] = {
 	/* click                event mask      button          function        argument */
-	{ ClkLtSymbol,      0,      Button1,    setlayout,      {0} },
-	{ ClkLtSymbol,      0,      Button2,    setlayout,      {.l = tile } },
-	{ ClkLtSymbol,      0,      Button3,    setlayout,      {.l = stairs } },
-	{ ClkWinTitle,      0,      Button2,    zoom,           {0} },
-	{ ClkStatusText,    0,      Button2,    spawn,          CMD(TERM) },
-	{ ClkClientWin,     Mod,    Button1,    movemouse,      {0} },
-	{ ClkClientWin,     Mod,    Button2,    togglefloating, {0} },
-	{ ClkClientWin,     Mod,    Button3,    resizemouse,    {0} },
-	{ ClkTagBar,        0,      Button1,    view,           {0} },
-	{ ClkTagBar,        0,      Button3,    toggleview,     {0} },
-	{ ClkTagBar,        Mod,    Button1,    tag,            {0} },
-	{ ClkTagBar,        Mod,    Button3,    toggletag,      {0} },
-	{ ClkStatusText,    0,      Button1,    spawn,          {.v = mute } },
-	{ ClkStatusText,    0,      Button3,    spawn,          {.v = cycle } },
-	{ ClkStatusText,    0,      Button4,    spawn,          VOLINC(5) },
-	{ ClkStatusText,    0,      Button5,    spawn,          VOLDEC(5) },
+	{ ClkLtSymbol,      0,        Button1,    setlayout,      {0} },
+	{ ClkLtSymbol,      0,        Button2,    setlayout,      {.l = tile } },
+	{ ClkLtSymbol,      0,        Button3,    setlayout,      {.l = stairs } },
+	{ ClkWinTitle,      0,        Button1,    spawn,          PIPEURL },
+	{ ClkStatusText,    0,        Button2,    spawn,          CMD(TERM) },
+	{ ClkClientWin,     Mod,      Button1,    movemouse,      {0} },
+	{ ClkClientWin,     Mod,      Button2,    togglefloating, {0} },
+	{ ClkClientWin,     Mod,      Button3,    resizemouse,    {0} },
+	{ ClkTagBar,        0,        Button1,    view,           {0} },
+	{ ClkTagBar,        0,        Button3,    toggleview,     {0} },
+	{ ClkTagBar,        Mod,      Button1,    tag,            {0} },
+	{ ClkTagBar,        Mod,      Button3,    toggletag,      {0} },
+	{ ClkStatusText,    0,        Button1,    spawn,          MUTE },
+	{ ClkStatusText,    0,        Button3,    spawn,          PACYCLE },
+	{ ClkStatusText,    0,        Button4,    spawn,          VOLINC(5) },
+	{ ClkStatusText,    0,        Button5,    spawn,          VOLDEC(5) },
 
 	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
 	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */

@@ -657,6 +657,9 @@ buttonpress(XEvent *e)
 		else
 			click = ClkWinTitle;
 	} else if ((c = wintoclient(ev->window))) {
+		/* if modkey is pressed down, do not focus the window
+		 * under the cursor. this enables eg. mod+scroll to
+		 * be used to change focus between windows. */
 		if (!(ev->state & Mod)) {
 			focus(c);
 			restack(selmon);
