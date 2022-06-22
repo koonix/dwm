@@ -92,7 +92,7 @@ static const Layout layouts[] = {
  *    WM_NAME(STRING) = title
  */
 static const Rule rules[] = {
-	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, sametagchildof, isterminal, noswallow, monitor, clientsymbol */
+	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, sametagchildof, isterminal, noswallow, monitor */
 	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
 	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
 	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
