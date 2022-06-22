@@ -91,7 +91,7 @@ typedef union {
 	int i;
 	unsigned int ui;
 	float f;
-	void (*l)(Monitor *m);
+	void (*lt)(Monitor *m);
 	const void *v;
 } Arg;
 
@@ -2037,13 +2037,13 @@ setlayout(const Arg *arg)
 {
 	const Layout *lt = NULL;
 	int n;
-	if (arg && arg->l) {
-		for (n = 0; n < LENGTH(layouts) && layouts[n].arrange != arg->l; n++);
+	if (arg && arg->lt) {
+		for (n = 0; n < LENGTH(layouts) && layouts[n].arrange != arg->lt; n++);
 		lt = &layouts[n];
 	}
-	if (!arg || !arg->l || lt != selmon->lt[selmon->sellt])
+	if (!arg || !arg->lt || lt != selmon->lt[selmon->sellt])
 		selmon->sellt ^= 1;
-	if (arg && arg->l)
+	if (arg && arg->lt)
 		selmon->lt[selmon->sellt] = lt;
 	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
 	if (selmon->sel)

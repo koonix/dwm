@@ -276,9 +276,9 @@ static Key keys[] = {
     { Mod,              XK_w,           killclient,     {0} },
     { ModCtrl,          XK_b,           togglebar,      {0} },
     { Mod,              XK_f,           togglefullscr,  {0} },
-    { Mod,              XK_n,           setlayout,      {.l = tile } },
-    { Mod,              XK_m,           setlayout,      {.l = monocle } },
-    { Mod,              XK_semicolon,   setlayout,      {.l = stairs } },
+    { Mod,              XK_n,           setlayout,      {.lt = tile } },
+    { Mod,              XK_m,           setlayout,      {.lt = monocle } },
+    { Mod,              XK_semicolon,   setlayout,      {.lt = stairs } },
   KP( ModCtrl,          KP_JK,          incnmaster,     {.i = -1 }, {.i = +1} ),
 
     { ModShift,         XK_f,           togglefloating, {0} },
@@ -315,8 +315,8 @@ static Key keys[] = {
 static Button buttons[] = {
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,      0,        Button1,    setlayout,      {0} },
-	{ ClkLtSymbol,      0,        Button2,    setlayout,      {.l = tile } },
-	{ ClkLtSymbol,      0,        Button3,    setlayout,      {.l = stairs } },
+	{ ClkLtSymbol,      0,        Button2,    setlayout,      {.lt = tile } },
+	{ ClkLtSymbol,      0,        Button3,    setlayout,      {.lt = stairs } },
 	{ ClkWinTitle,      0,        Button1,    spawn,          PIPEURL },
 	{ ClkStatusText,    0,        Button2,    spawn,          CMD(TERM) },
 	{ ClkClientWin,     Mod,      Button1,    movemouse,      {0} },
