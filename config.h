@@ -20,6 +20,14 @@ static const int stairsdirection     = 1;   /* 0: left-aligned, 1: right-aligned
 static const int stairssamesize      = 0;   /* 1 means shrink all the staired windows to the same size */
 static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
 
+/* systray */
+static const int showsystray             = 1;   /* 0 means no systray */
+static const int systrayoffset           = -5;  /* systray offset from the edge */
+static const unsigned int systrayspacing = 4;   /* systray spacing */
+static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
+static const int systraypinningfailfirst = 1;   /* 1: if pinning fails, display systray on the first monitor, 0: display systray on the last monitor */
+static const unsigned int systrayonleft  = 0;   /* 0: systray in the right corner, >0: systray on left of status text */
+
 /* if nmaster is bigger than this number, killing a focused master
  * will decrease nmaster by 1. set to a negative value to disable. */
 static const int nmasterbias = 1;
