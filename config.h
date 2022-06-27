@@ -52,6 +52,7 @@ static const char col_selfg[]      = "#bfbfbf";
 static const char col_selborder[]  = "#ffffff";
 static const char col_titlefg[]    = "#9d9d9d";
 static const char col_urgborder[]  = "#ff0000";
+static const char col_blockborder[]= "#006bff";
 static const char col_status[]     = "#9d9d9d";
 
 static const char *colors[][4] = {
@@ -60,6 +61,7 @@ static const char *colors[][4] = {
 	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  },
 	[SchemeTitle] = { col_titlefg, col_bg,  col_null       },
 	[SchemeUrg]   = { col_normfg,  col_bg,  col_urgborder  },
+	[SchemeBlock] = { col_null,    col_bg,  col_blockborder},
 };
 
 /* colors that can be used by the statusbar */
