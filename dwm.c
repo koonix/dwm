@@ -316,6 +316,7 @@ static Client *nexttagged(Client *c);
 
 /* variables */
 static const char broken[] = "broken";
+static int ssize = 0;
 static char stext[1024];
 static char fribiditext[BUFSIZ] = "";
 static int screen;
@@ -655,7 +656,7 @@ buttonpress(XEvent *e)
 			arg.ui = 1 << i;
 		} else if (ev->x < x + blw)
 			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - (int)TEXTW(stext))
+		else if (ev->x > selmon->ww - ssize)
 			click = ClkStatusText;
 		else
 			click = ClkWinTitle;
@@ -1058,7 +1059,7 @@ drawbar(Monitor *m)
 
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
-		tw = m->ww - drawstatusbar(m, bh, stext);
+		ssize = tw = m->ww - drawstatusbar(m, bh, stext);
 	}
 
 	for (c = m->clients; c; c = c->next) {
