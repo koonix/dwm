@@ -106,6 +106,7 @@ static const Rule rules[] = {
 	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
 	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to each other */
 	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
+	{ "tabbed", NULL, NULL,                                  0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block tabbed's input */
 	/* swallowing rules: */
 	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
 	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
