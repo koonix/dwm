@@ -212,6 +212,7 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define KEY(a, ...) CMD("xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__)
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
+#define LASTDL CMD("zsh", "-c", "termopen ~/Downloads/*(om[1])") /* open the last downloaded file */
 
 /* binding logic:
  * - audio and music related bindings start with super+alt
@@ -234,6 +235,7 @@ static Key keys[] = {
     { ModShift,         XK_e,           spawn,          CMD("sysact", "sleep") },
     { Mod,              XK_o,           spawn,          CMD("freq", "-m") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
+    { Mod,              XK_d,           spawn,          LASTDL },
     { ModAlt,           XK_F4,          quit,           {0} },
 
   KP( 0,                KP_VOL,         spawn,          VOLDEC(5),   VOLINC(5)   ),
