@@ -236,6 +236,7 @@ static Key keys[] = {
     { Mod,              XK_o,           spawn,          CMD("freq", "-m") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
     { Mod,              XK_d,           spawn,          LASTDL },
+    { ModAlt,           XK_F3,          restart,        {0} },
     { ModAlt,           XK_F4,          quit,           {0} },
 
   KP( 0,                KP_VOL,         spawn,          VOLDEC(5),   VOLINC(5)   ),
