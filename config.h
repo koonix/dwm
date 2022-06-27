@@ -10,15 +10,17 @@ static const unsigned int gappx      = 10;  /* gaps between windows */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
 static const int nmaster             = 1;   /* number of clients in master area */
-static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
-static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
 static const int showbar             = 1;   /* 0 means no bar */
 static const int topbar              = 1;   /* 0 means bottom bar */
+static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
+static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
 static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
+static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
+
+/* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
 static const int stairsdirection     = 1;   /* 0: left-aligned, 1: right-aligned */
 static const int stairssamesize      = 0;   /* 1 means shrink all the staired windows to the same size */
-static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
 
 /* systray */
 static const int showsystray             = 1;   /* 0 means no systray */
@@ -56,10 +58,10 @@ static const char col_status[]     = "#9d9d9d";
 
 static const char *colors[][4] = {
 	/*                fg           bg       border         */
-	[SchemeNorm]  = { col_normfg,  col_bg,  col_normborder },
-	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  },
-	[SchemeTitle] = { col_titlefg, col_bg,  col_null       },
-	[SchemeUrg]   = { col_normfg,  col_bg,  col_urgborder  },
+	[SchemeNorm]  = { col_normfg,  col_bg,  col_normborder }, /* colors of unselected items and windows */
+	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  }, /* colors of selected items and windows */
+	[SchemeTitle] = { col_titlefg, col_bg,  col_null       }, /* fg and bg color of the window title in the bar */
+	[SchemeUrg]   = { col_null,    col_bg,  col_urgborder  }, /* border color of urgent windows */
 };
 
 /* colors that can be used by the statusbar */
@@ -100,32 +102,39 @@ static const Layout layouts[] = {
  *    WM_NAME(STRING) = title
  */
 static const Rule rules[] = {
-	/* class, instance, title, tags mask, isfloating, blockinput, sametagid, sametagchildof, isterminal, noswallow, monitor */
+	/* 1 = tagmask, 2 = isfloating, 3 = blockinput, 4 = sametagid,
+	 * 5 = sametagchildof, 6 = isterminal, 7 = noswallow, 8 = monitor
+	 * class, instance, title,                               1   2   3   4   5   6   7    8 */
 	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile telegram's media viewer */
 	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  -1 }, /* don't tile qalculate */
 	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  -1 }, /* don't tile safeeyes */
 	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  -1 }, /* spawn wine programs next to each other */
 	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block firefox's input */
 	{ "tabbed", NULL, NULL,                                  0,  0,  0,  0,  0,  0,  0,  -1 }, /* don't block tabbed's input */
-	/* swallowing rules: */
-	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 },
-	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 },
+	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  -1 }, /* set terminal's isterminal rule */
+	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  -1 }, /* don't swallow evtest */
 };
 
 /* hint for attachdirection
+ *
  * attach:
  *   the default behavior; new clients go in the master area.
+ *
  * attachabove:
  *   make new clients attach above the selected client,
  *   instead of always becoming the new master. this behavior is known from xmonad.
+ *
  * attachaside:
  *   make new clients get attached and focused in the stacking area,
  *   instead of always becoming the new master. it's basically an attachabove modification.
+ *
  * attachbelow:
  *   make new clients attach below the selected client,
  *   instead of always becoming the new master. inspired heavily by attachabove.
+ *
  * attachbottom:
  *   new clients attach at the bottom of the stack instead of the top.
+ *
  * attachtop:
  *   new client attaches below the last master/on top of the stack.
  *   behavior feels very intuitive as it doesn't disrupt existing masters,

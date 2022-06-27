@@ -100,7 +100,6 @@ enum { Manager, Xembed, XembedInfo, XembedLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
-enum { StrTopLeft, StrTopRight, StrTopRightFull, StrTopLeftFull, StrBotLeft, StrBotRight }; /* stairs layout directions */
 
 typedef struct Monitor Monitor;
 typedef union {
@@ -386,7 +385,6 @@ static Window root, wmcheckwin;
 static volatile Window blockedwin = 0;
 static Client *sametagstacks[128];
 static unsigned int noenternotify = 0;
-
 static xcb_connection_t *xcon;
 
 /* configuration, allows nested code to access above variables */
@@ -1019,7 +1017,7 @@ drawstatusbar(Monitor *m, int bh, int stw, char* stext) {
 	char *p;
 	Clr oldbg, oldfg;
 
-	len = strlen(stext) + 1 ;
+	len = strlen(stext) + 1;
 	if (!(text = (char*) malloc(sizeof(char)*len)))
 		die("malloc");
 	p = text;
@@ -2465,7 +2463,7 @@ switchcol(const Arg *arg)
 
 	if (!selmon->sel)
 		return;
-	for (i = 0, c = nexttiled(selmon->clients); c ;
+	for (i = 0, c = nexttiled(selmon->clients); c;
 	     c = nexttiled(c->next), i++) {
 		if (c == selmon->sel)
 			col = (i + 1) > selmon->nmaster;
@@ -3491,7 +3489,7 @@ nexttiledloop(Client *c)
 Client *
 prevtiledloop(Client *c)
 {
-    Client *t;
+	Client *t;
 	if (!(t = prevtiled(c)))
 		t = lasttiled(c->mon);
 	return t;
@@ -3517,7 +3515,7 @@ prevtiled(Client *c)
 Client *
 firsttiled(Monitor *m)
 {
-    Client *c = m->clients;
+	Client *c = m->clients;
 	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
 	return c;
 }
