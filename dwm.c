@@ -233,6 +233,8 @@ static Client *prevtiled(Client *c);
 static void propertynotify(XEvent *e);
 static void push(const Arg *arg);
 static void quit(const Arg *arg);
+static void restart(const Arg *arg);
+static void sighup(int unused);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
@@ -339,7 +341,8 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast];
-static int running = 1;
+static volatile int running = 1;
+static volatile int must_restart = 0;
 static Cur *cursor[CurLast];
 static Clr **scheme;
 static Display *dpy;
@@ -1717,6 +1720,19 @@ quit(const Arg *arg)
 	running = 0;
 }
 
+void
+restart(const Arg *arg)
+{
+	must_restart = 1;
+	running = 0;
+}
+
+void
+sighup(int unused)
+{
+	restart(NULL);
+}
+
 Monitor *
 recttomon(int x, int y, int w, int h)
 {
@@ -2076,6 +2092,9 @@ setup(void)
 
 	/* clean up any zombies immediately */
 	sigchld(0);
+
+	if (signal(SIGHUP, sighup) == SIG_ERR)
+		die("can't install SIGHUP handler:");
 
 	/* init screen */
 	screen = DefaultScreen(dpy);
@@ -3042,6 +3061,8 @@ main(int argc, char *argv[])
 #endif /* __OpenBSD__ */
 	scan();
 	run();
+	if (must_restart)
+		execvp(argv[0], argv);
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
