@@ -297,18 +297,21 @@ static Key keys[] = {
     { Mod,              XK_w,           killclient,     {0} },
     { ModCtrl,          XK_b,           togglebar,      {0} },
     { Mod,              XK_f,           togglefullscr,  {0} },
-    { Mod,              XK_n,           setlayout,      {.lt = tile } },
-    { Mod,              XK_m,           setlayout,      {.lt = monocle } },
+    { Mod,              XK_m,           setlayout,      {.lt = tile } },
+    { ModShift,         XK_m,           setlayout,      {.lt = monocle } },
     { Mod,              XK_semicolon,   setlayout,      {.lt = stairs } },
   KP( ModCtrl,          KP_JK,          incnmaster,     {.i = -1 }, {.i = +1} ),
-
     { ModShift,         XK_f,           togglefloating, {0} },
     { Mod,              XK_0,           view,           {.ui = ~0 } },
     { ModShift,         XK_0,           tag,            {.ui = ~0 } },
 
+    { Mod,              XK_n,           adjacent,       {.adj = view } },
+    { ModCtrl,          XK_n,           adjacent,       {.adj = toggleview } },
+    { ModShift,         XK_n,           adjacent,       {.adj = tag } },
+    { ModCtrlShift,     XK_n,           adjacent,       {.adj = toggletag } },
+
   KP( Mod,              KP_COMMAPERIOD, focusmon,       {.i = +1}, {.i = -1} ),
   KP( ModShift,         KP_COMMAPERIOD, tagmon,         {.i = +1}, {.i = -1} ),
-
     { Mod,              XK_comma,       focusmon,       {.i = -1 } },
     { Mod,              XK_period,      focusmon,       {.i = +1 } },
     { ModShift,         XK_comma,       tagmon,         {.i = -1 } },

@@ -102,13 +102,16 @@ enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
 
 typedef struct Monitor Monitor;
-typedef union {
+
+typedef union Arg Arg;
+union Arg {
 	int i;
 	unsigned int ui;
 	float f;
 	void (*lt)(Monitor *m);
+	void (*adj)(const Arg *arg);
 	const void *v;
-} Arg;
+};
 
 typedef struct {
 	unsigned int click;
@@ -194,6 +197,7 @@ typedef struct {
 } Systray;
 
 /* function declarations */
+static void adjacent(const Arg *arg);
 static void allowenternotify(int unused);
 static void fribidi(char *in, char *out);
 static void applyrules(Client *c);
@@ -409,6 +413,24 @@ fribidi(char *in, char *out)
 	len = fribidi_charset_to_unicode(charset, in, len, logical);
 	fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
 	fribidi_unicode_to_charset(charset, visual, len, out);
+}
+
+void
+adjacent(const Arg *arg)
+{
+	Arg a = {0};
+	unsigned int tagnum;
+	int tags = selmon->tagset[selmon->seltags];
+
+	if (arg->adj == view || arg->adj == tag || arg->adj == toggletag) {
+		tagnum = (unsigned int)log2((double)tags);
+		a.ui = 1 << (tagnum + (tagnum % 2 ? -1 : +1));
+	} else if (arg->adj == toggleview) {
+		tagnum = (unsigned int)ffs(tags) - 1;
+		a.ui = 1 << (tagnum + 1);
+	}
+
+	arg->adj(&a);
 }
 
 void
