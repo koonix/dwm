@@ -100,16 +100,18 @@ enum { Manager, Xembed, XembedInfo, XembedLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
-enum { StrTopLeft, StrTopRight, StrTopRightFull, StrTopLeftFull, StrBotLeft, StrBotRight }; /* stairs layout directions */
 
 typedef struct Monitor Monitor;
-typedef union {
+
+typedef union Arg Arg;
+union Arg {
 	int i;
 	unsigned int ui;
 	float f;
 	void (*lt)(Monitor *m);
+	void (*adj)(const Arg *arg);
 	const void *v;
-} Arg;
+};
 
 typedef struct {
 	unsigned int click;
@@ -195,8 +197,9 @@ typedef struct {
 } Systray;
 
 /* function declarations */
+static void adjacent(const Arg *arg);
 static void allowenternotify(int unused);
-static void applyfribidi(char *str);
+static void fribidi(char *in, char *out);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -349,7 +352,6 @@ static Client *wintosystrayicon(Window w);
 static const char broken[] = "broken";
 static int ssize = 0;
 static char stext[1024];
-static char fribiditext[BUFSIZ] = "";
 static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
 static int bh, blw = 0;      /* bar geometry */
@@ -386,7 +388,6 @@ static Window root, wmcheckwin;
 static volatile Window blockedwin = 0;
 static Client *sametagstacks[128];
 static unsigned int noenternotify = 0;
-
 static xcb_connection_t *xcon;
 
 /* configuration, allows nested code to access above variables */
@@ -397,21 +398,39 @@ struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
 /* function implementations */
 static void
-applyfribidi(char *str)
+fribidi(char *in, char *out)
 {
-	FriBidiStrIndex len = strlen(str);
-	FriBidiChar logical[BUFSIZ];
-	FriBidiChar visual[BUFSIZ];
-	FriBidiParType base = FRIBIDI_PAR_ON;
+	FriBidiStrIndex len;
 	FriBidiCharSet charset;
+	FriBidiChar logical[1024];
+	FriBidiChar visual[1024];
+	FriBidiParType base = FRIBIDI_PAR_ON;
 
-	fribiditext[0] = 0;
-	if (len > 0) {
-		charset = fribidi_parse_charset("UTF-8");
-		len = fribidi_charset_to_unicode(charset, str, len, logical);
-		fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
-		len = fribidi_unicode_to_charset(charset, visual, len, fribiditext);
+	out[0] = '\0';
+	if (!(len = strlen(in)))
+		return;
+	charset = fribidi_parse_charset("UTF-8");
+	len = fribidi_charset_to_unicode(charset, in, len, logical);
+	fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
+	fribidi_unicode_to_charset(charset, visual, len, out);
+}
+
+void
+adjacent(const Arg *arg)
+{
+	Arg a = {0};
+	unsigned int tagnum;
+	int tags = selmon->tagset[selmon->seltags];
+
+	if (arg->adj == view || arg->adj == tag || arg->adj == toggletag) {
+		tagnum = (unsigned int)log2((double)tags);
+		a.ui = 1 << (tagnum + (tagnum % 2 ? -1 : +1));
+	} else if (arg->adj == toggleview) {
+		tagnum = (unsigned int)ffs(tags) - 1;
+		a.ui = 1 << (tagnum + 1);
 	}
+
+	arg->adj(&a);
 }
 
 void
@@ -1027,7 +1046,7 @@ drawstatusbar(Monitor *m, int bh, int stw, char* stext) {
 	char *p;
 	Clr oldbg, oldfg;
 
-	len = strlen(stext) + 1 ;
+	len = strlen(stext) + 1;
 	if (!(text = (char*) malloc(sizeof(char)*len)))
 		die("malloc");
 	p = text;
@@ -1155,6 +1174,7 @@ drawbar(Monitor *m)
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
+	char biditext[1024];
 
 	if (!m->showbar)
 		return;
@@ -1201,8 +1221,8 @@ drawbar(Monitor *m)
 	if ((w = m->ww - tw - x) > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
-			applyfribidi(m->sel->name);
-			drw_text(drw, x, 0, w, bh, lrpad / 2, fribiditext, 0);
+			fribidi(m->sel->name, biditext);
+			drw_text(drw, x, 0, w, bh, lrpad / 2, biditext, 0);
 			if (m->sel->isfloating)
 				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 		} else {
@@ -2476,7 +2496,7 @@ switchcol(const Arg *arg)
 
 	if (!selmon->sel)
 		return;
-	for (i = 0, c = nexttiled(selmon->clients); c ;
+	for (i = 0, c = nexttiled(selmon->clients); c;
 	     c = nexttiled(c->next), i++) {
 		if (c == selmon->sel)
 			col = (i + 1) > selmon->nmaster;
@@ -3503,7 +3523,7 @@ nexttiledloop(Client *c)
 Client *
 prevtiledloop(Client *c)
 {
-    Client *t;
+	Client *t;
 	if (!(t = prevtiled(c)))
 		t = lasttiled(c->mon);
 	return t;
@@ -3529,7 +3549,7 @@ prevtiled(Client *c)
 Client *
 firsttiled(Monitor *m)
 {
-    Client *c = m->clients;
+	Client *c = m->clients;
 	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
 	return c;
 }

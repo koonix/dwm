@@ -7,6 +7,8 @@ this is my build of dwm, a tiling window manager:
 
 ## patches
 
+- [systray](https://dwm.suckless.org/patches/systray)
+
 - [swallow](https://dwm.suckless.org/patches/swallow)
 
 - [sametagrule](https://github.com/soystemd/dwm/commit/fb1e103)
