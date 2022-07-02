@@ -55,13 +55,17 @@ static const char col_selborder[]  = "#ffffff";
 static const char col_titlefg[]    = "#9d9d9d";
 static const char col_urgborder[]  = "#ff0000";
 static const char col_status[]     = "#9d9d9d";
+static const char col_blockbordersel[]  = "#00b301";
+static const char col_blockbordernorm[] = "#004d00";
 
 static const char *colors[][4] = {
-	/*                fg           bg       border         */
-	[SchemeNorm]  = { col_normfg,  col_bg,  col_normborder }, /* colors of unselected items and windows */
-	[SchemeSel]   = { col_selfg,   col_bg,  col_selborder  }, /* colors of selected items and windows */
-	[SchemeTitle] = { col_titlefg, col_bg,  col_null       }, /* fg and bg color of the window title in the bar */
-	[SchemeUrg]   = { col_null,    col_bg,  col_urgborder  }, /* border color of urgent windows */
+	/*                    fg           bg       border         */
+	[SchemeNorm]      = { col_normfg,  col_bg,  col_normborder      }, /* colors of unselected items and windows */
+	[SchemeSel]       = { col_selfg,   col_bg,  col_selborder       }, /* colors of selected items and windows */
+	[SchemeTitle]     = { col_titlefg, col_bg,  col_null            }, /* fg and bg color of the window title in the bar */
+	[SchemeUrg]       = { col_null,    col_bg,  col_urgborder       }, /* border color of urgent windows */
+	[SchemeBlockSel]  = { col_null,    col_bg,  col_blockbordersel  }, /* border color of input-blocked windows */
+	[SchemeBlockNorm] = { col_null,    col_bg,  col_blockbordernorm }, /* border color of input-blocked windows */
 };
 
 /* colors that can be used by the statusbar */

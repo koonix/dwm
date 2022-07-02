@@ -89,7 +89,8 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle,
+       SchemeBlockSel, SchemeBlockNorm }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType, NetWMDesktop,
        NetWMWindowTypeDialog, NetClientList, NetDesktopNames,
@@ -672,6 +673,14 @@ unblockinput(int unused)
 		XSetErrorHandler(xerrordummy);
 		XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
 		XSetErrorHandler(xerror);
+		int color;
+		if (blockedwin == selmon->sel->win)
+			color = SchemeSel;
+		else if (wintoclient(blockedwin)->isurgent)
+			color = SchemeUrg;
+		else
+			color = SchemeNorm;
+		XSetWindowBorder(dpy, blockedwin, scheme[color][ColBorder].pixel);
 		XFlush(dpy);
 		blockedwin = 0;
 	}
@@ -1284,7 +1293,10 @@ focus(Client *c)
 		detachstack(c);
 		attachstack(c);
 		grabbuttons(c, 1);
-		XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
+		if (c->win == blockedwin)
+			XSetWindowBorder(dpy, c->win, scheme[SchemeBlockSel][ColBorder].pixel);
+		else
+			XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
 		setfocus(c);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
@@ -2628,7 +2640,10 @@ unfocus(Client *c, int setfocus)
 	if (!c)
 		return;
 	grabbuttons(c, 0);
-	XSetWindowBorder(dpy, c->win, scheme[SchemeNorm][ColBorder].pixel);
+	if (c->win == blockedwin)
+		XSetWindowBorder(dpy, c->win, scheme[SchemeBlockNorm][ColBorder].pixel);
+	else
+		XSetWindowBorder(dpy, c->win, scheme[SchemeNorm][ColBorder].pixel);
 	if (setfocus) {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
