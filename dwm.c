@@ -669,14 +669,16 @@ blockinput(Window w, int msec)
 void
 unblockinput(int unused)
 {
+	int color;
+	Client *c;
+
 	if (blockedwin) {
 		XSetErrorHandler(xerrordummy);
 		XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
 		XSetErrorHandler(xerror);
-		int color;
-		if (blockedwin == selmon->sel->win)
+		if (selmon->sel && blockedwin == selmon->sel->win)
 			color = SchemeSel;
-		else if (wintoclient(blockedwin)->isurgent)
+		else if ((c = wintoclient(blockedwin)) && c->isurgent)
 			color = SchemeUrg;
 		else
 			color = SchemeNorm;
