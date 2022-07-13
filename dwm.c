@@ -392,7 +392,7 @@ static Window root, wmcheckwin;
 static Window blockedwin = 0;
 static volatile unsigned int mustunblock = 0;
 static Client *sametagstacks[128];
-static unsigned int noenternotify = 0;
+static volatile unsigned int noenternotify = 0;
 static xcb_connection_t *xcon;
 
 /* configuration, allows nested code to access above variables */
