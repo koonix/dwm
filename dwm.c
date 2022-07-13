@@ -213,7 +213,8 @@ static void attachbottom(Client *c) __attribute__((unused));
 static void attachtop(Client *c) __attribute__((unused));
 static void attachstack(Client *c);
 static void blockinput(Window w, int msec);
-static void unblockinput(int unused);
+static void unblockinput(void);
+static void sigunblockinput(int unused);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
 static void cleanup(void);
@@ -229,6 +230,8 @@ static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
 static void drawbar(Monitor *m);
 static void drawbars(void);
+static void drawborder(Window win, int scm);
+static void updateborder(Client *c);
 static int drawstatusbar(Monitor *m, int bh, int stw, char* text);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
@@ -386,7 +389,8 @@ static Drw *drw;
 static Monitor *mons, *selmon;
 static Systray *systray = NULL;
 static Window root, wmcheckwin;
-static volatile Window blockedwin = 0;
+static Window blockedwin = 0;
+static volatile unsigned int mustunblock = 0;
 static Client *sametagstacks[128];
 static unsigned int noenternotify = 0;
 static xcb_connection_t *xcon;
@@ -647,13 +651,13 @@ attachstack(Client *c)
 void
 blockinput(Window w, int msec)
 {
-	unblockinput(0);
+	unblockinput();
 	XSetErrorHandler(xerrordummy);
 	XGrabKey(dpy, AnyKey, AnyModifier, w, False, GrabModeAsync, GrabModeAsync);
 	XSetErrorHandler(xerror);
 	blockedwin = w;
 	pid_t ppid = getpid();
-	if (signal(SIGUSR1, unblockinput) == SIG_ERR)
+	if (signal(SIGUSR1, sigunblockinput) == SIG_ERR)
 		die("can't install SIGUSR1 handler:");
 	if (fork() == 0) {
 		struct timespec sleep = {
@@ -667,25 +671,37 @@ blockinput(Window w, int msec)
 }
 
 void
-unblockinput(int unused)
+sigunblockinput(int unused)
 {
-	int color;
+	mustunblock = 1;
+	XDestroyWindow(dpy, XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0));
+	XFlush(dpy);
+}
+
+void
+unblockinput(void)
+{
+	int scm;
 	Client *c;
 
-	if (blockedwin) {
-		XSetErrorHandler(xerrordummy);
-		XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
-		XSetErrorHandler(xerror);
-		if (selmon->sel && blockedwin == selmon->sel->win)
-			color = SchemeSel;
-		else if ((c = wintoclient(blockedwin)) && c->isurgent)
-			color = SchemeUrg;
-		else
-			color = SchemeNorm;
-		XSetWindowBorder(dpy, blockedwin, scheme[color][ColBorder].pixel);
-		XFlush(dpy);
-		blockedwin = 0;
-	}
+	mustunblock = 0;
+
+	if (!blockedwin)
+		return;
+
+	XSetErrorHandler(xerrordummy);
+	XUngrabKey(dpy, AnyKey, AnyModifier, blockedwin);
+	XSetErrorHandler(xerror);
+
+	if (selmon->sel && blockedwin == selmon->sel->win)
+		scm = SchemeSel;
+	else if ((c = wintoclient(blockedwin)) && c->isurgent)
+		scm = SchemeUrg;
+	else
+		scm = SchemeNorm;
+	drawborder(blockedwin, scm);
+
+	blockedwin = 0;
 }
 
 void
@@ -1246,6 +1262,89 @@ drawbars(void)
 }
 
 void
+drawborder(Window win, int scm)
+{
+	int w, h;   /* window width and height */
+	int pw, ph; /* pixmap width and height */
+	int innerpx, inneroffset, innersum;
+	XSetWindowAttributes swa;
+	XWindowAttributes wa;
+	XGCValues gcval;
+	Pixmap pixmap;
+	GC gc;
+
+	if (!XGetWindowAttributes(dpy, win, &wa))
+		return;
+
+	if (!wa.border_width)
+		return;
+
+	w = wa.width;
+	h = wa.height;
+	pw = w + (wa.border_width * 2);
+	ph = h + (wa.border_width * 2);
+	innerpx = innerborderpx;
+	inneroffset = innerborderoffset;
+	innersum = innerpx + inneroffset;
+
+	/* the border pixmap's origin is the same as the window's origin (not the
+	 * border origin), but pixmaps tile in all directions. so to draw rectangles
+	 * in the window border that are above or to the left of the window, we need
+	 * to draw them with respect to where they appear when the pixmap is tiled
+	 * above and to the left of the window. for example, if we want a rectangle
+	 * to appear on the left side of the window, we need to draw it on the right
+	 * edge of the pixmap. */
+	XRectangle rectangles[] = {
+		{ 0,              h+inneroffset,  w+inneroffset, innerpx     }, /* 1 - below the window */
+		{ 0,              ph-innersum,    w+innersum,    innerpx     }, /* 2 - above the window */
+		{ w+inneroffset,  0,              innerpx,       h+innersum  }, /* 3 - right of the window */
+		{ pw-innersum,    0,              innerpx,       h+innersum  }, /* 4 - left of the window */
+		{ pw-innersum,    ph-innersum,    innersum,      innerpx     }, /* 5 - up and to the left of the window, left of 1 and above 7 */
+		{ w+inneroffset,  ph-inneroffset, innerpx,       inneroffset }, /* 6 - up and to the right of the window, above 3 and below 2 */
+		{ pw-innersum,    ph-inneroffset, innerpx,       inneroffset }, /* 7 - up and to the left of the window, above 4 and below 5 */
+		{ pw-inneroffset, h+inneroffset,  inneroffset,   innerpx     }, /* 8 - down and to the left of the window, left of 1 and right of 4 */
+	};
+
+	pixmap = XCreatePixmap(dpy, win, pw, ph, wa.depth);
+	gc = XCreateGC(dpy, pixmap, 0, NULL);
+
+	/* fill the area with the border color */
+	gcval.foreground = scheme[scm][ColBorder].pixel;
+	XChangeGC(dpy, gc, GCForeground, &gcval);
+	XFillRectangle(dpy, pixmap, gc, 0, 0, pw, ph);
+
+	/* draw the inner border on top of the previous fill */
+	gcval.foreground = scheme[scm][ColInnerBorder].pixel;
+	XChangeGC(dpy, gc, GCForeground, &gcval);
+	XFillRectangles(dpy, pixmap, gc, rectangles, 8);
+
+	swa.border_pixmap = pixmap;
+	XChangeWindowAttributes(dpy, win, CWBorderPixmap, &swa);
+
+	XFreePixmap(dpy, pixmap);
+	XFreeGC(dpy, gc);
+}
+
+void
+updateborder(Client *c)
+{
+	int scm;
+	if (c->isfullscreen || !ISVISIBLE(c))
+		return;
+	if (c->win == blockedwin && c == selmon->sel)
+		scm = SchemeBlockSel;
+	else if (c->win == blockedwin)
+		scm = SchemeBlockNorm;
+	else if (c == selmon->sel)
+		scm = SchemeSel;
+	else if (c->isurgent)
+		scm = SchemeUrg;
+	else
+		scm = SchemeNorm;
+	drawborder(c->win, scm);
+}
+
+void
 enternotify(XEvent *e)
 {
 	Client *c;
@@ -1296,9 +1395,9 @@ focus(Client *c)
 		attachstack(c);
 		grabbuttons(c, 1);
 		if (c->win == blockedwin)
-			XSetWindowBorder(dpy, c->win, scheme[SchemeBlockSel][ColBorder].pixel);
+			drawborder(c->win, SchemeBlockSel);
 		else
-			XSetWindowBorder(dpy, c->win, scheme[SchemeSel][ColBorder].pixel);
+			drawborder(c->win, SchemeSel);
 		setfocus(c);
 	} else {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
@@ -1626,7 +1725,7 @@ manage(Window w, XWindowAttributes *wa)
 
 	wc.border_width = c->bw;
 	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
-	XSetWindowBorder(dpy, w, scheme[SchemeNorm][ColBorder].pixel);
+	drawborder(w, SchemeNorm);
 	configure(c); /* propagates border_width, if size doesn't change */
 	updatewindowtype(c);
 	updatewmhints(c);
@@ -2007,6 +2106,7 @@ resizemouse(const Arg *arg)
 			}
 			if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
 				resize(c, c->x, c->y, nw, nh, 1);
+			updateborder(c);
 			break;
 		}
 	} while (ev.type != ButtonRelease);
@@ -2048,11 +2148,13 @@ restack(Monitor *m)
 	if (m->lt[m->sellt]->arrange) {
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
-		for (c = m->stack; c; c = c->snext)
+		for (c = m->stack; c; c = c->snext) {
+			updateborder(c);
 			if (!c->isfloating && ISVISIBLE(c)) {
 				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
 				wc.sibling = c->win;
 			}
+		}
 	}
 	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
@@ -2064,9 +2166,12 @@ run(void)
 	XEvent ev;
 	/* main event loop */
 	XSync(dpy, False);
-	while (running && !XNextEvent(dpy, &ev))
-		if (handler[ev.type])
+	while (running) {
+		if (mustunblock)
+			unblockinput();
+		else if (!XNextEvent(dpy, &ev) && handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+	}
 }
 
 void
@@ -2358,9 +2463,9 @@ setup(void)
 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
 	/* init appearance */
 	scheme = ecalloc(LENGTH(colors) + 1, sizeof(Clr *));
-	scheme[LENGTH(colors)] = drw_scm_create(drw, colors[0], 3);
+	scheme[LENGTH(colors)] = drw_scm_create(drw, colors[0], 4);
 	for (i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], 3);
+		scheme[i] = drw_scm_create(drw, colors[i], 4);
 	/* init system tray */
 	updatesystray();
 	/* init bars */
@@ -2643,9 +2748,9 @@ unfocus(Client *c, int setfocus)
 		return;
 	grabbuttons(c, 0);
 	if (c->win == blockedwin)
-		XSetWindowBorder(dpy, c->win, scheme[SchemeBlockNorm][ColBorder].pixel);
+		drawborder(c->win, SchemeBlockNorm);
 	else
-		XSetWindowBorder(dpy, c->win, scheme[SchemeNorm][ColBorder].pixel);
+		drawborder(c->win, SchemeNorm);
 	if (setfocus) {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
@@ -3105,7 +3210,7 @@ updatewmhints(Client *c)
 		} else {
 			c->isurgent = (wmh->flags & XUrgencyHint) ? 1 : 0;
 			if (c->isurgent)
-				XSetWindowBorder(dpy, c->win, scheme[SchemeUrg][ColBorder].pixel);
+				drawborder(c->win, SchemeUrg);
 		}
 		if (wmh->flags & InputHint)
 			c->neverfocus = !wmh->input;

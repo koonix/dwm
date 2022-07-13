@@ -5,8 +5,10 @@
 #define TERMCLASS "st-256color"
 
 /* appearance */
-static const unsigned int borderpx   = 3;   /* border pixel of windows */
-static const unsigned int gappx      = 10;  /* gaps between windows */
+static const unsigned int borderpx          = 9; /* border pixel of windows */
+static const unsigned int innerborderpx     = 3; /* inner border pixel of windows */
+static const unsigned int innerborderoffset = 3; /* distance between inner border and window */
+static const unsigned int gappx      = 5;   /* gaps between windows */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
 static const int nmaster             = 1;   /* number of clients in master area */
@@ -46,16 +48,17 @@ static const char *fonts[] = {
 };
 
 /* colors */
-static const char normfg[] = "#555555";
-static const char bgcol[]  = "#000000";
+static const char normfg[]    = "#555555";
+static const char bgcol[]     = "#000000";
+static const char bordercol[] = "#000000";
 static const char *colors[][4] = {
-	/*                    fg           bg       border    */
-	[SchemeNorm]      = { normfg,      bgcol,  "#333333" }, /* colors of normal (unselected) items, tags, and window borders */
-	[SchemeSel]       = { "#bfbfbf",   bgcol,  "#ffffff" }, /* colors of selected items, tags and and window borders */
-	[SchemeTitle]     = { "#9d9d9d",   bgcol,  NULL      }, /* fg and bg color of the window title area in the bar */
-	[SchemeUrg]       = { NULL,        NULL,   "#ff0000" }, /* border color of urgent windows */
-	[SchemeBlockNorm] = { NULL,        NULL,   "#004d00" }, /* border color of unselected input-blocked windows */
-	[SchemeBlockSel]  = { NULL,        NULL,   "#00b301" }, /* border color of selected input-blocked windows */
+	/*                    fg           bg       innerborder,  border */
+	[SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
+	[SchemeSel]       = { "#bfbfbf",   bgcol,  "#ffffff",     bordercol }, /* colors of selected items, tags and and window borders */
+	[SchemeTitle]     = { "#9d9d9d",   bgcol,  NULL,          NULL      }, /* fg and bg color of the window title area in the bar */
+	[SchemeUrg]       = { NULL,        NULL,   "#ff0000",     bordercol }, /* border color of urgent windows */
+	[SchemeBlockNorm] = { NULL,        NULL,   "#004d00",     bordercol }, /* border color of unselected input-blocked windows */
+	[SchemeBlockSel]  = { NULL,        NULL,   "#00b301",     bordercol }, /* border color of selected input-blocked windows */
 };
 
 /* colors that can be used by the statusbar */
