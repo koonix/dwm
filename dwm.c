@@ -381,7 +381,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 };
 static Atom wmatom[WMLast], netatom[NetLast], xatom[XembedLast];
 static volatile int running = 1;
-static volatile int must_restart = 0;
+static volatile int mustrestart = 0;
 static Cur *cursor[CurLast];
 static Clr **scheme;
 static Display *dpy;
@@ -1994,7 +1994,7 @@ quit(const Arg *arg)
 void
 restart(const Arg *arg)
 {
-	must_restart = 1;
+	mustrestart = 1;
 	running = 0;
 }
 
@@ -3568,7 +3568,7 @@ main(int argc, char *argv[])
 #endif /* __OpenBSD__ */
 	scan();
 	run();
-	if (must_restart)
+	if (mustrestart)
 		execvp(argv[0], argv);
 	cleanup();
 	XCloseDisplay(dpy);

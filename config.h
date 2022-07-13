@@ -96,8 +96,7 @@ static const Layout layouts[] = {
  *
  *  xprop(1):
  *    WM_CLASS(STRING) = instance, class
- *    WM_NAME(STRING) = title
- */
+ *    WM_NAME(STRING) = title */
 static const Rule rules[] = {
 	/* 1 = tagmask, 2 = isfloating, 3 = blockinput, 4 = sametagid,
 	 * 5 = sametagchildof, 6 = isterminal, 7 = noswallow, 8 = monitor
