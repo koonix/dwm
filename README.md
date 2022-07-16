@@ -15,6 +15,8 @@ this is my build of dwm, a tiling window manager:
 
 - [blockinputrule](https://github.com/soystemd/dwm/compare/36f4be5...b4d681d)
 
+- [fixjumprule](https://github.com/soystemd/dwm/commit/5643525)
+
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
 
 - [push](https://dwm.suckless.org/patches/push)
@@ -29,6 +31,8 @@ this is my build of dwm, a tiling window manager:
 
 - [urgentborder](https://dwm.suckless.org/patches/urgentborder)
 
+- [fancyborders](https://github.com/soystemd/dwm/commit/b375ca9)
+
 - [ewmhtags](https://dwm.suckless.org/patches/ewmhtags)
 
 - [NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
@@ -40,6 +44,10 @@ this is my build of dwm, a tiling window manager:
 - [titlecolor](https://dwm.suckless.org/patches/titlecolor)
 
 - [stairs](https://dwm.suckless.org/patches/stairs)
+
+- [bidi](https://dwm.suckless.org/patches/bidi)
+
+and many other minor changes and fixes.
 
 ## related stuff
 
