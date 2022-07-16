@@ -969,6 +969,8 @@ configurerequest(XEvent *e)
 				configure(c);
 			if (ISVISIBLE(c))
 				XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
+			if (ISVISIBLE(c) && (ev->value_mask & (CWWidth|CWHeight)))
+				updateborder(c);
 		} else
 			configure(c);
 	} else {
