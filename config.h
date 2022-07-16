@@ -96,22 +96,24 @@ static const Layout layouts[] = {
  *   by setting fixjump to 1, the x and y of the configure event of the client
  *   will be ignored, thus preventing it from dictating it's own window position.
  *
- *  xprop(1):
+ * xprop(1):
  *    WM_CLASS(STRING) = instance, class
- *    WM_NAME(STRING) = title */
+ *    WM_NAME(STRING) = title
+ *
+ * 1 = tagmask,   2 = isfloating,     3 = blockinput,
+ * 4 = sametagid, 5 = sametagchildof, 6 = isterminal,
+ * 7 = noswallow, 8 = fixjump,        9 = monitor      */
 static const Rule rules[] = {
-	/* 1 = tagmask, 2 = isfloating, 3 = blockinput, 4 = sametagid,
-	 * 5 = sametagchildof, 6 = isterminal, 7 = noswallow, 8 = fixjump, 9 = monitor
-	 * class, instance, title,                               1   2   3   4   5   6   7   8   9 */
-	{ "TelegramDesktop", "telegram-desktop", "Media viewer", 0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL,                           0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
-	{ "Safeeyes", "safeeyes", "safeeyes",                    0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile safeeyes */
-	{ ".exe", NULL, NULL,                                    0,  0, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
-	{ "Steam", NULL, NULL,                                   0,  0, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
-	{ "firefox", NULL, NULL,                                 0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
-	{ "tabbed", NULL, NULL,                                  0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block tabbed's input */
-	{ TERMCLASS, NULL, NULL,                                 0,  0,  0,  0,  0,  1,  0,  0, -1 }, /* set terminal's isterminal rule */
-	{ NULL, NULL, "Event Tester",                            0,  0,  0,  0,  0,  0,  1,  0, -1 }, /* don't swallow evtest */
+	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9 */
+	{ "TelegramDesktop", NULL, "Media viewer",  0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL,              0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
+	{ "Safeeyes", "safeeyes", "safeeyes",       0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile safeeyes */
+	{ ".exe", NULL, NULL,                       0,  0, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
+	{ "Steam", NULL, NULL,                      0,  0, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
+	{ "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
+	{ "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block tabbed's input */
+	{ TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  0,  1,  0,  0, -1 }, /* set terminal's isterminal rule */
+	{ NULL, NULL, "Event Tester",               0,  0,  0,  0,  0,  0,  1,  0, -1 }, /* don't swallow xev's window */
 };
 
 /* hint for attachdirection
@@ -139,7 +141,7 @@ static const Rule rules[] = {
  *   behavior feels very intuitive as it doesn't disrupt existing masters,
  *   no matter the amount of them, it only pushes the clients in stack down.
  *   in case of nmaster = 1 feels like attachaside. */
-static void (*attachdirection)(Client *c) = attachbelow;
+static void (*attachdirection)(Client *) = attachbelow;
 
 /* ======== */
 /* = KEYS = */
