@@ -131,7 +131,8 @@ struct Client {
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid;
 	int bw, oldbw;
 	unsigned int tags;
-	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow;
+	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+	int isterminal, noswallow, fixjump;
 	unsigned int blockinput;
 	pid_t pid;
 	Client *next;
@@ -189,6 +190,7 @@ typedef struct {
 	unsigned int sametagchildof;
 	int isterminal;
 	int noswallow;
+	int fixjump;
 	int monitor;
 } Rule;
 
@@ -463,6 +465,7 @@ applyrules(Client *c)
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
+			c->fixjump    = r->fixjump;
 			c->isfloating = r->isfloating;
 			c->tags |= r->tags;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
@@ -945,11 +948,11 @@ configurerequest(XEvent *e)
 			c->bw = ev->border_width;
 		else if (c->isfloating || !selmon->lt[selmon->sellt]->arrange) {
 			m = c->mon;
-			if (ev->value_mask & CWX) {
+			if (ev->value_mask & CWX && !c->fixjump) {
 				c->oldx = c->x;
 				c->x = m->mx + ev->x;
 			}
-			if (ev->value_mask & CWY) {
+			if (ev->value_mask & CWY && !c->fixjump) {
 				c->oldy = c->y;
 				c->y = m->my + ev->y;
 			}
@@ -961,15 +964,15 @@ configurerequest(XEvent *e)
 				c->oldh = c->h;
 				c->h = ev->height;
 			}
-			if ((c->x + c->w) > m->mx + m->mw && c->isfloating)
+			if ((c->x + c->w) > m->mx + m->mw && c->isfloating && !c->fixjump)
 				c->x = m->mx + (m->mw / 2 - WIDTH(c) / 2); /* center in x direction */
-			if ((c->y + c->h) > m->my + m->mh && c->isfloating)
+			if ((c->y + c->h) > m->my + m->mh && c->isfloating && !c->fixjump)
 				c->y = m->my + (m->mh / 2 - HEIGHT(c) / 2); /* center in y direction */
 			if ((ev->value_mask & (CWX|CWY)) && !(ev->value_mask & (CWWidth|CWHeight)))
 				configure(c);
 			if (ISVISIBLE(c))
 				XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
-			if (ISVISIBLE(c) && (ev->value_mask & (CWWidth|CWHeight)))
+			if (ISVISIBLE(c) && (ev->value_mask & (CWWidth|CWHeight)) && !c->fixjump)
 				updateborder(c);
 		} else
 			configure(c);
