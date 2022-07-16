@@ -11,11 +11,11 @@ this is my build of dwm, a tiling window manager:
 
 - [swallow](https://dwm.suckless.org/patches/swallow)
 
-- [sametagrule](https://github.com/soystemd/dwm/commit/fb1e103)
+- [sametagrule](https://github.com/ghesy/dwm/commit/fb1e103)
 
-- [blockinputrule](https://github.com/soystemd/dwm/compare/36f4be5...b4d681d)
+- [blockinputrule](https://github.com/ghesy/dwm/compare/36f4be5...b4d681d)
 
-- [fixjumprule](https://github.com/soystemd/dwm/commit/5643525)
+- [fixjumprule](https://github.com/ghesy/dwm/commit/5643525)
 
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
 
@@ -31,11 +31,11 @@ this is my build of dwm, a tiling window manager:
 
 - [urgentborder](https://dwm.suckless.org/patches/urgentborder)
 
-- [fancyborders](https://github.com/soystemd/dwm/commit/b375ca9)
+- [fancyborders](https://github.com/ghesy/dwm/commit/b375ca9)
 
 - [ewmhtags](https://dwm.suckless.org/patches/ewmhtags)
 
-- [NET_WM_DESKTOP hint](https://github.com/soystemd/dwm/compare/cc4564f...5ce1409)
+- [NET_WM_DESKTOP hint](https://github.com/ghesy/dwm/compare/cc4564f...5ce1409)
 
 - [clientindicatorshidevacant](https://dwm.suckless.org/patches/clientindicators)
 
@@ -51,5 +51,5 @@ and many other minor changes and fixes.
 
 ## related stuff
 
-- my statusbar: [soystemd/dwmBar](https://github.com/soystemd/dwmbar)
-- my dotfiles: [soystemd/dotfiles](https://github.com/soystemd/dotfiles)
+- my statusbar: [soystemd/dwmBar](https://github.com/ghesy/dwmbar)
+- my dotfiles: [soystemd/dotfiles](https://github.com/ghesy/dotfiles)
