@@ -17,6 +17,8 @@ this is my build of dwm, a tiling window manager:
 
 - [fixjumprule](https://github.com/ghesy/dwm/commit/5643525)
 
+- [nmasterbias](https://github.com/ghesy/dwm/commit/601138f)
+
 - [switchcol](https://dwm.suckless.org/patches/switchcol)
 
 - [push](https://dwm.suckless.org/patches/push)
