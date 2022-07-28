@@ -327,8 +327,8 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
-static pid_t getparentprocess(pid_t p);
-static int isdescprocess(pid_t p, pid_t c);
+static pid_t getparentprocess(pid_t pid);
+static int isdescprocess(pid_t parent, pid_t child);
 static Client *swallowingclient(Window w);
 static int swallow(Client *c);
 static void unswallow(Client *c);
@@ -1274,7 +1274,6 @@ drawborder(Window win, int scm)
 	int innerpx, inneroffset, innersum;
 	XSetWindowAttributes swa;
 	XWindowAttributes wa;
-	XGCValues gcval;
 	Pixmap pixmap;
 	GC gc;
 
@@ -1314,13 +1313,11 @@ drawborder(Window win, int scm)
 	gc = XCreateGC(dpy, pixmap, 0, NULL);
 
 	/* fill the area with the border color */
-	gcval.foreground = scheme[scm][ColBorder].pixel;
-	XChangeGC(dpy, gc, GCForeground, &gcval);
+	XSetForeground(dpy, gc, scheme[scm][ColBorder].pixel);
 	XFillRectangle(dpy, pixmap, gc, 0, 0, pw, ph);
 
 	/* draw the inner border on top of the previous fill */
-	gcval.foreground = scheme[scm][ColInnerBorder].pixel;
-	XChangeGC(dpy, gc, GCForeground, &gcval);
+	XSetForeground(dpy, gc, scheme[scm][ColInnerBorder].pixel);
 	XFillRectangles(dpy, pixmap, gc, rectangles, 8);
 
 	swa.border_pixmap = pixmap;
@@ -3292,19 +3289,19 @@ winpid(Window w)
 }
 
 pid_t
-getparentprocess(pid_t p)
+getparentprocess(pid_t pid)
 {
-	unsigned int v = 0;
+	unsigned int ppid = 0;
 
 #ifdef __linux__
 	FILE *f;
 	char buf[256];
-	snprintf(buf, sizeof(buf) - 1, "/proc/%u/stat", (unsigned)p);
+	snprintf(buf, sizeof(buf) - 1, "/proc/%u/stat", (unsigned)pid);
 
 	if (!(f = fopen(buf, "r")))
 		return 0;
 
-	fscanf(f, "%*u (%*[^)]) %*c %u", &v);
+	fscanf(f, "%*u (%*[^)]) %*c %u", &ppid);
 	fclose(f);
 #endif /* __linux__*/
 
@@ -3317,19 +3314,19 @@ getparentprocess(pid_t p)
 	if (!kd)
 		return 0;
 
-	kp = kvm_getprocs(kd, KERN_PROC_PID, p, sizeof(*kp), &n);
-	v = kp->p_ppid;
+	kp = kvm_getprocs(kd, KERN_PROC_PID, pid, sizeof(*kp), &n);
+	ppid = kp->p_ppid;
 #endif /* __OpenBSD__ */
 
-	return (pid_t)v;
+	return (pid_t)ppid;
 }
 
 int
-isdescprocess(pid_t p, pid_t c)
+isdescprocess(pid_t parent, pid_t child)
 {
-	while (c != p && c != 0)
-		c = getparentprocess(c);
-	return (int)c;
+	while (child != parent && child != 0)
+		child = getparentprocess(child);
+	return (int)child;
 }
 
 Client *
@@ -3381,8 +3378,10 @@ int
 swallow(Client *c)
 {
 	Client *p;
+
 	if (c->noswallow || c->isterminal || (c->isfloating && !swallowfloating))
 		return 0;
+
 	p = termforwin(c);
 	if (!p)
 		return 0;
@@ -3584,7 +3583,7 @@ void
 transfer(const Arg *arg)
 {
 	Client *c, *mtail = selmon->clients, *stail = NULL, *insertafter;
-	int transfertostack = 0, i, nmasterclients;
+	int transfertostack = 0, nmasterclients = 0, i;
 
 	for (i = 0, c = selmon->clients; c; c = c->next) {
 		if (!ISVISIBLE(c) || c->isfloating)

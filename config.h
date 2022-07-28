@@ -51,18 +51,19 @@ static const char *fonts[] = {
 static const char normfg[]    = "#555555";
 static const char bgcol[]     = "#000000";
 static const char bordercol[] = "#000000";
+static const char textcol[]   = "#9d9d9d";
 static const char *colors[][4] = {
-	/*                    fg           bg       innerborder,  border */
+	/*                    fg           bg       innerborder,  outerborder */
 	[SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
 	[SchemeSel]       = { "#bfbfbf",   bgcol,  "#ffffff",     bordercol }, /* colors of selected items, tags and and window borders */
-	[SchemeTitle]     = { "#9d9d9d",   bgcol,  NULL,          NULL      }, /* fg and bg color of the window title area in the bar */
+	[SchemeTitle]     = { textcol,     bgcol,  NULL,          NULL      }, /* fg and bg color of the window title area in the bar */
 	[SchemeUrg]       = { NULL,        NULL,   "#ff0000",     bordercol }, /* border color of urgent windows */
 	[SchemeBlockNorm] = { NULL,        NULL,   "#004d00",     bordercol }, /* border color of unselected input-blocked windows */
 	[SchemeBlockSel]  = { NULL,        NULL,   "#00b301",     bordercol }, /* border color of selected input-blocked windows */
 };
 
 /* colors that can be used by the statusbar */
-static const char *statuscolors[] = { normfg, "#9d9d9d" };
+static const char *statuscolors[] = { "#333333", textcol };
 
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
