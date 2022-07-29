@@ -193,9 +193,8 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 
 /* audio and media */
-#define VOLINC(n) CMD("pamixer", "--allow-boost", "-i", #n)
-#define VOLDEC(n) CMD("pamixer", "--allow-boost", "-d", #n)
-#define MPCVOL(n) CMD("mpc", "volume", #n)
+#define VOL(dB) CMD("pactl", "set-sink-volume", "@DEFAULT_SINK@", #dB "dB")
+#define MPCVOL(percent) CMD("mpc", "volume", #percent)
 #define MUTE CMD("pamixer", "-t")
 #define PACYCLE CMD("pacycle")
 
@@ -258,10 +257,10 @@ static Key keys[] = {
     { ModAlt,           XK_F3,          restart,        {0} },
     { ModAlt,           XK_F4,          quit,           {0} },
 
-  KP( 0,                KP_VOL,         spawn,          VOLDEC(5),   VOLINC(5)   ),
-  KP( ShiftMask,        KP_VOL,         spawn,          VOLDEC(20),  VOLINC(20)  ),
-  KP( ModAlt,           KP_JK,          spawn,          VOLDEC(5),   VOLINC(5)   ),
-  KP( ModAltShift,      KP_JK,          spawn,          VOLDEC(20),  VOLINC(20)  ),
+  KP( 0,                KP_VOL,         spawn,          VOL(-3),   VOL(+3)   ),
+  KP( ShiftMask,        KP_VOL,         spawn,          VOL(-10),  VOL(+10)  ),
+  KP( ModAlt,           KP_JK,          spawn,          VOL(-3),   VOL(+3)   ),
+  KP( ModAltShift,      KP_JK,          spawn,          VOL(-10),  VOL(+10)  ),
   KP( ModAltCtrl,       KP_JK,          spawn,          MPCVOL(-10), MPCVOL(+10) ),
     { ModAlt,           XK_m,           spawn,          MUTE },
     { ModAltShift,      XK_m,           spawn,          TOGGLE_MIC_MUTE },
@@ -353,8 +352,8 @@ static Button buttons[] = {
 	{ ClkTagBar,        Mod,      Button3,    toggletag,      {0} },
 	{ ClkStatusText,    0,        Button1,    spawn,          MUTE },
 	{ ClkStatusText,    0,        Button3,    spawn,          PACYCLE },
-	{ ClkStatusText,    0,        Button4,    spawn,          VOLINC(5) },
-	{ ClkStatusText,    0,        Button5,    spawn,          VOLDEC(5) },
+	{ ClkStatusText,    0,        Button4,    spawn,          VOL(+3) },
+	{ ClkStatusText,    0,        Button5,    spawn,          VOL(-3) },
 
 	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
 	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
