@@ -258,9 +258,7 @@ static Key keys[] = {
     { ModAlt,           XK_F4,          quit,           {0} },
 
   KP( 0,                KP_VOL,         spawn,          VOL(-3),   VOL(+3)   ),
-  KP( ShiftMask,        KP_VOL,         spawn,          VOL(-10),  VOL(+10)  ),
   KP( ModAlt,           KP_JK,          spawn,          VOL(-3),   VOL(+3)   ),
-  KP( ModAltShift,      KP_JK,          spawn,          VOL(-10),  VOL(+10)  ),
   KP( ModAltCtrl,       KP_JK,          spawn,          MPCVOL(-10), MPCVOL(+10) ),
     { ModAlt,           XK_m,           spawn,          MUTE },
     { ModAltShift,      XK_m,           spawn,          TOGGLE_MIC_MUTE },
