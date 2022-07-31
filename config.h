@@ -162,11 +162,11 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define AltCtrlShift  AltCtrl|ShiftMask
 
 /* key pair definition */
-#define K1(k1, k2) k1
-#define K2(k1, k2) k2
-#define KP(mod, kp, fn, arg1, arg2) \
-	{ mod, K1(kp), fn, arg1 }, \
-	{ mod, K2(kp), fn, arg2 }
+#define K1(K1, K2) K1
+#define K2(K1, K2) K2
+#define KP(MOD, KP, FN, ARG1, ARG2) \
+	{ MOD, K1(KP), FN, ARG1 }, \
+	{ MOD, K2(KP), FN, ARG2 }
 
 /* common key pairs */
 #define KP_JK            XK_j, XK_k
@@ -185,8 +185,8 @@ static void (*attachdirection)(Client *) = attachbelow;
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 #define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
-#define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
-#define SHTUI(cmd) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", cmd, NULL } }
+#define SHCMD(CMD) { .v = (const char*[]){ "/bin/sh", "-c", CMD, NULL } }
+#define SHTUI(CMD) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", CMD, NULL } }
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
@@ -194,26 +194,27 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 
 /* audio and media */
 #define VOL(dB) CMD("pactl", "set-sink-volume", "@DEFAULT_SINK@", #dB "dB")
-#define MPCVOL(percent) CMD("mpc", "volume", #percent)
+#define MPCVOL(PERCENT) CMD("mpc", "volume", #PERCENT)
 #define MUTE CMD("pamixer", "-t")
 #define PACYCLE CMD("pacycle")
 
-#define TOGGLE_MIC_MUTE SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
+#define TOGGLE_MIC_MUTE \
+	SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
 	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
-	"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; } || { " \
+	"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;} || { " \
 	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
-	"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute ;:; }")
+	"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
 
 #define MEDIA_PLAYPAUSE \
 	SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
 	"-f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
-	"printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; :;} || " \
+	"printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; : ;} || " \
 	"cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
 
-#define MEDIACMD(a, b) \
-	SHCMD("(mpc | grep -q '^\\[playing' && mpc " a ") & " \
+#define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
+	SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & " \
 	"playerctl -a status -f '{{playerInstance}}	{{status}}' | " \
-	"grep Playing | cut -f1 | xargs -rL1 playerctl " b " -p")
+	"grep Playing | cut -f1 | xargs -rL1 playerctl " PLAYERCTL_CMD " -p")
 
 #define MEDIA_NEXT MEDIACMD("next", "next")
 #define MEDIA_PREV MEDIACMD("prev", "previous")
@@ -222,14 +223,14 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 /**/
 
 /* backlight */
-#define LIGHTINC(n) CMD("light", "-A", #n)
-#define LIGHTDEC(n) CMD("light", "-U", #n)
+#define LIGHTINC(N) CMD("light", "-A", #N)
+#define LIGHTDEC(N) CMD("light", "-U", #N)
 
 /* other */
 #define PIPEURL CMD("pipeurl", "--clipboard", "ask")
 #define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
-#define KEY(a, ...) CMD("xdotool", "keyup", a, "key", "--clearmodifiers", __VA_ARGS__)
+#define SENDKEY(KEYUP, ...) CMD("xdotool", "keyup", KEYUP, "key", "--clearmodifiers", __VA_ARGS__)
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
 #define LASTDL CMD("zsh", "-c", "termopen ~/Downloads/*(om[1])") /* open the last downloaded file */
 
@@ -321,16 +322,16 @@ static Key keys[] = {
 };
 
 /* macro for defining scroll actions for when the cursor is on any window or the root window */
-#define ROOTSCROLL(mod, fn, arg_up, arg_down) \
-	{ ClkRootWin,   mod, Button4, fn, arg_up }, \
-	{ ClkRootWin,   mod, Button5, fn, arg_down }, \
-	{ ClkClientWin, mod, Button4, fn, arg_up }, \
-	{ ClkClientWin, mod, Button5, fn, arg_down }
+#define GLOBALSCROLL(MOD, FN, ARG_UP, ARG_DOWN) \
+	{ ClkRootWin,   MOD, Button4, FN, ARG_UP }, \
+	{ ClkRootWin,   MOD, Button5, FN, ARG_DOWN }, \
+	{ ClkClientWin, MOD, Button4, FN, ARG_UP }, \
+	{ ClkClientWin, MOD, Button5, FN, ARG_DOWN }
 
 /* same as above, but for clicking instead of scrolling */
-#define ROOTCLICK(mod, fn, arg) \
-	{ ClkRootWin,   mod, Button1, fn, arg }, \
-	{ ClkClientWin, mod, Button1, fn, arg }
+#define GLOBALCLICK(MOD, FN, ARG) \
+	{ ClkRootWin,   MOD, Button1, FN, ARG }, \
+	{ ClkClientWin, MOD, Button1, FN, ARG }
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
@@ -353,9 +354,9 @@ static Button buttons[] = {
 	{ ClkStatusText,    0,        Button4,    spawn,          VOL(+3) },
 	{ ClkStatusText,    0,        Button5,    spawn,          VOL(-3) },
 
-	ROOTSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
-	ROOTSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
-	ROOTSCROLL( ModCtrl,    setmfact,         {.f = +0.05},  {.f = -0.05} ), /* super+control+scroll:  change mfact */
+	GLOBALSCROLL( Mod,        focusstacktiled,  {.i = -1},     {.i = +1}    ), /* super+scroll:          change focus */
+	GLOBALSCROLL( ModShift,   push,             {.i = -1},     {.i = +1}    ), /* super+shift+scroll:    push the focused window */
+	GLOBALSCROLL( ModCtrl,    setmfact,         {.f = +0.05},  {.f = -0.05} ), /* super+control+scroll:  change mfact */
 };
 
 // vim:noexpandtab
