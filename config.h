@@ -241,9 +241,8 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 	"xclip -r -o -selection clipboard | DISPLAY=$dpy xclip -selection clipboard; done")
 
 /* binding logic:
- * - audio and music related bindings start with super+alt
- * - layout bindigns start with super+control
- * - most bindings that have a similar function only differ in the shift key */
+ * - audio and music related bindings start with super+alt (ModAlt)
+ * - most bindings that have a similar function only differ by a shift modifier */
 static Key keys[] = {
   /*  modifier          key             function        argument */
     { Mod,              XK_p,           spawn,          CMD("stuff", "-m") },
