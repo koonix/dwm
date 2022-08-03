@@ -222,9 +222,9 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 #define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
 /**/
 
-/* backlight */
-#define LIGHTINC(N) CMD("light", "-A", #N)
-#define LIGHTDEC(N) CMD("light", "-U", #N)
+/* change the brightness of internal and external monitors */
+#define LIGHTINC(N) SHCMD("light -A " #N "; monbrightness raise " #N)
+#define LIGHTDEC(N) SHCMD("light -U " #N "; monbrightness lower " #N)
 
 /* other */
 #define PIPEURL CMD("pipeurl", "--clipboard", "ask")
