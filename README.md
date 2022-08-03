@@ -3,7 +3,7 @@
 this is my build of dwm, a tiling window manager:
 [dwm.suckless.org](https://dwm.suckless.org)
 
-![screenshot](sc.jpg)
+![screenshot](screenshot.jpg)
 
 ## patches
 
