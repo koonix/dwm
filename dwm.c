@@ -133,6 +133,7 @@ struct Client {
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
 	int isterminal, noswallow, fixjump;
+	int isminimized, minimize;
 	unsigned int blockinput;
 	pid_t pid;
 	Client *next;
