@@ -234,6 +234,12 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
 #define LASTDL CMD("zsh", "-c", "termopen ~/Downloads/*(om[1])") /* open the last downloaded file */
 
+#define COPYTOXEPHYR \
+	SHCMD("answer=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
+	"-nb '#333333' -nf '#aaaaaa' -sb '#80232f'); [ \"$answer\" = Yes ] && " \
+	"for dpy in $(pgrep -ax Xephyr | grep -o ' :[0-9]\\+'); do " \
+	"xclip -r -o -selection clipboard | DISPLAY=$dpy xclip -selection clipboard; done")
+
 /* binding logic:
  * - audio and music related bindings start with super+alt
  * - layout bindigns start with super+control
@@ -255,6 +261,7 @@ static Key keys[] = {
     { Mod,              XK_o,           spawn,          CMD("freq", "-m") },
     { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
     { Mod,              XK_d,           spawn,          LASTDL },
+    { Mod,              XK_x,           spawn,          COPYTOXEPHYR },
     { ModAlt,           XK_F3,          restart,        {0} },
     { ModAlt,           XK_F4,          quit,           {0} },
 
