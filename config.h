@@ -234,11 +234,15 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
 #define LASTDL CMD("zsh", "-c", "termopen ~/Downloads/*(om[1])") /* open the last downloaded file */
 
+/* copy the clipboard contents to all running Xephyr instances */
 #define COPYTOXEPHYR \
-	SHCMD("answer=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
-	"-nb '#333333' -nf '#aaaaaa' -sb '#80232f'); [ \"$answer\" = Yes ] && " \
+	SHCMD("confirm=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
+	"-nb '#222222' -nf '#aaaaaa' -sb '#52161e'); [ \"$confirm\" != Yes ] && exit; " \
+	"xclip -o -selection clipboard -t TARGETS | grep -q image/png && target=image/png || unset target; " \
 	"for dpy in $(pgrep -ax Xephyr | grep -o ' :[0-9]\\+'); do " \
-	"xclip -r -o -selection clipboard | DISPLAY=$dpy xclip -selection clipboard; done")
+	"xclip -o -r -selection clipboard ${target:+-t $target} | " \
+	"DISPLAY=$dpy xclip -selection clipboard ${target:+-t $target}; done")
+
 
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
