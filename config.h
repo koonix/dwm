@@ -206,10 +206,10 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 	"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
 
 #define MEDIA_PLAYPAUSE \
-	SHCMD("mpc pause & f=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
+	SHCMD("mpc pause & file=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
 	"-f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
-	"printf '%s\\n' \"$p\" >\"$f\"; playerctl -a pause; : ;} || " \
-	"cut -f1 \"$f\" | xargs -rL1 playerctl play -p")
+	"printf '%s\\n' \"$p\" >\"$file\"; playerctl -a pause; : ;} || " \
+	"cut -f1 \"$file\" | xargs -rL1 playerctl play -p")
 
 #define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
 	SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & " \
