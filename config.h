@@ -245,8 +245,8 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
  * - most bindings that have a similar function only differ by a shift modifier */
 static Key keys[] = {
   /*  modifier          key             function        argument */
-    { Mod,              XK_p,           spawn,          CMD("stuff", "-m") },
-    { ModShift,         XK_p,           spawn,          {.v = dmenucmd } },
+    { Mod,              XK_o,           spawn,          CMD("stuff", "-m") },
+    { ModShift,         XK_o,           spawn,          {.v = dmenucmd } },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
     { ModShift,         XK_t,           spawn,          TERMCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
@@ -257,8 +257,8 @@ static Key keys[] = {
     { Mod,              XK_v,           spawn,          SHTUI("exec ${EDITOR:-nvim}") },
     { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
-    { Mod,              XK_o,           spawn,          CMD("freq", "-m") },
-    { ModCtrl,          XK_p,           spawn,          CMD("dpass") },
+    { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
+    { Mod,              XK_p,           spawn,          CMD("dpass") },
     { Mod,              XK_d,           spawn,          LASTDL },
     { Mod,              XK_x,           spawn,          COPYTOXEPHYR },
     { ModAlt,           XK_F3,          restart,        {0} },
