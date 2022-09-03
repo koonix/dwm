@@ -181,15 +181,15 @@ static void (*attachdirection)(Client *) = attachbelow;
 	{ ModShift,         KEY,    tag,            {.ui = 1 << TAG} }, \
 	{ ModCtrlShift,     KEY,    toggletag,      {.ui = 1 << TAG} }
 
+/* ============ */
+/* = Commands = */
+/* ============ */
+
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 #define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
 #define SHCMD(CMD) { .v = (const char*[]){ "/bin/sh", "-c", CMD, NULL } }
 #define SHTUI(CMD) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", CMD, NULL } }
-
-/* commands */
-static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 
 /* audio and media */
 #define VOL(dB) CMD("pactl", "set-sink-volume", "@DEFAULT_SINK@", #dB "dB")
@@ -246,10 +246,10 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
  * - most bindings that have a similar function only differ by a shift modifier */
-static Key keys[] = {
+static const Key keys[] = {
   /*  modifier          key             function        argument */
     { Mod,              XK_o,           spawn,          CMD("stuff", "-m") },
-    { ModShift,         XK_o,           spawn,          {.v = dmenucmd } },
+    { ModShift,         XK_o,           spawn,          CMD("dmenu_run", "-p", "Programs") },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
     { ModShift,         XK_t,           spawn,          TERMCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
@@ -344,7 +344,7 @@ static Key keys[] = {
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
-static Button buttons[] = {
+static const Button buttons[] = {
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,      0,        Button1,    setlayout,      {0} },
 	{ ClkLtSymbol,      0,        Button2,    setlayout,      {.lt = tile } },
