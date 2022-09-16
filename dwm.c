@@ -1991,6 +1991,8 @@ restart(const Arg *arg)
 {
 	mustrestart = 1;
 	running = 0;
+	XDestroyWindow(dpy, XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0));
+	XFlush(dpy);
 }
 
 void
@@ -3562,10 +3564,10 @@ main(int argc, char *argv[])
 #endif /* __OpenBSD__ */
 	scan();
 	run();
-	if (mustrestart)
-		execvp(argv[0], argv);
 	cleanup();
 	XCloseDisplay(dpy);
+	if (mustrestart)
+		execvp(argv[0], argv);
 	return EXIT_SUCCESS;
 }
 
