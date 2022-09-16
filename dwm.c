@@ -202,7 +202,6 @@ typedef struct {
 /* function declarations */
 static void adjacent(const Arg *arg);
 static void allowenternotify(int unused);
-static void fribidi(char *in, char *out);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -214,9 +213,6 @@ static void attachbelow(Client *c) __attribute__((unused));
 static void attachbottom(Client *c) __attribute__((unused));
 static void attachtop(Client *c) __attribute__((unused));
 static void attachstack(Client *c);
-static void blockinput(Window w, int msec);
-static void unblockinput(void);
-static void sigunblockinput(int unused);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
 static void cleanup(void);
@@ -232,8 +228,6 @@ static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
 static void drawbar(Monitor *m);
 static void drawbars(void);
-static void drawborder(Window win, int scm);
-static void updateborder(Client *c);
 static int drawstatusbar(Monitor *m, int bh, int stw, char* text);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
@@ -242,6 +236,7 @@ static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static void focusstacktiled(const Arg *arg);
+static void fribidi(char *in, char *out);
 static Atom getatomprop(Client *c, Atom prop);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
@@ -261,7 +256,7 @@ static void movemouse(const Arg *arg);
 static void pop(Client *c);
 static void propertynotify(XEvent *e);
 static void push(const Arg *arg);
-static void quit(const Arg *arg);
+static void quit(const Arg *arg) __attribute__((unused));
 static void restart(const Arg *arg);
 static void sighup(int unused);
 static Monitor *recttomon(int x, int y, int w, int h);
@@ -270,11 +265,6 @@ static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
 static void run(void);
-static void sametagapply(Client *c);
-static void sametagcleanup(Client *c);
-static int sametagisattached(Client *c);
-static void sametagattach(Client *c);
-static void sametagdetach(Client *c);
 static void scan(void);
 static int sendevent(Window w, Atom proto, int mask, long d0, long d1, long d2, long d3, long d4);
 static void sendmon(Client *c, Monitor *m);
@@ -326,6 +316,23 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
+/* misinput functions */
+static void blockinput(Window w, int msec);
+static void unblockinput(void);
+static void sigunblockinput(int unused);
+
+/* fancyborders functions */
+static void drawborder(Window win, int scm);
+static void updateborder(Client *c);
+
+/* sametag functions */
+static void sametagapply(Client *c);
+static void sametagcleanup(Client *c);
+static int sametagisattached(Client *c);
+static void sametagattach(Client *c);
+static void sametagdetach(Client *c);
+
+/* swallow functions */
 static pid_t getparentprocess(pid_t pid);
 static int isdescprocess(pid_t parent, pid_t child);
 static Client *swallowingclient(Window w);
@@ -334,15 +341,7 @@ static void unswallow(Client *c);
 static Client *termforwin(const Client *c);
 static pid_t winpid(Window w);
 
-static int numtiled(Monitor *m) __attribute__((unused));
-static Client * nexttiledloop(Client *c);
-static Client * prevtiledloop(Client *c);
-static Client * nexttiled(Client *c);
-static Client * prevtiled(Client *c);
-static Client * firsttiled(Monitor *m) __attribute__((unused));
-static Client * lasttiled(Monitor *m);
-static Client *nexttagged(Client *c);
-
+/* systray functions */
 static unsigned int getsystraywidth();
 static void removesystrayicon(Client *i);
 static void resizebarwin(Monitor *m);
@@ -352,6 +351,16 @@ static void updatesystray(void);
 static void updatesystrayicongeom(Client *i, int w, int h);
 static void updatesystrayiconstate(Client *i, XPropertyEvent *ev);
 static Client *wintosystrayicon(Window w);
+
+/* auxiliary functions */
+static int numtiled(Monitor *m) __attribute__((unused));
+static Client *nexttiledloop(Client *c);
+static Client *prevtiledloop(Client *c);
+static Client *nexttiled(Client *c);
+static Client *prevtiled(Client *c);
+static Client *firsttiled(Monitor *m) __attribute__((unused));
+static Client *lasttiled(Monitor *m);
+static Client *nexttagged(Client *c);
 
 /* variables */
 static const char broken[] = "broken";
@@ -403,24 +412,6 @@ static xcb_connection_t *xcon;
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
 /* function implementations */
-static void
-fribidi(char *in, char *out)
-{
-	FriBidiStrIndex len;
-	FriBidiCharSet charset;
-	FriBidiChar logical[1024];
-	FriBidiChar visual[1024];
-	FriBidiParType base = FRIBIDI_PAR_ON;
-
-	out[0] = '\0';
-	if (!(len = strlen(in)))
-		return;
-	charset = fribidi_parse_charset("UTF-8");
-	len = fribidi_charset_to_unicode(charset, in, len, logical);
-	fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
-	fribidi_unicode_to_charset(charset, visual, len, out);
-}
-
 void
 adjacent(const Arg *arg)
 {
@@ -1291,7 +1282,7 @@ drawborder(Window win, int scm)
 	innersum = innerpx + inneroffset;
 
 	/* the border pixmap's origin is the same as the window's origin (not the
-	 * border origin), but pixmaps tile in all directions. so to draw rectangles
+	 * border's origin), but pixmaps tile in all directions. so to draw rectangles
 	 * in the window border that are above or to the left of the window, we need
 	 * to draw them with respect to where they appear when the pixmap is tiled
 	 * above and to the left of the window. for example, if we want a rectangle
@@ -1478,6 +1469,24 @@ focusstacktiled(const Arg *arg)
 		focus(c);
 		restack(selmon);
 	}
+}
+
+void
+fribidi(char *in, char *out)
+{
+	FriBidiStrIndex len;
+	FriBidiCharSet charset;
+	FriBidiChar logical[1024];
+	FriBidiChar visual[1024];
+	FriBidiParType base = FRIBIDI_PAR_ON;
+
+	out[0] = '\0';
+	if (!(len = strlen(in)))
+		return;
+	charset = fribidi_parse_charset("UTF-8");
+	len = fribidi_charset_to_unicode(charset, in, len, logical);
+	fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
+	fribidi_unicode_to_charset(charset, visual, len, out);
 }
 
 Atom
@@ -2848,8 +2857,8 @@ updatebars(void)
 		if (showsystray && m == systraytomon(m))
 			w -= getsystraywidth();
 		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, w, bh, 0, DefaultDepth(dpy, screen),
-				CopyFromParent, DefaultVisual(dpy, screen),
-				CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+			CopyFromParent, DefaultVisual(dpy, screen),
+			CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
 		if (showsystray && m == systraytomon(m))
 			XMapRaised(dpy, systray->win);
@@ -2875,7 +2884,7 @@ void
 updateclientdesktop(Client *c) {
 	long data[] = { (unsigned int)log2((double)c->tags) };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
-			PropModeReplace, (unsigned char *)data, 1);
+		PropModeReplace, (unsigned char *)data, 1);
 }
 
 void
@@ -3083,8 +3092,8 @@ updatesystrayiconstate(Client *i, XPropertyEvent *ev)
 	long flags;
 	int code = 0;
 
-	if (!showsystray || !i || ev->atom != xatom[XembedInfo] ||
-			!(flags = getatomprop(i, xatom[XembedInfo])))
+	if (!showsystray || !i || ev->atom != xatom[XembedInfo]
+		|| !(flags = getatomprop(i, xatom[XembedInfo])))
 		return;
 
 	if (flags & XEMBED_MAPPED && !i->tags) {
@@ -3102,7 +3111,7 @@ updatesystrayiconstate(Client *i, XPropertyEvent *ev)
 	else
 		return;
 	sendevent(i->win, xatom[Xembed], StructureNotifyMask, CurrentTime, code, 0,
-			systray->win, XEMBED_EMBEDDED_VERSION);
+		systray->win, XEMBED_EMBEDDED_VERSION);
 }
 
 void
@@ -3131,7 +3140,7 @@ updatesystray(void)
 		wa.background_pixel  = scheme[SchemeNorm][ColBg].pixel;
 		XSelectInput(dpy, systray->win, SubstructureNotifyMask);
 		XChangeProperty(dpy, systray->win, netatom[NetSystemTrayOrientation], XA_CARDINAL, 32,
-				PropModeReplace, (unsigned char *)&netatom[NetSystemTrayOrientationHorz], 1);
+			PropModeReplace, (unsigned char *)&netatom[NetSystemTrayOrientationHorz], 1);
 		XChangeWindowAttributes(dpy, systray->win, CWEventMask|CWOverrideRedirect|CWBackPixel, &wa);
 		XSetClassHint(dpy, systray->win, &ch);
 		XMapRaised(dpy, systray->win);
