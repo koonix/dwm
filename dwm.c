@@ -355,6 +355,7 @@ static void updatesystray(void);
 static void updatesystrayicongeom(Client *i, int w, int h);
 static void updatesystrayiconstate(Client *i, XPropertyEvent *ev);
 static Client *wintosystrayicon(Window w);
+static void sendsystrayevent(Window w, int xembedmsg);
 
 /* auxiliary functions */
 static int numtiled(Monitor *m) __attribute__((unused));
@@ -835,11 +836,11 @@ clientmessage(XEvent *e)
 			/* use parents background color */
 			swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
 			XChangeWindowAttributes(dpy, c->win, CWBackPixel, &swa);
-			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_EMBEDDED_NOTIFY, 0, systray->win, XEMBED_EMBEDDED_VERSION);
+			sendsystrayevent(c->win, XEMBED_EMBEDDED_NOTIFY);
 			/* FIXME not sure if I have to send these events, too */
-			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_FOCUS_IN, 0, systray->win, XEMBED_EMBEDDED_VERSION);
-			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_WINDOW_ACTIVATE, 0, systray->win, XEMBED_EMBEDDED_VERSION);
-			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_MODALITY_ON, 0, systray->win, XEMBED_EMBEDDED_VERSION);
+			sendsystrayevent(c->win, XEMBED_FOCUS_IN);
+			sendsystrayevent(c->win, XEMBED_WINDOW_ACTIVATE);
+			sendsystrayevent(c->win, XEMBED_MODALITY_ON);
 			XSync(dpy, False);
 			resizebarwin(selmon);
 			updatesystray();
@@ -2311,10 +2312,10 @@ sendevent(Window w, Atom proto, int mask, long d0, long d1, long d2, long d3, lo
 }
 
 void
-setnumdesktops(void){
-	long data[] = { TAGSLENGTH };
-	XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL,
-	                32, PropModeReplace, (unsigned char *)data, 1);
+sendsystrayevent(Window w, int xembedmsg)
+{
+	sendevent(w, netatom[Xembed], StructureNotifyMask, CurrentTime,
+		xembedmsg, 0, systray->win, XEMBED_EMBEDDED_VERSION);
 }
 
 void
@@ -3129,8 +3130,7 @@ updatesystrayiconstate(Client *i, XPropertyEvent *ev)
 	}
 	else
 		return;
-	sendevent(i->win, xatom[Xembed], StructureNotifyMask, CurrentTime, code, 0,
-		systray->win, XEMBED_EMBEDDED_VERSION);
+	sendsystrayevent(i->win, code);
 }
 
 void
