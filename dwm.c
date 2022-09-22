@@ -101,6 +101,7 @@ enum { Manager, Xembed, XembedInfo, XembedLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+enum { TimerUnblock, TimerLast }; /* timers */
 
 typedef struct Monitor Monitor;
 
@@ -316,10 +317,13 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
+/* tasks */
+static void starttimer(int task, int msec);
+static int exectimer(Window win);
+
 /* misinput functions */
 static void blockinput(Window w, int msec);
 static void unblockinput(void);
-static void sigunblockinput(int unused);
 
 /* fancyborders functions */
 static void drawborder(Window win, int scm);
@@ -400,10 +404,10 @@ static Monitor *mons, *selmon;
 static Systray *systray = NULL;
 static Window root, wmcheckwin;
 static Window blockedwin = 0;
-static volatile unsigned int mustunblock = 0;
 static Client *sametagstacks[128];
 static volatile unsigned int noenternotify = 0;
 static xcb_connection_t *xcon;
+static Window timerwin[TimerLast];
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -649,26 +653,7 @@ blockinput(Window w, int msec)
 	XGrabKey(dpy, AnyKey, AnyModifier, w, False, GrabModeAsync, GrabModeAsync);
 	XSetErrorHandler(xerror);
 	blockedwin = w;
-	pid_t ppid = getpid();
-	if (signal(SIGUSR1, sigunblockinput) == SIG_ERR)
-		die("can't install SIGUSR1 handler:");
-	if (fork() == 0) {
-		struct timespec sleep = {
-			.tv_sec = (int)(msec / MSECPERSEC),
-			.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
-		};
-		nanosleep(&sleep, NULL);
-		kill(ppid, SIGUSR1);
-		exit(EXIT_SUCCESS);
-	}
-}
-
-void
-sigunblockinput(int unused)
-{
-	mustunblock = 1;
-	XDestroyWindow(dpy, XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0));
-	XFlush(dpy);
+	starttimer(TimerUnblock, msec);
 }
 
 void
@@ -676,8 +661,6 @@ unblockinput(void)
 {
 	int scm;
 	Client *c;
-
-	mustunblock = 0;
 
 	if (!blockedwin)
 		return;
@@ -2172,12 +2155,9 @@ run(void)
 	XEvent ev;
 	/* main event loop */
 	XSync(dpy, False);
-	while (running) {
-		if (mustunblock)
-			unblockinput();
-		else if (!XNextEvent(dpy, &ev) && handler[ev.type])
+	while (running && !XNextEvent(dpy, &ev))
+		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
-	}
 }
 
 void
@@ -2598,6 +2578,42 @@ stairs(Monitor *m)
 				   0);
 		}
 	}
+}
+
+void
+starttimer(int task, int msec)
+{
+	timerwin[task] = XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0);
+
+	if (fork() != 0)
+		return;
+
+	if (dpy)
+		close(ConnectionNumber(dpy));
+
+	struct timespec sleep = {
+		.tv_sec = (int)(msec / MSECPERSEC),
+		.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
+	};
+	nanosleep(&sleep, NULL);
+
+	if ((dpy = XOpenDisplay(NULL))) {
+		XDestroyWindow(dpy, timerwin[task]);
+		XCloseDisplay(dpy);
+	}
+
+	exit(EXIT_SUCCESS);
+}
+
+int
+exectimer(Window win)
+{
+	if (win == timerwin[TimerUnblock])
+		unblockinput();
+	else
+		return 0;
+
+	return 1;
 }
 
 void
