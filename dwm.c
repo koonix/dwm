@@ -202,7 +202,6 @@ typedef struct {
 
 /* function declarations */
 static void adjacent(const Arg *arg);
-static void allowenternotify(int unused);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -405,8 +404,8 @@ static Monitor *mons, *selmon;
 static Systray *systray = NULL;
 static Window root, wmcheckwin;
 static Window blockedwin = 0;
+static Window swallowwin = 0;
 static Client *sametagstacks[128];
-static volatile unsigned int noenternotify = 0;
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
 
@@ -1327,8 +1326,10 @@ enternotify(XEvent *e)
 	Monitor *m;
 	XCrossingEvent *ev = &e->xcrossing;
 
-	if (noenternotify)
+	if (ev->window == swallowwin) {
+		swallowwin = 0;
 		return;
+	}
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
 	c = wintoclient(ev->window);
@@ -3402,6 +3403,9 @@ int
 swallow(Client *c)
 {
 	Client *p;
+	Window win, wtmp;
+	unsigned int uitmp;
+	int itmp;
 
 	if (c->noswallow || c->isterminal || (c->isfloating && !swallowfloating))
 		return 0;
@@ -3418,35 +3422,30 @@ swallow(Client *c)
 
 	p->swallowing = c;
 	c->mon = p->mon;
-
 	setfullscreen(c, p->isfullscreen);
-	Window w = p->win;
+	win = p->win;
 	p->win = c->win;
-	c->win = w;
-	updatetitle(p);
+	c->win = win;
 	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
-	arrange(p->mon);
 	configure(p);
-	updateclientlist();
-	XMapWindow(dpy, p->win);
-	if (p->mon->stack == p)
-		focus(p);
-	noenternotify = 1;
-	pid_t ppid = getpid();
-	if (signal(SIGUSR2, allowenternotify) == SIG_ERR)
-		die("can't install SIGUSR2 handler:");
-	if (fork() == 0) {
-		struct timespec sleep = { .tv_sec = 0, .tv_nsec = 50000000 };
-		nanosleep(&sleep, NULL);
-		kill(ppid, SIGUSR2);
-		exit(EXIT_SUCCESS);
-	}
-	return 1;
-}
+	updatetitle(p);
+	updateclientdesktop(p);
 
-void allowenternotify(int unused)
-{
-	noenternotify = 0;
+	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
+		PropModeAppend, (unsigned char *) &(p->win), 1);
+
+	arrange(p->mon);
+	XMapWindow(dpy, p->win);
+
+	if (p->mon->stack == p) {
+		focus(p);
+	} else {
+		XQueryPointer(dpy, root, &wtmp, &win, &itmp, &itmp, &itmp, &itmp, &uitmp);
+		if (win == p->win)
+			swallowwin = win;
+	}
+
+	return 1;
 }
 
 void
@@ -3464,6 +3463,7 @@ unswallow(Client *c)
 	setclientstate(c, NormalState);
 	focus(NULL);
 	arrange(c->mon);
+	updateclientlist();
 }
 
 Client *
