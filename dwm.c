@@ -1660,7 +1660,9 @@ killclient(const Arg *arg)
 {
 	if (!selmon->sel || selmon->sel->win == blockedwin)
 		return;
-	if (!sendevent(selmon->sel->win, wmatom[WMDelete], NoEventMask, wmatom[WMDelete], CurrentTime, 0, 0, 0)) {
+	if (!sendevent(selmon->sel->win, wmatom[WMDelete], NoEventMask,
+		wmatom[WMDelete], CurrentTime, 0, 0, 0))
+	{
 		XGrabServer(dpy);
 		XSetErrorHandler(xerrordummy);
 		XSetCloseDownMode(dpy, DestroyAll);
@@ -1773,7 +1775,8 @@ maprequest(XEvent *e)
 
 	Client *i;
 	if ((i = wintosystrayicon(ev->window))) {
-		sendevent(i->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_WINDOW_ACTIVATE, 0, systray->win, XEMBED_EMBEDDED_VERSION);
+		sendevent(i->win, netatom[Xembed], StructureNotifyMask, CurrentTime,
+			XEMBED_WINDOW_ACTIVATE, 0, systray->win, XEMBED_EMBEDDED_VERSION);
 		resizebarwin(selmon);
 		updatesystray();
 	}
@@ -2310,7 +2313,8 @@ setfocus(Client *c)
 			XA_WINDOW, 32, PropModeReplace,
 			(unsigned char *) &(c->win), 1);
 	}
-	sendevent(c->win, wmatom[WMTakeFocus], NoEventMask, wmatom[WMTakeFocus], CurrentTime, 0, 0, 0);
+	sendevent(c->win, wmatom[WMTakeFocus], NoEventMask, wmatom[WMTakeFocus],
+		CurrentTime, 0, 0, 0);
 }
 
 void
@@ -2865,7 +2869,7 @@ updatebars(void)
 		.background_pixmap = ParentRelative,
 		.event_mask = ButtonPressMask|ExposureMask
 	};
-	XClassHint ch = {"dwm", "dwm"};
+	XClassHint ch = { "bar", "dwm" };
 	unsigned int w;
 
 	for (m = mons; m; m = m->next) {
@@ -3086,23 +3090,25 @@ updatestatus(void)
 void
 updatesystrayicongeom(Client *i, int w, int h)
 {
-	if (i) {
-		i->h = bh;
-		if (w == h)
+	if (!i)
+		return;
+
+	i->h = bh;
+	if (w == h)
+		i->w = bh;
+	else if (h == bh)
+		i->w = w;
+	else
+		i->w = (int) ((float)bh * ((float)w / (float)h));
+	applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
+
+	/* force icons into the systray dimensions if they don't want to */
+	if (i->h > bh) {
+		if (i->w == i->h)
 			i->w = bh;
-		else if (h == bh)
-			i->w = w;
 		else
-			i->w = (int) ((float)bh * ((float)w / (float)h));
-		applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
-		/* force icons into the systray dimensions if they don't want to */
-		if (i->h > bh) {
-			if (i->w == i->h)
-				i->w = bh;
-			else
-				i->w = (int) ((float)bh * ((float)i->w / (float)i->h));
-			i->h = bh;
-		}
+			i->w = (int) ((float)bh * ((float)i->w / (float)i->h));
+		i->h = bh;
 	}
 }
 
@@ -3143,7 +3149,7 @@ updatesystray(void)
 	unsigned int x = m->mx + m->mw;
 	unsigned int sw = ssize - lrpad + systrayspacing;
 	unsigned int w = 1;
-	XClassHint ch = {"systray", "dwm"};
+	XClassHint ch = { "systray", "dwm" };
 
 	if (!showsystray)
 		return;
@@ -3153,7 +3159,8 @@ updatesystray(void)
 		/* init systray */
 		if (!(systray = (Systray *)calloc(1, sizeof(Systray))))
 			die("fatal: could not malloc() %u bytes\n", sizeof(Systray));
-		systray->win = XCreateSimpleWindow(dpy, root, x, m->by, w, bh, 0, 0, scheme[SchemeSel][ColBg].pixel);
+		systray->win = XCreateSimpleWindow(dpy, root, x, m->by, w, bh, 0, 0,
+			scheme[SchemeSel][ColBg].pixel);
 		wa.event_mask        = ButtonPressMask | ExposureMask;
 		wa.override_redirect = True;
 		wa.background_pixel  = scheme[SchemeNorm][ColBg].pixel;
@@ -3167,7 +3174,8 @@ updatesystray(void)
 		XMapRaised(dpy, systray->win);
 		XSetSelectionOwner(dpy, netatom[NetSystemTray], systray->win, CurrentTime);
 		if (XGetSelectionOwner(dpy, netatom[NetSystemTray]) == systray->win) {
-			sendevent(root, xatom[Manager], StructureNotifyMask, CurrentTime, netatom[NetSystemTray], systray->win, 0, 0);
+			sendevent(root, xatom[Manager], StructureNotifyMask, CurrentTime,
+				netatom[NetSystemTray], systray->win, 0, 0);
 			XSync(dpy, False);
 		}
 		else {
