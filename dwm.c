@@ -2905,8 +2905,9 @@ updatebarpos(Monitor *m)
 }
 
 void
-updateclientdesktop(Client *c) {
-	long data[] = { (unsigned int)log2((double)c->tags) };
+updateclientdesktop(Client *c)
+{
+	long data[] = { (unsigned int)log2((double)c->tags) + 1 };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -2928,13 +2929,9 @@ updateclientlist()
 void
 updatecurrentdesktop(void)
 {
-	long rawdata[] = { selmon->tagset[selmon->seltags] };
-	int i = 0;
-	while (*rawdata >> (i+1))
-		i++;
-	long data[] = { i };
-	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL,
-	                32, PropModeReplace, (unsigned char *)data, 1);
+	long data[] = { (unsigned int)log2((double)selmon->tagset[selmon->seltags]) + 1 };
+	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
+		PropModeReplace, (unsigned char *)data, 1);
 }
 
 int
