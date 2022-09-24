@@ -8,7 +8,7 @@
 static const unsigned int borderpx          = 9; /* border pixel of windows */
 static const unsigned int innerborderpx     = 3; /* inner border pixel of windows */
 static const unsigned int innerborderoffset = 3; /* distance between inner border and window */
-static const unsigned int gappx      = 5;   /* gaps between windows */
+static const unsigned int gappx      = 20;  /* gaps between windows */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
 static const int nmaster             = 1;   /* number of clients in master area */
@@ -17,7 +17,13 @@ static const int topbar              = 1;   /* 0 means bottom bar */
 static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
 static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
-static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
+static const unsigned char xkblayout = 0;   /* the default keyboard layout number; 0 is the main layout */
+
+/* geometry of client indicators */
+static const unsigned int cindgap       = 2; /* vertical gap between the indicator rectangles */
+static const unsigned int cindwidth     = 2; /* width of the indicator rectangle */
+static const unsigned int cindwidthsel  = 2; /* width of the selected clients' indicator */
+static const unsigned int cindheight    = 2; /* height of the indicator rectangle */
 
 /* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
@@ -42,16 +48,16 @@ static const unsigned int blockinputmsec = 1000;
 
 /* fonts */
 static const char *fonts[] = {
-	"peep:size=12",
-	"Vazirmatn NL:size=10",
+	"Signika Negative:size=13",
+	":lang=fa:spacing=mono:size=12",
 	"Symbols Nerd Font:size=10",
 };
 
 /* colors */
-static const char normfg[]    = "#555555";
-static const char bgcol[]     = "#000000";
+static const char normfg[]    = "#666666";
+static const char bgcol[]     = "#181b1c";
 static const char bordercol[] = "#000000";
-static const char textcol[]   = "#9d9d9d";
+static const char textcol[]   = "#bfbfbf";
 static const char *colors[][4] = {
 	/*                    fg           bg       innerborder,  outerborder */
 	[SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
@@ -108,7 +114,7 @@ static const Rule rules[] = {
 	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9 */
 	{ "TelegramDesktop", NULL, "Media viewer",  0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
 	{ "Qalculate-gtk", NULL, NULL,              0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
-	{ "Safeeyes", "safeeyes", "safeeyes",       0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile safeeyes */
+	{ "Droidcam", NULL, NULL,                   0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile droidcam */
 	{ ".exe", NULL, NULL,                       0,  0, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
 	{ "Steam", NULL, NULL,                      0,  0, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
 	{ "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
@@ -182,15 +188,15 @@ static void (*attachdirection)(Client *) = attachbelow;
 	{ ModShift,         KEY,    tag,            {.ui = 1 << TAG} }, \
 	{ ModCtrlShift,     KEY,    toggletag,      {.ui = 1 << TAG} }
 
+/* ============ */
+/* = Commands = */
+/* ============ */
+
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 #define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
 #define SHCMD(CMD) { .v = (const char*[]){ "/bin/sh", "-c", CMD, NULL } }
 #define SHTUI(CMD) { .v = (const char*[]){ TERM, "-e", "/bin/sh", "-c", CMD, NULL } }
-
-/* commands */
-static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs", NULL };
 
 /* audio and media */
 #define VOL(dB) CMD("pactl", "set-sink-volume", "@DEFAULT_SINK@", #dB "dB")
@@ -247,10 +253,13 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-p", "Programs",
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
  * - most bindings that have a similar function only differ by a shift modifier */
-static Key keys[] = {
+static const Key keys[] = {
   /*  modifier          key             function        argument */
     { Mod,              XK_o,           spawn,          CMD("stuff", "-m") },
-    { ModShift,         XK_o,           spawn,          {.v = dmenucmd } },
+    { ModShift,         XK_o,           spawn,          CMD("dmenu_run", "-p", "Programs") },
+    { Mod,              XK_p,           spawn,          CMD("dpass") },
+    { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
+    { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
     { ModShift,         XK_t,           spawn,          TERMCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
@@ -259,14 +268,10 @@ static Key keys[] = {
     { ControlMask,      XK_grave,       spawn,          CMD("dunstctl", "history-pop") },
     { CtrlShift,        XK_period,      spawn,          CMD("dunstctl", "context") },
     { Mod,              XK_v,           spawn,          SHTUI("exec ${EDITOR:-nvim}") },
-    { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
-    { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
-    { Mod,              XK_p,           spawn,          CMD("dpass") },
     { Mod,              XK_d,           spawn,          LASTDL },
     { Mod,              XK_x,           spawn,          COPYTOXEPHYR },
-    { ModAlt,           XK_F3,          restart,        {0} },
-    { ModAlt,           XK_F4,          quit,           {0} },
+    { ModShift,         XK_q,           restart,        {0} },
 
   KP( 0,                KP_VOL,         spawn,          VOL(-3),   VOL(+3)   ),
   KP( ModAlt,           KP_JK,          spawn,          VOL(-3),   VOL(+3)   ),
@@ -345,7 +350,7 @@ static Key keys[] = {
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
-static Button buttons[] = {
+static const Button buttons[] = {
 	/* click                event mask      button          function        argument */
 	{ ClkLtSymbol,      0,        Button1,    setlayout,      {0} },
 	{ ClkLtSymbol,      0,        Button2,    setlayout,      {.lt = tile } },
