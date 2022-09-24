@@ -1201,7 +1201,9 @@ drawbar(Monitor *m)
 
 		for (c = m->clients; c; c = c->next) {
 			if (c->tags & (1 << i)) {
-				drw_rect(drw, x, 1 + (indn * 3), selmon->sel == c ? 2 : 2, 2, 1, urg & 1 << i);
+				drw_rect(drw, x, 1 + (indn * (cindheight + cindgap)),
+					selmon->sel == c ? cindwidthsel : cindwidth, cindheight,
+					1, urg & 1 << i);
 				indn++;
 			}
 		}

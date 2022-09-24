@@ -19,6 +19,12 @@ static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscr
 static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
 static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
 
+/* geometry of client indicators */
+static const unsigned int cindgap       = 2; /* vertical gap between the indicator rectangles */
+static const unsigned int cindwidth     = 2; /* width of the indicator rectangle */
+static const unsigned int cindwidthsel  = 2; /* width of the selected clients' indicator */
+static const unsigned int cindheight    = 2; /* height of the indicator rectangle */
+
 /* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
 static const int stairsdirection     = 1;   /* 0: left-aligned, 1: right-aligned */
