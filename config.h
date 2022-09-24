@@ -8,7 +8,7 @@
 static const unsigned int borderpx          = 9; /* border pixel of windows */
 static const unsigned int innerborderpx     = 3; /* inner border pixel of windows */
 static const unsigned int innerborderoffset = 3; /* distance between inner border and window */
-static const unsigned int gappx      = 5;   /* gaps between windows */
+static const unsigned int gappx      = 20;  /* gaps between windows */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
 static const int nmaster             = 1;   /* number of clients in master area */
@@ -17,7 +17,7 @@ static const int topbar              = 1;   /* 0 means bottom bar */
 static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
 static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
-static const unsigned char xkblayout = 0;   /* the default keyboard layout number (starts from 0) */
+static const unsigned char xkblayout = 0;   /* the default keyboard layout number; 0 is the main layout */
 
 /* geometry of client indicators */
 static const unsigned int cindgap       = 2; /* vertical gap between the indicator rectangles */
@@ -48,16 +48,16 @@ static const unsigned int blockinputmsec = 1000;
 
 /* fonts */
 static const char *fonts[] = {
-	"peep:size=12",
-	"Vazirmatn NL:size=10",
+	"Signika Negative:size=13",
+	":lang=fa:spacing=mono:size=12",
 	"Symbols Nerd Font:size=10",
 };
 
 /* colors */
-static const char normfg[]    = "#555555";
-static const char bgcol[]     = "#000000";
+static const char normfg[]    = "#666666";
+static const char bgcol[]     = "#181b1c";
 static const char bordercol[] = "#000000";
-static const char textcol[]   = "#9d9d9d";
+static const char textcol[]   = "#bfbfbf";
 static const char *colors[][4] = {
 	/*                    fg           bg       innerborder,  outerborder */
 	[SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
