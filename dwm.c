@@ -1163,10 +1163,10 @@ drawstatusbar(Monitor *m, int bh, int stw, char* stext) {
 void
 drawbar(Monitor *m)
 {
-	int indn;
 	int x, w, tw = 0, stw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
+	int indn, cindpx = drw->fonts->h * cindfact;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
 	char biditext[1024];
@@ -1190,6 +1190,7 @@ drawbar(Monitor *m)
 	}
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
+
 		/* do not draw vacant tags */
 		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
 			continue;
@@ -1201,9 +1202,7 @@ drawbar(Monitor *m)
 
 		for (c = m->clients; c; c = c->next) {
 			if (c->tags & (1 << i)) {
-				drw_rect(drw, x, 1 + (indn * (cindheight + cindgap)),
-					selmon->sel == c ? cindwidthsel : cindwidth, cindheight,
-					1, urg & 1 << i);
+				drw_rect(drw, x, (indn * cindpx * 2) + 1, cindpx, cindpx, 1, urg & 1 << i);
 				indn++;
 			}
 		}

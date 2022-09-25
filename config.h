@@ -5,25 +5,20 @@
 #define TERMCLASS "st-256color"
 
 /* appearance */
-static const unsigned int borderpx          = 9; /* border pixel of windows */
-static const unsigned int innerborderpx     = 3; /* inner border pixel of windows */
-static const unsigned int innerborderoffset = 3; /* distance between inner border and window */
-static const unsigned int gappx      = 20;  /* gaps between windows */
-static const unsigned int snap       = 32;  /* snap pixel */
-static const float mfact             = 0.5; /* factor of master area size [0.05..0.95] */
-static const int nmaster             = 1;   /* number of clients in master area */
-static const int showbar             = 1;   /* 0 means no bar */
-static const int topbar              = 1;   /* 0 means bottom bar */
-static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
-static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
-static const int swallowfloating     = 0;   /* 1 means swallow floating windows by default */
-static const unsigned char xkblayout = 0;   /* the default keyboard layout number; 0 is the main layout */
-
-/* geometry of client indicators */
-static const unsigned int cindgap       = 2; /* vertical gap between the indicator rectangles */
-static const unsigned int cindwidth     = 2; /* width of the indicator rectangle */
-static const unsigned int cindwidthsel  = 2; /* width of the selected clients' indicator */
-static const unsigned int cindheight    = 2; /* height of the indicator rectangle */
+static const unsigned int borderpx          = 9;  /* border pixel of windows */
+static const unsigned int innerborderpx     = 3;  /* inner border pixel of windows */
+static const unsigned int innerborderoffset = 3;  /* distance between inner border and window */
+static const unsigned int gappx      = 20;   /* gaps between windows */
+static const unsigned int snap       = 32;   /* snap pixel */
+static const float mfact             = 0.5;  /* factor of master area size [0.05..0.95] */
+static const int nmaster             = 1;    /* number of clients in master area */
+static const int showbar             = 1;    /* 0 means no bar */
+static const int topbar              = 1;    /* 0 means bottom bar */
+static const int resizehints         = 1;    /* 1 means respect size hints in tiled resizals */
+static const int lockfullscreen      = 0;    /* 1 will force focus on the fullscreen window */
+static const int swallowfloating     = 0;    /* 1 means swallow floating windows by default */
+static const unsigned char xkblayout = 0;    /* the default keyboard layout number; 0 is the main layout */
+static const float cindfact          = 0.1;  /* size of client indicators */
 
 /* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
@@ -257,7 +252,7 @@ static const Key keys[] = {
   /*  modifier          key             function        argument */
     { Mod,              XK_o,           spawn,          CMD("stuff", "-m") },
     { ModShift,         XK_o,           spawn,          CMD("dmenu_run", "-p", "Programs") },
-    { Mod,              XK_p,           spawn,          CMD("dpass") },
+    { Mod,              XK_p,           spawn,          CMD("dmenu-pass") },
     { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
     { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
