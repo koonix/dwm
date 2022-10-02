@@ -250,11 +250,12 @@ static void (*attachdirection)(Client *) = attachbelow;
  * - most bindings that have a similar function only differ by a shift modifier */
 static const Key keys[] = {
   /*  modifier          key             function        argument */
+    { Mod,              XK_q,           spawn,          CMD("sysact") },
+    { Mod,              XK_m,           spawn,          CMD("manuals") },
     { Mod,              XK_o,           spawn,          CMD("stuff", "-m") },
     { ModShift,         XK_o,           spawn,          CMD("dmenu_run", "-p", "Programs") },
     { Mod,              XK_p,           spawn,          CMD("dmenu-pass") },
     { Mod,              XK_i,           spawn,          CMD("freq", "-m") },
-    { Mod,              XK_q,           spawn,          CMD("sysact") },
     { Mod,              XK_t,           spawn,          CMD(TERM) },
     { ModShift,         XK_t,           spawn,          TERMCWD },
     { Mod,              XK_b,           spawn,          SHCMD("exec $BROWSER") },
@@ -264,7 +265,7 @@ static const Key keys[] = {
     { CtrlShift,        XK_period,      spawn,          CMD("dunstctl", "context") },
     { Mod,              XK_v,           spawn,          SHTUI("exec ${EDITOR:-nvim}") },
     { Mod,              XK_e,           spawn,          CMD("loginctl", "lock-session") },
-    { Mod,              XK_d,           spawn,          LASTDL },
+    { Mod,              XK_d,           spawn,          TUI("dictfzf") },
     { Mod,              XK_x,           spawn,          COPYTOXEPHYR },
     { ModShift,         XK_q,           restart,        {0} },
 
@@ -306,9 +307,9 @@ static const Key keys[] = {
     { Mod,              XK_w,           killclient,     {0} },
     { ModCtrl,          XK_b,           togglebar,      {0} },
     { Mod,              XK_f,           togglefullscr,  {0} },
-    { Mod,              XK_m,           setlayout,      {.lt = tile } },
-    { ModShift,         XK_m,           setlayout,      {.lt = monocle } },
-    { Mod,              XK_semicolon,   setlayout,      {.lt = stairs } },
+    { Mod,              XK_semicolon,   setlayout,      {.lt = tile } },
+    { ModShift,         XK_semicolon,   setlayout,      {.lt = stairs } },
+    { ModCtrl,          XK_semicolon,   setlayout,      {.lt = monocle } },
   KP( ModCtrl,          KP_JK,          incnmaster,     {.i = -1 }, {.i = +1} ),
     { ModShift,         XK_f,           togglefloating, {0} },
     { Mod,              XK_0,           view,           {.ui = ~0 } },
