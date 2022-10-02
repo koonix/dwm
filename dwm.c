@@ -157,6 +157,13 @@ typedef struct {
 	void (*arrange)(Monitor *);
 } Layout;
 
+typedef struct {
+	float mfact;
+	int nmaster;
+	unsigned int sellt;
+	const Layout *lt[2];
+} Pertag;
+
 struct Monitor {
 	char ltsymbol[16];
 	float mfact;
@@ -177,6 +184,7 @@ struct Monitor {
 	Monitor *next;
 	Window barwin;
 	const Layout *lt[2];
+	Pertag *pertag;
 };
 
 typedef struct {
@@ -311,6 +319,11 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
+/* pertag functions */
+static void loadpertag(unsigned int tags, unsigned int newtags);
+static void pushpertag(unsigned int newtags);
+static void poppertag(void);
+
 /* tasks */
 static void starttimer(int task, int msec);
 static int exectimer(Window win);
@@ -352,14 +365,23 @@ static Client *wintosystrayicon(Window w);
 static void sendsystrayevent(Window w, int xembedmsg);
 
 /* auxiliary functions */
+static unsigned int gettagnum(unsigned int tags);
 static int numtiled(Monitor *m) __attribute__((unused));
+static int numtiledontag(Client *c);
+static int numtiledcore(Client *c, unsigned int tags);
+static int ismaster(Client *c);
+static int ismasterontag(Client *c);
+static int ismastercore(Client *c, unsigned int tags);
 static Client *nexttiledloop(Client *c);
 static Client *prevtiledloop(Client *c);
 static Client *nexttiled(Client *c);
+static Client * nexttiledontag(Client *c) __attribute__((unused));
+static Client * nexttiledcore(Client *c, unsigned int tags);
 static Client *prevtiled(Client *c);
 static Client *firsttiled(Monitor *m) __attribute__((unused));
+static Client * firsttiledontag(Client *c);
+static Client * firsttiledcore(Client *c, unsigned int tags);
 static Client *lasttiled(Monitor *m);
-static Client *nexttagged(Client *c);
 
 /* variables */
 static const char broken[] = "broken";
@@ -403,6 +425,9 @@ static Window swallowwin = 0;
 static Client *sametagstacks[128];
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
+static unsigned int pertagtags = 0;
+static unsigned int pertagstack[16];
+static int pertagtop = -1;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -786,6 +811,7 @@ cleanupmon(Monitor *mon)
 	}
 	XUnmapWindow(dpy, mon->barwin);
 	XDestroyWindow(dpy, mon->barwin);
+	free(mon->pertag);
 	free(mon);
 }
 
@@ -961,6 +987,7 @@ Monitor *
 createmon(void)
 {
 	Monitor *m;
+	int i;
 
 	m = ecalloc(1, sizeof(Monitor));
 	m->tagset[0] = m->tagset[1] = 1;
@@ -972,6 +999,15 @@ createmon(void)
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+
+	m->pertag = ecalloc(LENGTH(tags) + 1, sizeof(Pertag));
+	for (i = 0; i < LENGTH(tags) + 1; i++) {
+		m->pertag[i].mfact = m->mfact;
+		m->pertag[i].nmaster = m->nmaster;
+		m->pertag[i].lt[0] = m->lt[0];
+		m->pertag[i].lt[1] = m->lt[1];
+	}
+
 	return m;
 }
 
@@ -2761,6 +2797,7 @@ toggleview(const Arg *arg)
 	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
+		loadpertag(selmon->tagset[selmon->seltags], newtagset);
 		selmon->tagset[selmon->seltags] = newtagset;
 		focus(NULL);
 		arrange(selmon);
@@ -2793,8 +2830,7 @@ unmanage(Client *c, int destroyed)
 {
 	Monitor *m = c->mon;
 	XWindowChanges wc;
-	Client *s, *t;
-	int i;
+	Client *s;
 
 	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
 
@@ -2809,12 +2845,6 @@ unmanage(Client *c, int destroyed)
 		arrange(m);
 		focus(NULL);
 		return;
-	}
-
-	if (nmasterbias > 0 && c == selmon->sel && selmon->nmaster > nmasterbias) {
-		for (i = 0, t = nexttiled(m->clients); t && t != c; t = nexttiled(t->next), i++);
-		if (i < m->nmaster)
-		selmon->nmaster = MAX(selmon->nmaster - 1, 0);
 	}
 
 	sametagcleanup(c);
@@ -2832,13 +2862,11 @@ unmanage(Client *c, int destroyed)
 		XSetErrorHandler(xerror);
 		XUngrabServer(dpy);
 	}
-	free(c);
 
-	if (!s) {
-		arrange(m);
-		focus(NULL);
-		updateclientlist();
-	}
+	free(c);
+	arrange(m);
+	focus(NULL);
+	updateclientlist();
 }
 
 void
@@ -3257,6 +3285,7 @@ view(const Arg *arg)
 {
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
+	loadpertag(selmon->tagset[selmon->seltags], arg->ui & TAGMASK);
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
@@ -3643,13 +3672,110 @@ transfer(const Arg *arg)
 	arrange(selmon);
 }
 
+void
+loadpertag(unsigned int tags, unsigned int newtags)
+{
+	if (!pertag)
+		return;
+
+	pertagtags = newtags;
+
+	if (newtags == tags)
+		return;
+
+	unsigned int tagnum = gettagnum(tags);
+	unsigned int newtagnum = gettagnum(newtags);
+
+	selmon->pertag[tagnum].mfact = selmon->mfact;
+	selmon->pertag[tagnum].nmaster = selmon->nmaster;
+	selmon->pertag[tagnum].sellt = selmon->sellt;
+	selmon->pertag[tagnum].lt[0] = selmon->lt[0];
+	selmon->pertag[tagnum].lt[1] = selmon->lt[1];
+
+	selmon->mfact = selmon->pertag[newtagnum].mfact;
+	selmon->nmaster = selmon->pertag[newtagnum].nmaster;
+	selmon->sellt = selmon->pertag[newtagnum].sellt;
+	selmon->lt[0] = selmon->pertag[newtagnum].lt[0];
+	selmon->lt[1] = selmon->pertag[newtagnum].lt[1];
+}
+
+void
+pushpertag(unsigned int newtags)
+{
+	if (!pertag)
+		return;
+
+	if (pertagtop == LENGTH(pertagstack) - 1)
+		return;
+
+	unsigned int tags = pertagtags ? pertagtags : selmon->tagset[selmon->seltags];
+	pertagstack[++pertagtop] = tags;
+	loadpertag(tags, newtags);
+}
+
+void
+poppertag(void)
+{
+	if (!pertag)
+		return;
+
+	if (pertagtop >= 0)
+		loadpertag(pertagtags, pertagstack[pertagtop--]);
+}
+
+unsigned int
+gettagnum(unsigned int tags)
+{
+	return (unsigned int)log2((double)tags);
+}
+
 int
 numtiled(Monitor *m)
 {
+	return numtiledcore(m->clients, m->tagset[m->seltags]);
+}
+
+int
+numtiledontag(Client *c)
+{
+	return numtiledcore(c, c->tags);
+}
+
+int
+numtiledcore(Client *c, unsigned int tags)
+{
 	int i = 0;
-	Client *c = nexttiled(m->clients);
-	for (; c; c = nexttiled(c->next), i++);
+	c = nexttiledcore(c->mon->clients, tags);
+	for (; c; c = nexttiledcore(c->next, tags), i++);
 	return i;
+}
+
+int
+ismaster(Client *c)
+{
+	return ismastercore(c, c->mon->tagset[c->mon->seltags]);
+}
+
+int
+ismasterontag(Client *c)
+{
+	return ismastercore(c, c->tags);
+}
+
+int
+ismastercore(Client *c, unsigned int tags)
+{
+	Client *t;
+	int i, ret;
+
+	for (i = 0, t = nexttiledcore(c->mon->clients, tags);
+	     t && t != c;
+	     t = nexttiledcore(t->next, tags), i++);
+
+	pushpertag(tags);
+	ret = i < c->mon->nmaster;
+	poppertag();
+	return ret;
 }
 
 Client *
@@ -3673,7 +3799,19 @@ prevtiledloop(Client *c)
 Client *
 nexttiled(Client *c)
 {
-	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
+	return c ? nexttiledcore(c, c->mon->tagset[c->mon->seltags]) : c;
+}
+
+Client *
+nexttiledontag(Client *c)
+{
+	return nexttiledcore(c, c->tags);
+}
+
+Client *
+nexttiledcore(Client *c, unsigned int tags)
+{
+	for (; c && (c->isfloating || !ISVISIBLEONTAG(c, tags)); c = c->next);
 	return c;
 }
 
@@ -3690,9 +3828,21 @@ prevtiled(Client *c)
 Client *
 firsttiled(Monitor *m)
 {
-	Client *c = m->clients;
-	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
-	return c;
+	return firsttiledcore(m->clients, m->tagset[m->seltags]);
+}
+
+Client *
+firsttiledontag(Client *c)
+{
+	return firsttiledcore(c, c->tags);
+}
+
+Client *
+firsttiledcore(Client *c, unsigned int tags)
+{
+	Client *t = c->mon->clients;
+	for (; t && (t->isfloating || !ISVISIBLEONTAG(t, tags)); t = t->next);
+	return t;
 }
 
 Client *

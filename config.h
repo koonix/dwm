@@ -19,6 +19,7 @@ static const int lockfullscreen      = 0;    /* 1 will force focus on the fullsc
 static const int swallowfloating     = 0;    /* 1 means swallow floating windows by default */
 static const unsigned char xkblayout = 0;    /* the default keyboard layout number; 0 is the main layout */
 static const float cindfact          = 0.1;  /* size of client indicators */
+static const int pertag              = 1;    /* 1 means remember layout, mfact and nmaster per tag */
 
 /* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
