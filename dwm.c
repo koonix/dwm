@@ -157,6 +157,13 @@ typedef struct {
 	void (*arrange)(Monitor *);
 } Layout;
 
+typedef struct {
+	float mfact;
+	int nmaster;
+	unsigned int sellt;
+	const Layout *lt[2];
+} Pertag;
+
 struct Monitor {
 	char ltsymbol[16];
 	float mfact;
@@ -177,6 +184,7 @@ struct Monitor {
 	Monitor *next;
 	Window barwin;
 	const Layout *lt[2];
+	Pertag *pertag;
 };
 
 typedef struct {
@@ -200,7 +208,7 @@ typedef struct {
 } Systray;
 
 /* function declarations */
-static void adjacent(const Arg *arg);
+static void adjacent(const Arg *arg) __attribute__((unused));
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -281,6 +289,7 @@ static void stairs(Monitor *m);
 static void switchcol(const Arg *arg);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
+static void tagreduced(Client *c, int unmanage, unsigned int newtags);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
@@ -311,15 +320,20 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
-/* tasks */
+/* pertag functions */
+static void loadpertag(unsigned int tags, unsigned int newtags);
+static void pushpertag(unsigned int newtags);
+static void poppertag(void);
+
+/* timer functions */
 static void starttimer(int task, int msec);
 static int exectimer(Window win);
 
-/* misinput functions */
+/* blockinput functions */
 static void blockinput(Window w, int msec);
 static void unblockinput(void);
 
-/* fancyborders functions */
+/* dualborders functions */
 static void drawborder(Window win, int scm);
 static void updateborder(Client *c);
 
@@ -352,14 +366,23 @@ static Client *wintosystrayicon(Window w);
 static void sendsystrayevent(Window w, int xembedmsg);
 
 /* auxiliary functions */
+static unsigned int gettagnum(unsigned int tags);
 static int numtiled(Monitor *m) __attribute__((unused));
+static int numtiledontag(Client *c);
+static int numtiledcore(Client *c, unsigned int tags);
+static int ismaster(Client *c);
+static int ismasterontag(Client *c);
+static int ismastercore(Client *c, unsigned int tags);
 static Client *nexttiledloop(Client *c);
 static Client *prevtiledloop(Client *c);
 static Client *nexttiled(Client *c);
+static Client * nexttiledontag(Client *c) __attribute__((unused));
+static Client * nexttiledcore(Client *c, unsigned int tags);
 static Client *prevtiled(Client *c);
 static Client *firsttiled(Monitor *m) __attribute__((unused));
+static Client * firsttiledontag(Client *c);
+static Client * firsttiledcore(Client *c, unsigned int tags);
 static Client *lasttiled(Monitor *m);
-static Client *nexttagged(Client *c);
 
 /* variables */
 static const char broken[] = "broken";
@@ -403,6 +426,9 @@ static Window swallowwin = 0;
 static Client *sametagstacks[128];
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
+static unsigned int pertagtags = 0;
+static unsigned int pertagstack[16];
+static int pertagtop = -1;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -419,7 +445,7 @@ adjacent(const Arg *arg)
 	int tags = selmon->tagset[selmon->seltags];
 
 	if (arg->adj == view || arg->adj == tag || arg->adj == toggletag) {
-		tagnum = (unsigned int)log2((double)tags);
+		tagnum = gettagnum(tags);
 		a.ui = 1 << (tagnum + (tagnum % 2 ? -1 : +1));
 	} else if (arg->adj == toggleview) {
 		tagnum = (unsigned int)ffs(tags) - 1;
@@ -582,7 +608,7 @@ attachabove(Client *c)
 
 void
 attachaside(Client *c) {
-	Client *at = nexttagged(c);
+	Client *at = firsttiledontag(c);
 	if (!at) {
 		attach(c);
 		return;
@@ -786,6 +812,7 @@ cleanupmon(Monitor *mon)
 	}
 	XUnmapWindow(dpy, mon->barwin);
 	XDestroyWindow(dpy, mon->barwin);
+	free(mon->pertag);
 	free(mon);
 }
 
@@ -961,6 +988,7 @@ Monitor *
 createmon(void)
 {
 	Monitor *m;
+	int i;
 
 	m = ecalloc(1, sizeof(Monitor));
 	m->tagset[0] = m->tagset[1] = 1;
@@ -972,6 +1000,15 @@ createmon(void)
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+
+	m->pertag = ecalloc(LENGTH(tags) + 1, sizeof(Pertag));
+	for (i = 0; i < LENGTH(tags) + 1; i++) {
+		m->pertag[i].mfact = m->mfact;
+		m->pertag[i].nmaster = m->nmaster;
+		m->pertag[i].lt[0] = m->lt[0];
+		m->pertag[i].lt[1] = m->lt[1];
+	}
+
 	return m;
 }
 
@@ -2592,24 +2629,24 @@ starttimer(int task, int msec)
 {
 	timerwin[task] = XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0);
 
-	if (fork() != 0)
-		return;
+	if (fork() == 0) {
 
-	if (dpy)
-		close(ConnectionNumber(dpy));
+		if (dpy)
+			close(ConnectionNumber(dpy));
 
-	struct timespec sleep = {
-		.tv_sec = (int)(msec / MSECPERSEC),
-		.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
-	};
-	nanosleep(&sleep, NULL);
+		struct timespec sleep = {
+			.tv_sec = (int)(msec / MSECPERSEC),
+			.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
+		};
+		nanosleep(&sleep, NULL);
 
-	if ((dpy = XOpenDisplay(NULL))) {
-		XDestroyWindow(dpy, timerwin[task]);
-		XCloseDisplay(dpy);
+		if ((dpy = XOpenDisplay(NULL))) {
+			XDestroyWindow(dpy, timerwin[task]);
+			XCloseDisplay(dpy);
+		}
+
+		exit(EXIT_SUCCESS);
 	}
-
-	exit(EXIT_SUCCESS);
 }
 
 int
@@ -2656,11 +2693,33 @@ void
 tag(const Arg *arg)
 {
 	if (selmon->sel && arg->ui & TAGMASK) {
+		tagreduced(selmon->sel, 0, arg->ui & TAGMASK);
 		selmon->sel->tags = arg->ui & TAGMASK;
 		updateclientdesktop(selmon->sel);
 		focus(NULL);
 		arrange(selmon);
 	}
+}
+
+void
+tagreduced(Client *c, int unmanage, unsigned int newtags) {
+	unsigned int targettags = unmanage ? c->tags : ~(~c->tags|newtags);
+
+	if (!targettags)
+		return;
+
+	pushpertag(targettags);
+
+	if (resettag && !c->isfloating && numtiledontag(c) == 1) {
+		c->mon->nmaster = nmaster;
+		c->mon->mfact = mfact;
+		c->mon->sellt ^= 1;
+		c->mon->lt[c->mon->sellt] = &layouts[0];
+	} else if (nmasterbias >= 0 && c->mon->nmaster > nmasterbias && ismasterontag(c)) {
+		c->mon->nmaster = MAX(c->mon->nmaster - 1, 0);
+	}
+
+	poppertag();
 }
 
 void
@@ -2749,6 +2808,7 @@ toggletag(const Arg *arg)
 		return;
 	newtags = selmon->sel->tags ^ (arg->ui & TAGMASK);
 	if (newtags) {
+		tagreduced(selmon->sel, 0, newtags);
 		selmon->sel->tags = newtags;
 		focus(NULL);
 		arrange(selmon);
@@ -2761,6 +2821,7 @@ toggleview(const Arg *arg)
 	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
+		loadpertag(selmon->tagset[selmon->seltags], newtagset);
 		selmon->tagset[selmon->seltags] = newtagset;
 		focus(NULL);
 		arrange(selmon);
@@ -2793,8 +2854,7 @@ unmanage(Client *c, int destroyed)
 {
 	Monitor *m = c->mon;
 	XWindowChanges wc;
-	Client *s, *t;
-	int i;
+	Client *s;
 
 	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
 
@@ -2811,12 +2871,7 @@ unmanage(Client *c, int destroyed)
 		return;
 	}
 
-	if (nmasterbias > 0 && c == selmon->sel && selmon->nmaster > nmasterbias) {
-		for (i = 0, t = nexttiled(m->clients); t && t != c; t = nexttiled(t->next), i++);
-		if (i < m->nmaster)
-		selmon->nmaster = MAX(selmon->nmaster - 1, 0);
-	}
-
+	tagreduced(c, 1, 0);
 	sametagcleanup(c);
 	detach(c);
 	detachstack(c);
@@ -2832,13 +2887,11 @@ unmanage(Client *c, int destroyed)
 		XSetErrorHandler(xerror);
 		XUngrabServer(dpy);
 	}
-	free(c);
 
-	if (!s) {
-		arrange(m);
-		focus(NULL);
-		updateclientlist();
-	}
+	free(c);
+	arrange(m);
+	focus(NULL);
+	updateclientlist();
 }
 
 void
@@ -2908,7 +2961,7 @@ updatebarpos(Monitor *m)
 void
 updateclientdesktop(Client *c)
 {
-	long data[] = { (unsigned int)log2((double)c->tags) + 1 };
+	long data[] = { gettagnum(c->tags) + 1 };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -2930,7 +2983,7 @@ updateclientlist()
 void
 updatecurrentdesktop(void)
 {
-	long data[] = { (unsigned int)log2((double)selmon->tagset[selmon->seltags]) + 1 };
+	long data[] = { gettagnum(selmon->tagset[selmon->seltags]) + 1 };
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -3257,6 +3310,7 @@ view(const Arg *arg)
 {
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
+	loadpertag(selmon->tagset[selmon->seltags], arg->ui & TAGMASK);
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
@@ -3572,6 +3626,8 @@ zoom(const Arg *arg)
 
 	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
 		return;
+	if (ismaster(c))
+		return;
 	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
 		return;
 	pop(c);
@@ -3643,13 +3699,110 @@ transfer(const Arg *arg)
 	arrange(selmon);
 }
 
+void
+loadpertag(unsigned int tags, unsigned int newtags)
+{
+	if (!pertag)
+		return;
+
+	pertagtags = newtags;
+
+	if (newtags == tags)
+		return;
+
+	unsigned int tagnum = gettagnum(tags);
+	unsigned int newtagnum = gettagnum(newtags);
+
+	selmon->pertag[tagnum].mfact = selmon->mfact;
+	selmon->pertag[tagnum].nmaster = selmon->nmaster;
+	selmon->pertag[tagnum].sellt = selmon->sellt;
+	selmon->pertag[tagnum].lt[0] = selmon->lt[0];
+	selmon->pertag[tagnum].lt[1] = selmon->lt[1];
+
+	selmon->mfact = selmon->pertag[newtagnum].mfact;
+	selmon->nmaster = selmon->pertag[newtagnum].nmaster;
+	selmon->sellt = selmon->pertag[newtagnum].sellt;
+	selmon->lt[0] = selmon->pertag[newtagnum].lt[0];
+	selmon->lt[1] = selmon->pertag[newtagnum].lt[1];
+}
+
+void
+pushpertag(unsigned int newtags)
+{
+	if (!pertag)
+		return;
+
+	if (pertagtop == LENGTH(pertagstack) - 1)
+		return;
+
+	unsigned int tags = pertagtags ? pertagtags : selmon->tagset[selmon->seltags];
+	pertagstack[++pertagtop] = tags;
+	loadpertag(tags, newtags);
+}
+
+void
+poppertag(void)
+{
+	if (!pertag)
+		return;
+
+	if (pertagtop >= 0)
+		loadpertag(pertagtags, pertagstack[pertagtop--]);
+}
+
+unsigned int
+gettagnum(unsigned int tags)
+{
+	return (unsigned int)log2((double)tags);
+}
+
 int
 numtiled(Monitor *m)
 {
+	return numtiledcore(m->clients, m->tagset[m->seltags]);
+}
+
+int
+numtiledontag(Client *c)
+{
+	return numtiledcore(c, c->tags);
+}
+
+int
+numtiledcore(Client *c, unsigned int tags)
+{
 	int i = 0;
-	Client *c = nexttiled(m->clients);
-	for (; c; c = nexttiled(c->next), i++);
+	c = nexttiledcore(c->mon->clients, tags);
+	for (; c; c = nexttiledcore(c->next, tags), i++);
 	return i;
+}
+
+int
+ismaster(Client *c)
+{
+	return ismastercore(c, c->mon->tagset[c->mon->seltags]);
+}
+
+int
+ismasterontag(Client *c)
+{
+	return ismastercore(c, c->tags);
+}
+
+int
+ismastercore(Client *c, unsigned int tags)
+{
+	Client *t;
+	int i, ret;
+
+	for (i = 0, t = nexttiledcore(c->mon->clients, tags);
+	     t && t != c;
+	     t = nexttiledcore(t->next, tags), i++);
+
+	pushpertag(tags);
+	ret = i < c->mon->nmaster;
+	poppertag();
+	return ret;
 }
 
 Client *
@@ -3673,7 +3826,19 @@ prevtiledloop(Client *c)
 Client *
 nexttiled(Client *c)
 {
-	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
+	return c ? nexttiledcore(c, c->mon->tagset[c->mon->seltags]) : c;
+}
+
+Client *
+nexttiledontag(Client *c)
+{
+	return nexttiledcore(c, c->tags);
+}
+
+Client *
+nexttiledcore(Client *c, unsigned int tags)
+{
+	for (; c && (c->isfloating || !ISVISIBLEONTAG(c, tags)); c = c->next);
 	return c;
 }
 
@@ -3690,9 +3855,21 @@ prevtiled(Client *c)
 Client *
 firsttiled(Monitor *m)
 {
-	Client *c = m->clients;
-	for (; c && (c->isfloating || !ISVISIBLE(c)); c = c->next);
-	return c;
+	return firsttiledcore(m->clients, m->tagset[m->seltags]);
+}
+
+Client *
+firsttiledontag(Client *c)
+{
+	return firsttiledcore(c, c->tags);
+}
+
+Client *
+firsttiledcore(Client *c, unsigned int tags)
+{
+	Client *t = c->mon->clients;
+	for (; t && (t->isfloating || !ISVISIBLEONTAG(t, tags)); t = t->next);
+	return t;
 }
 
 Client *
@@ -3703,14 +3880,6 @@ lasttiled(Monitor *m)
 		if (!p->isfloating && ISVISIBLE(p))
 			r = p;
 	return r;
-}
-
-Client *
-nexttagged(Client *c)
-{
-	Client *t = c->mon->clients;
-	for (; t && (t->isfloating || !ISVISIBLEONTAG(t, c->tags)); t = t->next);
-	return t;
 }
 
 // vim:noexpandtab
