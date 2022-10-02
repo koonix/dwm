@@ -289,6 +289,7 @@ static void stairs(Monitor *m);
 static void switchcol(const Arg *arg);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
+static void tagreduced(Client *c, int unmanage, unsigned int newtags);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
@@ -2692,11 +2693,33 @@ void
 tag(const Arg *arg)
 {
 	if (selmon->sel && arg->ui & TAGMASK) {
+		tagreduced(selmon->sel, 0, arg->ui & TAGMASK);
 		selmon->sel->tags = arg->ui & TAGMASK;
 		updateclientdesktop(selmon->sel);
 		focus(NULL);
 		arrange(selmon);
 	}
+}
+
+void
+tagreduced(Client *c, int unmanage, unsigned int newtags) {
+	unsigned int targettags = unmanage ? c->tags : ~(~c->tags|newtags);
+
+	if (!targettags)
+		return;
+
+	pushpertag(targettags);
+
+	if (resettag && !c->isfloating && numtiledontag(c) == 1) {
+		c->mon->nmaster = nmaster;
+		c->mon->mfact = mfact;
+		c->mon->sellt ^= 1;
+		c->mon->lt[c->mon->sellt] = &layouts[0];
+	} else if (nmasterbias >= 0 && c->mon->nmaster > nmasterbias && ismasterontag(c)) {
+		c->mon->nmaster = MAX(c->mon->nmaster - 1, 0);
+	}
+
+	poppertag();
 }
 
 void
@@ -2785,6 +2808,7 @@ toggletag(const Arg *arg)
 		return;
 	newtags = selmon->sel->tags ^ (arg->ui & TAGMASK);
 	if (newtags) {
+		tagreduced(selmon->sel, 0, newtags);
 		selmon->sel->tags = newtags;
 		focus(NULL);
 		arrange(selmon);
@@ -2847,6 +2871,7 @@ unmanage(Client *c, int destroyed)
 		return;
 	}
 
+	tagreduced(c, 1, 0);
 	sametagcleanup(c);
 	detach(c);
 	detachstack(c);

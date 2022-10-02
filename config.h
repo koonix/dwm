@@ -20,6 +20,7 @@ static const int swallowfloating     = 0;    /* 1 means swallow floating windows
 static const unsigned char xkblayout = 0;    /* the default keyboard layout number; 0 is the main layout */
 static const float cindfact          = 0.1;  /* size of client indicators */
 static const int pertag              = 1;    /* 1 means remember layout, mfact and nmaster per tag */
+static const int resettag            = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
 
 /* the stairs layout */
 static const unsigned int stairpx    = 75;  /* depth of the stairs layout */
