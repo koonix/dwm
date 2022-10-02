@@ -444,7 +444,7 @@ adjacent(const Arg *arg)
 	int tags = selmon->tagset[selmon->seltags];
 
 	if (arg->adj == view || arg->adj == tag || arg->adj == toggletag) {
-		tagnum = (unsigned int)log2((double)tags);
+		tagnum = gettagnum(tags);
 		a.ui = 1 << (tagnum + (tagnum % 2 ? -1 : +1));
 	} else if (arg->adj == toggleview) {
 		tagnum = (unsigned int)ffs(tags) - 1;
@@ -607,7 +607,7 @@ attachabove(Client *c)
 
 void
 attachaside(Client *c) {
-	Client *at = nexttagged(c);
+	Client *at = firsttiledontag(c);
 	if (!at) {
 		attach(c);
 		return;
@@ -2936,7 +2936,7 @@ updatebarpos(Monitor *m)
 void
 updateclientdesktop(Client *c)
 {
-	long data[] = { (unsigned int)log2((double)c->tags) + 1 };
+	long data[] = { gettagnum(c->tags) + 1 };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -2958,7 +2958,7 @@ updateclientlist()
 void
 updatecurrentdesktop(void)
 {
-	long data[] = { (unsigned int)log2((double)selmon->tagset[selmon->seltags]) + 1 };
+	long data[] = { gettagnum(selmon->tagset[selmon->seltags]) + 1 };
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -3601,6 +3601,8 @@ zoom(const Arg *arg)
 
 	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
 		return;
+	if (ismaster(c))
+		return;
 	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
 		return;
 	pop(c);
@@ -3853,14 +3855,6 @@ lasttiled(Monitor *m)
 		if (!p->isfloating && ISVISIBLE(p))
 			r = p;
 	return r;
-}
-
-Client *
-nexttagged(Client *c)
-{
-	Client *t = c->mon->clients;
-	for (; t && (t->isfloating || !ISVISIBLEONTAG(t, c->tags)); t = t->next);
-	return t;
 }
 
 // vim:noexpandtab
