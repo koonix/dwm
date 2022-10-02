@@ -208,7 +208,7 @@ typedef struct {
 } Systray;
 
 /* function declarations */
-static void adjacent(const Arg *arg);
+static void adjacent(const Arg *arg) __attribute__((unused));
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -324,15 +324,15 @@ static void loadpertag(unsigned int tags, unsigned int newtags);
 static void pushpertag(unsigned int newtags);
 static void poppertag(void);
 
-/* tasks */
+/* timer functions */
 static void starttimer(int task, int msec);
 static int exectimer(Window win);
 
-/* misinput functions */
+/* blockinput functions */
 static void blockinput(Window w, int msec);
 static void unblockinput(void);
 
-/* fancyborders functions */
+/* dualborders functions */
 static void drawborder(Window win, int scm);
 static void updateborder(Client *c);
 
@@ -2628,24 +2628,24 @@ starttimer(int task, int msec)
 {
 	timerwin[task] = XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0);
 
-	if (fork() != 0)
-		return;
+	if (fork() == 0) {
 
-	if (dpy)
-		close(ConnectionNumber(dpy));
+		if (dpy)
+			close(ConnectionNumber(dpy));
 
-	struct timespec sleep = {
-		.tv_sec = (int)(msec / MSECPERSEC),
-		.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
-	};
-	nanosleep(&sleep, NULL);
+		struct timespec sleep = {
+			.tv_sec = (int)(msec / MSECPERSEC),
+			.tv_nsec = (long)((msec % MSECPERSEC) * NSECPERMSEC)
+		};
+		nanosleep(&sleep, NULL);
 
-	if ((dpy = XOpenDisplay(NULL))) {
-		XDestroyWindow(dpy, timerwin[task]);
-		XCloseDisplay(dpy);
+		if ((dpy = XOpenDisplay(NULL))) {
+			XDestroyWindow(dpy, timerwin[task]);
+			XCloseDisplay(dpy);
+		}
+
+		exit(EXIT_SUCCESS);
 	}
-
-	exit(EXIT_SUCCESS);
 }
 
 int
