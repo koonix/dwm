@@ -9,6 +9,8 @@ this is my build of dwm, a tiling window manager:
 
 - [systray](https://dwm.suckless.org/patches/systray)
 
+- [pertag-ng](https://github.com/ghesy/dwm/commit/7816cfb)
+
 - [swallow](https://dwm.suckless.org/patches/swallow)
 
 - [sametagrule](https://github.com/ghesy/dwm/commit/fb1e103)
@@ -31,15 +33,22 @@ this is my build of dwm, a tiling window manager:
 
 - [pwkl](https://dwm.suckless.org/patches/pwkl)
 
+- [adjacent](https://github.com/ghesy/dwm/commit/7310263)
+
+- [fixjump](https://github.com/ghesy/dwm/commit/5643525)
+
+- [eventtimer](https://github.com/ghesy/dwm/commit/73b3f78)
+
 - [urgentborder](https://dwm.suckless.org/patches/urgentborder)
 
-- [fancyborders](https://github.com/ghesy/dwm/commit/b375ca9)
+- [dualborders](https://github.com/ghesy/dwm/commit/b375ca9)
 
 - [ewmhtags](https://dwm.suckless.org/patches/ewmhtags)
 
 - [NET_WM_DESKTOP hint](https://github.com/ghesy/dwm/compare/cc4564f...5ce1409)
 
-- [clientindicatorshidevacant](https://dwm.suckless.org/patches/clientindicators)
+- [clientindicatorshidevacant](https://dwm.suckless.org/patches/clientindicators) +
+[cindfact](https://github.com/ghesy/dwm/commit/4a33fd9)
 
 - [status2d + swap-save-restore](https://dwm.suckless.org/patches/status2d)
 
@@ -49,7 +58,7 @@ this is my build of dwm, a tiling window manager:
 
 - [bidi](https://dwm.suckless.org/patches/bidi)
 
-and many other minor changes and fixes.
+and many other minor additions, changes and fixes.
 
 ## related stuff
 
