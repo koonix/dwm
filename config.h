@@ -91,10 +91,10 @@ static const Layout layouts[] = {
  *   set to 0 to disable, set to a negative value to use the default value (blockinputmsec).
  *   swallowing windows won't be input-blocked because they don't steal the focus.
  *
- * sametagid, sametagchildof:
+ * sametagid, sametagparentid:
  *   with these rules you can have some windows open in the same tag and monitor
  *   as other windows. ex. if window A has a sametagid of 10, and window B has a
- *   sametagchildof of 10, window B will be opened next to window A.
+ *   sametagparentid of 10, window B will be opened next to window A.
  *   can be an integer between 0 and 127. a value of zero disables this feature.
  *
  * fixjump:
@@ -106,9 +106,9 @@ static const Layout layouts[] = {
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  *
- * 1 = tagmask,   2 = isfloating,     3 = blockinput,
- * 4 = sametagid, 5 = sametagchildof, 6 = isterminal,
- * 7 = noswallow, 8 = fixjump,        9 = monitor
+ *   1 = tagmask,     2 = isfloating,       3 = blockinput,
+ *   4 = sametagid,   5 = sametagparentid,  6 = isterminal,
+ *   7 = noswallow,   8 = fixjump,          9 = monitor
  */
 static const Rule rules[] = {
 	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9 */
