@@ -1719,22 +1719,20 @@ manage(Window w, XWindowAttributes *wa)
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
-	c->pid = getwinpid(w);
-	/* geometry */
+	c->pid = getwinpid(c->win);
+	c->bw = borderpx;
+	c->blockinput = blockinputmsec;
+	c->xkblayout  = xkblayout;
+
+	c->oldbw = wa->border_width;
 	c->x = c->oldx = wa->x;
 	c->y = c->oldy = wa->y;
 	c->w = c->oldw = wa->width;
 	c->h = c->oldh = wa->height;
-	c->oldbw = wa->border_width;
-	c->tags = 0;
-	c->isfloating = 0;
-	c->isfullscreen = 0;
-	c->sametagid  = c->sametagchildof = 0;
-	c->blockinput = blockinputmsec;
-	c->xkblayout  = xkblayout;
 
 	updatetitle(c);
-	if (XGetTransientForHint(dpy, w, &trans) && (t = wintoclient(trans))) {
+
+	if (XGetTransientForHint(dpy, c->win, &trans) && (t = wintoclient(trans))) {
 		c->mon = t->mon;
 		c->tags = t->tags;
 	} else {
@@ -1749,16 +1747,15 @@ manage(Window w, XWindowAttributes *wa)
 		c->y = c->mon->wy + c->mon->wh - HEIGHT(c);
 	c->x = MAX(c->x, c->mon->wx);
 	c->y = MAX(c->y, c->mon->wy);
-	c->bw = borderpx;
 
 	wc.border_width = c->bw;
-	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
-	drawborder(w, SchemeNorm);
+	XConfigureWindow(dpy, c->win, CWBorderWidth, &wc);
+	drawborder(c->win, SchemeNorm);
+
 	configure(c); /* propagates border_width, if size doesn't change */
 	updatewindowtype(c);
 	updatewmhints(c);
-
-	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+	XSelectInput(dpy, c->win, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 	grabbuttons(c, 0);
 
 	if (!c->isfloating)
@@ -1771,30 +1768,26 @@ manage(Window w, XWindowAttributes *wa)
 	if (swallow(c))
 		return;
 
-	updatesizehints(c);
-	updateclientdesktop(c);
-
 	if (c->blockinput && ISVISIBLE(c))
 		blockinput(c->win, c->blockinput);
 
+	updatesizehints(c);
+	updateclientdesktop(c);
+	setclientstate(c, NormalState);
+	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
 
+	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
+		PropModeAppend, (unsigned char *)&(c->win), 1);
+
 	attachdirection(c);
 	attachstack(c);
-
-	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
-		(unsigned char *) &(c->win), 1);
-
-	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
-	setclientstate(c, NormalState);
-
 	if (c->mon == selmon)
 		unfocus(selmon->sel, 0);
 	c->mon->sel = c;
 	arrange(c->mon);
 	XMapWindow(dpy, c->win);
-
 	focus(NULL);
 }
 
@@ -2209,8 +2202,8 @@ sametagapply(Client *c)
 {
 	const Client *p = NULL;
 	if (c->sametagparentid && (p = sametagstacks[c->sametagparentid])) {
-		c->tags = p->tags;
 		c->mon  = p->mon;
+		c->tags = p->tags;
 		if (!ISVISIBLE(c))
 			seturgent(c, 1);
 	}
