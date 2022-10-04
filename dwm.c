@@ -3544,10 +3544,16 @@ wintoclient(Window w)
 	Client *c;
 	Monitor *m;
 
+	/* the chance of the selected client being the client
+	 * we're looking for is higher, so check that first */
+	if (selmon->sel && selmon->sel->win == w)
+		return selmon->sel;
+
 	for (m = mons; m; m = m->next)
 		for (c = m->clients; c; c = c->next)
 			if (c->win == w)
 				return c;
+
 	return NULL;
 }
 
