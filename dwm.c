@@ -137,12 +137,12 @@ struct Client {
 	pid_t pid;
 	Client *next;
 	Client *snext;
-	Client *swallowing;
+	Client *swallowclient;
 	Monitor *mon;
 	Window win;
 	unsigned char xkblayout;
 	Client *sametagnext;
-	unsigned int sametagid, sametagchildof;
+	unsigned int sametagid, sametagparentid;
 };
 
 typedef struct {
@@ -197,7 +197,7 @@ typedef struct {
 	int isfloating;
 	int blockinput;
 	unsigned int sametagid;
-	unsigned int sametagchildof;
+	unsigned int sametagparentid;
 	int isterminal;
 	int noswallow;
 	int fixjump;
@@ -323,13 +323,13 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
 /* pertag functions */
-static void loadpertag(Monitor *m, unsigned int tags, unsigned int newtags);
-static void pushpertag(Monitor *m, unsigned int newtags);
-static void poppertag(Monitor *m);
+static void pertagload(Monitor *m, unsigned int tags, unsigned int newtags);
+static void pertagpush(Monitor *m, unsigned int newtags);
+static void pertagpop(Monitor *m);
 
 /* timer functions */
-static void starttimer(int task, int msec);
-static int exectimer(Window win);
+static void timerstart(int task, int msec);
+static int timerexec(Window win);
 
 /* blockinput functions */
 static void blockinput(Window w, int msec);
@@ -349,11 +349,11 @@ static void sametagdetach(Client *c);
 /* swallow functions */
 static pid_t getparentprocess(pid_t pid);
 static int isdescprocess(pid_t parent, pid_t child);
-static Client *swallowingclient(Window w);
+static Client *wintoswallowclient(Window w);
 static int swallow(Client *c);
 static void unswallow(Client *c);
-static Client *termforwin(const Client *c);
-static pid_t winpid(Window w);
+static Client *getswallowterminal(Client *c);
+static pid_t getwinpid(Window w);
 
 /* systray functions */
 static unsigned int getsystraywidth();
@@ -475,7 +475,7 @@ applyrules(Client *c)
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
 			c->sametagid  = r->sametagid;
-			c->sametagchildof = r->sametagchildof;
+			c->sametagparentid = r->sametagparentid;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
@@ -673,7 +673,7 @@ blockinput(Window w, int msec)
 	XGrabKey(dpy, AnyKey, AnyModifier, w, False, GrabModeAsync, GrabModeAsync);
 	XSetErrorHandler(xerror);
 	blockedwin = w;
-	starttimer(TimerUnblock, msec);
+	timerstart(TimerUnblock, msec);
 }
 
 void
@@ -1018,13 +1018,13 @@ destroynotify(XEvent *e)
 	Client *c;
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
-	if (exectimer(ev->window))
+	if (timerexec(ev->window))
 		return;
 
 	if ((c = wintoclient(ev->window)))
 		unmanage(c, 1);
-	else if ((c = swallowingclient(ev->window)))
-		unmanage(c->swallowing, 1);
+	else if ((c = wintoswallowclient(ev->window)))
+		unmanage(c->swallowclient, 1);
 	else if ((c = wintosystrayicon(ev->window))) {
 		removesystrayicon(c);
 		resizebarwin(selmon);
@@ -1720,7 +1720,7 @@ manage(Window w, XWindowAttributes *wa)
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
-	c->pid = winpid(w);
+	c->pid = getwinpid(w);
 	/* geometry */
 	c->x = c->oldx = wa->x;
 	c->y = c->oldy = wa->y;
@@ -2205,7 +2205,7 @@ void
 sametagapply(Client *c)
 {
 	const Client *p = NULL;
-	if (c->sametagchildof && (p = sametagstacks[c->sametagchildof])) {
+	if (c->sametagparentid && (p = sametagstacks[c->sametagparentid])) {
 		c->tags = p->tags;
 		c->mon  = p->mon;
 		if (!ISVISIBLE(c))
@@ -2625,7 +2625,7 @@ stairs(Monitor *m)
 }
 
 void
-starttimer(int task, int msec)
+timerstart(int task, int msec)
 {
 	timerwin[task] = XCreateSimpleWindow(dpy, root, 1, 1, 1, 1, 0, 0, 0);
 
@@ -2650,7 +2650,7 @@ starttimer(int task, int msec)
 }
 
 int
-exectimer(Window win)
+timerexec(Window win)
 {
 	if (win == timerwin[TimerUnblock])
 		unblockinput();
@@ -2708,7 +2708,7 @@ tagreduced(Client *c, int unmanage, unsigned int newtags) {
 	if (!targettags)
 		return;
 
-	pushpertag(c->mon, targettags);
+	pertagpush(c->mon, targettags);
 
 	if (resettag && !c->isfloating && numtiledontag(c) == 1) {
 		c->mon->nmaster = nmaster;
@@ -2719,7 +2719,7 @@ tagreduced(Client *c, int unmanage, unsigned int newtags) {
 		c->mon->nmaster = MAX(c->mon->nmaster - 1, 0);
 	}
 
-	poppertag(c->mon);
+	pertagpop(c->mon);
 }
 
 void
@@ -2821,7 +2821,7 @@ toggleview(const Arg *arg)
 	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
-		loadpertag(selmon->tagset[selmon->seltags], newtagset);
+		pertagload(selmon, selmon->tagset[selmon->seltags], newtagset);
 		selmon->tagset[selmon->seltags] = newtagset;
 		focus(NULL);
 		arrange(selmon);
@@ -2858,14 +2858,14 @@ unmanage(Client *c, int destroyed)
 
 	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
 
-	if (c->swallowing) {
+	if (c->swallowclient) {
 		unswallow(c);
 		return;
 	}
 
-	if ((s = swallowingclient(c->win))) {
-		free(s->swallowing);
-		s->swallowing = NULL;
+	if ((s = wintoswallowclient(c->win))) {
+		free(s->swallowclient);
+		s->swallowclient = NULL;
 		arrange(m);
 		focus(NULL);
 		return;
@@ -3088,7 +3088,7 @@ updatesizehints(Client *c)
 	long msize;
 	XSizeHints size;
 
-	if (c->swallowing)
+	if (c->swallowclient)
 		return;
 
 	if (!XGetWMNormalHints(dpy, c->win, &size, &msize))
@@ -3310,7 +3310,7 @@ view(const Arg *arg)
 {
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
-	loadpertag(selmon->tagset[selmon->seltags], arg->ui & TAGMASK);
+	pertagload(selmon, selmon->tagset[selmon->seltags], arg->ui & TAGMASK);
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
@@ -3320,7 +3320,7 @@ view(const Arg *arg)
 }
 
 pid_t
-winpid(Window w)
+getwinpid(Window w)
 {
 	pid_t result = 0;
 
@@ -3378,15 +3378,14 @@ getparentprocess(pid_t pid)
 	unsigned int ppid = 0;
 
 #ifdef __linux__
-	FILE *f;
-	char buf[256];
-	snprintf(buf, sizeof(buf) - 1, "/proc/%u/stat", (unsigned)pid);
+	FILE *stat;
+	char path[32];
 
-	if (!(f = fopen(buf, "r")))
+	snprintf(path, sizeof(path) - 1, "/proc/%u/stat", (unsigned)pid);
+	if (!(stat = fopen(path, "r")))
 		return 0;
-
-	fscanf(f, "%*u (%*[^)]) %*c %u", &ppid);
-	fclose(f);
+	fscanf(stat, "%*u (%*[^)]) %*c %u", &ppid);
+	fclose(stat);
 #endif /* __linux__*/
 
 #ifdef __OpenBSD__
@@ -3397,7 +3396,6 @@ getparentprocess(pid_t pid)
 	kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, NULL);
 	if (!kd)
 		return 0;
-
 	kp = kvm_getprocs(kd, KERN_PROC_PID, pid, sizeof(*kp), &n);
 	ppid = kp->p_ppid;
 #endif /* __OpenBSD__ */
@@ -3414,46 +3412,46 @@ isdescprocess(pid_t parent, pid_t child)
 }
 
 Client *
-termforwin(const Client *w)
+getswallowterminal(Client *c)
 {
-	Client *c;
+	Client *t;
 	Monitor *m;
 
-	if (!w->pid || w->isterminal)
+	if (!c->pid || c->isterminal)
 		return NULL;
 
 	/* the chance of the selected client being the terminal
 	 * we're looking for is higher, so check that first */
-	if ((c = selmon->sel) && c->isterminal &&
-	   !c->swallowing && c->pid && isdescprocess(c->pid, w->pid))
-		return c;
+	if ((t = selmon->sel) && t->isterminal &&
+		!t->swallowclient && t->pid && isdescprocess(t->pid, c->pid))
+	{
+		return t;
+	}
 
 	for (m = mons; m; m = m->next)
-		for (c = m->clients; c; c = c->next)
-			if (c != selmon->sel && c->isterminal &&
-			    !c->swallowing && c->pid && isdescprocess(c->pid, w->pid))
-				return c;
+		for (t = m->clients; t; t = t->next)
+			if (t != selmon->sel && t->isterminal &&
+			    !t->swallowclient && t->pid && isdescprocess(t->pid, c->pid))
+				return t;
 
 	return NULL;
 }
 
 Client *
-swallowingclient(Window w)
+wintoswallowclient(Window w)
 {
 	Client *c;
 	Monitor *m;
 
 	/* the chance of the selected client being the swallowing client
 	 * we're looking for is higher, so check that first */
-	if ((c = selmon->sel) && c->swallowing && c->swallowing->win == w)
+	if ((c = selmon->sel) && c->swallowclient && c->swallowclient->win == w)
 		return c;
 
-	for (m = mons; m; m = m->next) {
-		for (c = m->clients; c; c = c->next) {
-			if (c->swallowing && c->swallowing->win == w)
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			if (c->swallowclient && c->swallowclient->win == w)
 				return c;
-		}
-	}
 
 	return NULL;
 }
@@ -3461,7 +3459,7 @@ swallowingclient(Window w)
 int
 swallow(Client *c)
 {
-	Client *p;
+	Client *t;
 	Window win, wtmp;
 	unsigned int uitmp;
 	int itmp;
@@ -3469,38 +3467,38 @@ swallow(Client *c)
 	if (c->noswallow || c->isterminal || (c->isfloating && !swallowfloating))
 		return 0;
 
-	p = termforwin(c);
-	if (!p)
+	t = getswallowterminal(c);
+	if (!t)
 		return 0;
 
 	detach(c);
 	detachstack(c);
 
 	setclientstate(c, WithdrawnState);
-	XUnmapWindow(dpy, p->win);
+	XUnmapWindow(dpy, t->win);
 
-	p->swallowing = c;
-	c->mon = p->mon;
-	setfullscreen(c, p->isfullscreen);
-	win = p->win;
-	p->win = c->win;
+	t->swallowclient = c;
+	c->mon = t->mon;
+	setfullscreen(c, t->isfullscreen);
+	win = t->win;
+	t->win = c->win;
 	c->win = win;
-	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
-	configure(p);
-	updatetitle(p);
-	updateclientdesktop(p);
+	XMoveResizeWindow(dpy, t->win, t->x, t->y, t->w, t->h);
+	configure(t);
+	updatetitle(t);
+	updateclientdesktop(t);
 
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
-		PropModeAppend, (unsigned char *) &(p->win), 1);
+		PropModeAppend, (unsigned char *) &(t->win), 1);
 
-	arrange(p->mon);
-	XMapWindow(dpy, p->win);
+	arrange(t->mon);
+	XMapWindow(dpy, t->win);
 
-	if (p->mon->stack == p) {
-		focus(p);
+	if (t->mon->stack == t) {
+		focus(t);
 	} else {
 		XQueryPointer(dpy, root, &wtmp, &win, &itmp, &itmp, &itmp, &itmp, &uitmp);
-		if (win == p->win)
+		if (win == t->win)
 			swallowwin = win;
 	}
 
@@ -3510,10 +3508,10 @@ swallow(Client *c)
 void
 unswallow(Client *c)
 {
-	c->win = c->swallowing->win;
-	setfullscreen(c->swallowing, c->isfullscreen);
-	free(c->swallowing);
-	c->swallowing = NULL;
+	c->win = c->swallowclient->win;
+	setfullscreen(c->swallowclient, c->isfullscreen);
+	free(c->swallowclient);
+	c->swallowclient = NULL;
 
 	updatetitle(c);
 	arrange(c->mon);
@@ -3700,7 +3698,7 @@ transfer(const Arg *arg)
 }
 
 void
-loadpertag(Monitor *m, unsigned int tags, unsigned int newtags)
+pertagload(Monitor *m, unsigned int tags, unsigned int newtags)
 {
 	if (!pertag)
 		return;
@@ -3727,23 +3725,23 @@ loadpertag(Monitor *m, unsigned int tags, unsigned int newtags)
 }
 
 void
-pushpertag(Monitor *m, unsigned int newtags)
+pertagpush(Monitor *m, unsigned int newtags)
 {
 	if (!pertag)
 		return;
 
 	if (m->pertagtop < LENGTH(m->pertagstack) - 1)
-		loadpertag(m, m->pertagstack[m->pertagtop++], newtags);
+		pertagload(m, m->pertagstack[m->pertagtop++], newtags);
 }
 
 void
-poppertag(Monitor *m)
+pertagpop(Monitor *m)
 {
 	if (!pertag)
 		return;
 
 	if (m->pertagtop >= 1)
-		loadpertag(m, m->pertagstack[m->pertagtop--], m->pertagstack[m->pertagtop]);
+		pertagload(m, m->pertagstack[m->pertagtop--], m->pertagstack[m->pertagtop]);
 }
 
 unsigned int
@@ -3795,9 +3793,9 @@ ismastercore(Client *c, unsigned int tags)
 	     t && t != c;
 	     t = nexttiledcore(t->next, tags), i++);
 
-	pushpertag(c->mon, tags);
+	pertagpush(c->mon, tags);
 	ret = i < c->mon->nmaster;
-	poppertag(c->mon);
+	pertagpop(c->mon);
 	return ret;
 }
 
