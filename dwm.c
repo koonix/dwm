@@ -185,6 +185,8 @@ struct Monitor {
 	Window barwin;
 	const Layout *lt[2];
 	Pertag *pertag;
+	unsigned int pertagstack[16];
+	unsigned int pertagtop;
 };
 
 typedef struct {
@@ -321,9 +323,9 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 
 /* pertag functions */
-static void loadpertag(unsigned int tags, unsigned int newtags);
-static void pushpertag(unsigned int newtags);
-static void poppertag(void);
+static void loadpertag(Monitor *m, unsigned int tags, unsigned int newtags);
+static void pushpertag(Monitor *m, unsigned int newtags);
+static void poppertag(Monitor *m);
 
 /* timer functions */
 static void starttimer(int task, int msec);
@@ -426,9 +428,6 @@ static Window swallowwin = 0;
 static Client *sametagstacks[128];
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
-static unsigned int pertagtags = 0;
-static unsigned int pertagstack[16];
-static int pertagtop = -1;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -991,7 +990,8 @@ createmon(void)
 	int i;
 
 	m = ecalloc(1, sizeof(Monitor));
-	m->tagset[0] = m->tagset[1] = 1;
+	m->tagset[0] = m->tagset[1] = m->pertagstack[0] = 1;
+	m->pertagtop = 0;
 	m->mfact = mfact;
 	m->nmaster = nmaster;
 	m->showbar = showbar;
@@ -2708,7 +2708,7 @@ tagreduced(Client *c, int unmanage, unsigned int newtags) {
 	if (!targettags)
 		return;
 
-	pushpertag(targettags);
+	pushpertag(c->mon, targettags);
 
 	if (resettag && !c->isfloating && numtiledontag(c) == 1) {
 		c->mon->nmaster = nmaster;
@@ -2719,7 +2719,7 @@ tagreduced(Client *c, int unmanage, unsigned int newtags) {
 		c->mon->nmaster = MAX(c->mon->nmaster - 1, 0);
 	}
 
-	poppertag();
+	poppertag(c->mon);
 }
 
 void
@@ -3700,12 +3700,12 @@ transfer(const Arg *arg)
 }
 
 void
-loadpertag(unsigned int tags, unsigned int newtags)
+loadpertag(Monitor *m, unsigned int tags, unsigned int newtags)
 {
 	if (!pertag)
 		return;
 
-	pertagtags = newtags;
+	m->pertagstack[m->pertagtop] = newtags;
 
 	if (newtags == tags)
 		return;
@@ -3713,41 +3713,37 @@ loadpertag(unsigned int tags, unsigned int newtags)
 	unsigned int tagnum = gettagnum(tags);
 	unsigned int newtagnum = gettagnum(newtags);
 
-	selmon->pertag[tagnum].mfact = selmon->mfact;
-	selmon->pertag[tagnum].nmaster = selmon->nmaster;
-	selmon->pertag[tagnum].sellt = selmon->sellt;
-	selmon->pertag[tagnum].lt[0] = selmon->lt[0];
-	selmon->pertag[tagnum].lt[1] = selmon->lt[1];
+	m->pertag[tagnum].mfact = m->mfact;
+	m->pertag[tagnum].nmaster = m->nmaster;
+	m->pertag[tagnum].sellt = m->sellt;
+	m->pertag[tagnum].lt[0] = m->lt[0];
+	m->pertag[tagnum].lt[1] = m->lt[1];
 
-	selmon->mfact = selmon->pertag[newtagnum].mfact;
-	selmon->nmaster = selmon->pertag[newtagnum].nmaster;
-	selmon->sellt = selmon->pertag[newtagnum].sellt;
-	selmon->lt[0] = selmon->pertag[newtagnum].lt[0];
-	selmon->lt[1] = selmon->pertag[newtagnum].lt[1];
+	m->mfact = m->pertag[newtagnum].mfact;
+	m->nmaster = m->pertag[newtagnum].nmaster;
+	m->sellt = m->pertag[newtagnum].sellt;
+	m->lt[0] = m->pertag[newtagnum].lt[0];
+	m->lt[1] = m->pertag[newtagnum].lt[1];
 }
 
 void
-pushpertag(unsigned int newtags)
+pushpertag(Monitor *m, unsigned int newtags)
 {
 	if (!pertag)
 		return;
 
-	if (pertagtop == LENGTH(pertagstack) - 1)
-		return;
-
-	unsigned int tags = pertagtags ? pertagtags : selmon->tagset[selmon->seltags];
-	pertagstack[++pertagtop] = tags;
-	loadpertag(tags, newtags);
+	if (m->pertagtop < LENGTH(m->pertagstack) - 1)
+		loadpertag(m, m->pertagstack[m->pertagtop++], newtags);
 }
 
 void
-poppertag(void)
+poppertag(Monitor *m)
 {
 	if (!pertag)
 		return;
 
-	if (pertagtop >= 0)
-		loadpertag(pertagtags, pertagstack[pertagtop--]);
+	if (m->pertagtop >= 1)
+		loadpertag(m, m->pertagstack[m->pertagtop--], m->pertagstack[m->pertagtop]);
 }
 
 unsigned int
@@ -3799,9 +3795,9 @@ ismastercore(Client *c, unsigned int tags)
 	     t && t != c;
 	     t = nexttiledcore(t->next, tags), i++);
 
-	pushpertag(tags);
+	pushpertag(c->mon, tags);
 	ret = i < c->mon->nmaster;
-	poppertag();
+	poppertag(c->mon);
 	return ret;
 }
 
