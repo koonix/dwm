@@ -3730,8 +3730,10 @@ pertagpop(Monitor *m)
 	if (!pertag)
 		return;
 
-	if (m->pertagtop >= 1)
-		pertagload(m, m->pertagstack[m->pertagtop--], m->pertagstack[m->pertagtop]);
+	if (m->pertagtop >= 1) {
+		m->pertagtop--;
+		pertagload(m, m->pertagstack[m->pertagtop + 1], m->pertagstack[m->pertagtop]);
+	}
 }
 
 unsigned int
