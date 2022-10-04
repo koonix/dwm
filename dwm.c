@@ -93,9 +93,8 @@ enum { SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle,
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType, NetWMDesktop,
        NetWMWindowTypeDialog, NetWMWindowTypeDock, NetClientList, NetDesktopNames,
-       NetDesktopViewport, NetNumberOfDesktops, NetCurrentDesktop,
-       NetSystemTray, NetSystemTrayOP, NetSystemTrayOrientation,
-       NetSystemTrayOrientationHorz, NetLast }; /* EWMH atoms */
+       NetNumberOfDesktops, NetCurrentDesktop, NetSystemTray, NetSystemTrayOP,
+       NetSystemTrayOrientation, NetSystemTrayOrientationHorz, NetLast }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XembedLast }; /* Xembed atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
@@ -2460,7 +2459,6 @@ setup(void)
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetWMWindowTypeDock] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
-	netatom[NetDesktopViewport] = XInternAtom(dpy, "_NET_DESKTOP_VIEWPORT", False);
 	netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
@@ -2519,11 +2517,6 @@ setup(void)
 	XTextProperty text;
 	Xutf8TextListToTextProperty(dpy, (char**)tags, LENGTH(tags), XUTF8StringStyle, &text);
 	XSetTextProperty(dpy, root, &text, netatom[NetDesktopNames]);
-
-	/* viewport property */
-	data[0] = data[1] = 0;
-	XChangeProperty(dpy, root, netatom[NetDesktopViewport], XA_CARDINAL, 32,
-		PropModeReplace, (unsigned char *)data, 2);
 
 	/* select events */
 	wa.cursor = cursor[CurNormal]->cursor;
