@@ -91,7 +91,7 @@ enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
 enum { SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle,
        SchemeBlockSel, SchemeBlockNorm }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
-       NetWMFullscreen, NetActiveWindow, NetWMWindowType, NetWMDesktop,
+       NetWMFullscreen, NetActiveWindow, NetWMWindowType, NetWMDesktop, NetWMPID,
        NetWMWindowTypeDialog, NetWMWindowTypeDock, NetClientList, NetDesktopNames,
        NetNumberOfDesktops, NetCurrentDesktop, NetSystemTray, NetSystemTrayOP,
        NetSystemTrayOrientation, NetSystemTrayOrientationHorz, NetLast }; /* EWMH atoms */
@@ -1764,6 +1764,10 @@ manage(Window w, XWindowAttributes *wa)
 	if (!c->isfloating)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 
+	if (c->pid)
+		XChangeProperty(dpy, c->win, netatom[NetWMPID], XA_CARDINAL, 32,
+			PropModeReplace, (unsigned char *)&(c->pid), 1);
+
 	if (swallow(c))
 		return;
 
@@ -2463,6 +2467,7 @@ setup(void)
 	netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
 	netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+	netatom[NetWMPID] = XInternAtom(dpy, "_NET_WM_PID", False);
 	netatom[NetSystemTray] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_S0", False);
 	netatom[NetSystemTrayOP] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_OPCODE", False);
 	netatom[NetSystemTrayOrientation] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_ORIENTATION", False);
@@ -3343,7 +3348,6 @@ getwinpid(Window w)
 
 	if (result == (pid_t)-1)
 		result = 0;
-
 #endif /* __linux__ */
 
 #ifdef __OpenBSD__
@@ -3353,15 +3357,15 @@ getwinpid(Window w)
 	unsigned char *prop;
 	pid_t ret;
 
-	if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1,
+	if (XGetWindowProperty(dpy, w, netatom[NetWMPID], 0, 1,
 		False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
 		return 0;
 
 	ret = *(pid_t*)prop;
 	XFree(prop);
 	result = ret;
-
 #endif /* __OpenBSD__ */
+
 	return result;
 }
 
