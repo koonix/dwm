@@ -2961,7 +2961,7 @@ updatebarpos(Monitor *m)
 void
 updateclientdesktop(Client *c)
 {
-	long data[] = { gettagnum(c->tags) + 1 };
+	long data[] = { gettagnum(c->tags) };
 	XChangeProperty(dpy, c->win, netatom[NetWMDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
@@ -2983,7 +2983,7 @@ updateclientlist()
 void
 updatecurrentdesktop(void)
 {
-	long data[] = { gettagnum(selmon->tagset[selmon->seltags]) + 1 };
+	long data[] = { gettagnum(selmon->tagset[selmon->seltags]) };
 	XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
 		PropModeReplace, (unsigned char *)data, 1);
 }
