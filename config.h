@@ -267,7 +267,7 @@ static const Key keys[] = {
     { Mod,              XK_b,                 spawn,          SHCMD("exec $BROWSER") },
     { Mod,              XK_g,                 spawn,          XMOUSELESS },
     { Mod,              XK_n,                 spawn,          CMD("dunstctl", "close") },
-    { ModShift,         XK_n,                 spawn,          CMD("dunstctl", "context") },
+    { ModShift,         XK_n,                 spawn,          CMD("dunstctl", "action") },
     { ModCtrl,          XK_n,                 spawn,          CMD("dunstctl", "history-pop") },
     { Mod,              XK_v,                 spawn,          SHTUI("exec ${EDITOR:-nvim}") },
     { Mod,              XK_e,                 spawn,          CMD("loginctl", "lock-session") },
