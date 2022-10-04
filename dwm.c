@@ -314,6 +314,7 @@ static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
 static void view(const Arg *arg);
+static int getwintags(Window w);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
@@ -427,6 +428,7 @@ static Window swallowwin = 0;
 static Client *sametagstacks[128];
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
+static int isscanning = 0;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -1741,6 +1743,8 @@ manage(Window w, XWindowAttributes *wa)
 		sametagapply(c);
 	}
 
+	c->tags = isscanning ? getwintags(c->win) : c->tags;
+
 	if (c->x + WIDTH(c) > c->mon->wx + c->mon->ww)
 		c->x = c->mon->wx + c->mon->ww - WIDTH(c);
 	if (c->y + HEIGHT(c) > c->mon->wy + c->mon->wh)
@@ -2250,6 +2254,8 @@ scan(void)
 	Window d1, d2, *wins = NULL;
 	XWindowAttributes wa;
 
+	isscanning = 1;
+
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa)
@@ -2268,6 +2274,8 @@ scan(void)
 		if (wins)
 			XFree(wins);
 	}
+
+	isscanning = 0;
 }
 
 void
@@ -3308,6 +3316,23 @@ view(const Arg *arg)
 	focus(NULL);
 	arrange(selmon);
 	updatecurrentdesktop();
+}
+
+int
+getwintags(Window w)
+{
+	Atom type;
+	int format;
+	unsigned long nitems, bytes;
+	unsigned char *desktop;
+
+	if (XGetWindowProperty(dpy, w, netatom[NetWMDesktop], 0, 1, False,
+		XA_CARDINAL, &type, &format, &nitems, &bytes, &desktop) == Success && desktop)
+	{
+		return ( 1 << *(unsigned int *)desktop ) & TAGMASK;
+	}
+
+	return 0;
 }
 
 pid_t
