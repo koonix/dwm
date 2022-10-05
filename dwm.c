@@ -1602,15 +1602,16 @@ getwintags(Window w)
 	Atom type;
 	int format;
 	unsigned long nitems, bytes;
-	unsigned char *rettags;
+	unsigned char *prop;
+	unsigned int rettags = 0;
 
 	if (XGetWindowProperty(dpy, w, netatom[NetWMDesktop], 0, 1, False, XA_CARDINAL,
-		&type, &format, &nitems, &bytes, &rettags) == Success && rettags)
+		&type, &format, &nitems, &bytes, &prop) == Success && prop)
 	{
-		return ( 1 << *(unsigned int *)rettags ) & TAGMASK;
+		rettags = ( 1 << *(unsigned int *)prop ) & TAGMASK;
 	}
-
-	return 0;
+	XFree(prop);
+	return rettags;
 }
 
 void
