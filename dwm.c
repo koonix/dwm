@@ -249,6 +249,7 @@ static Atom getatomprop(Client *c, Atom prop);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
+static unsigned int getwintags(Window w);
 static void gotourgent(const Arg *arg);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
@@ -314,7 +315,6 @@ static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
 static void view(const Arg *arg);
-static int getwintags(Window w);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
@@ -428,7 +428,7 @@ static Window swallowwin = 0;
 static Client *sametagstacks[128];
 static xcb_connection_t *xcon;
 static Window timerwin[TimerLast];
-static int isscanning = 0;
+static int init = 0;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -1596,6 +1596,23 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size)
 	return 1;
 }
 
+unsigned int
+getwintags(Window w)
+{
+	Atom type;
+	int format;
+	unsigned long nitems, bytes;
+	unsigned char *rettags;
+
+	if (XGetWindowProperty(dpy, w, netatom[NetWMDesktop], 0, 1, False, XA_CARDINAL,
+		&type, &format, &nitems, &bytes, &rettags) == Success && rettags)
+	{
+		return ( 1 << *(unsigned int *)rettags ) & TAGMASK;
+	}
+
+	return 0;
+}
+
 void
 gotourgent(const Arg *arg)
 {
@@ -1718,6 +1735,7 @@ manage(Window w, XWindowAttributes *wa)
 	Client *c, *t = NULL;
 	Window trans = None;
 	XWindowChanges wc;
+	unsigned int wintags;
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
@@ -1743,7 +1761,8 @@ manage(Window w, XWindowAttributes *wa)
 		sametagapply(c);
 	}
 
-	c->tags = isscanning ? getwintags(c->win) : c->tags;
+	if (init && (wintags = getwintags(c->win)))
+		c->tags = wintags;
 
 	if (c->x + WIDTH(c) > c->mon->wx + c->mon->ww)
 		c->x = c->mon->wx + c->mon->ww - WIDTH(c);
@@ -2254,8 +2273,6 @@ scan(void)
 	Window d1, d2, *wins = NULL;
 	XWindowAttributes wa;
 
-	isscanning = 1;
-
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa)
@@ -2274,8 +2291,6 @@ scan(void)
 		if (wins)
 			XFree(wins);
 	}
-
-	isscanning = 0;
 }
 
 void
@@ -3318,23 +3333,6 @@ view(const Arg *arg)
 	updatecurrentdesktop();
 }
 
-int
-getwintags(Window w)
-{
-	Atom type;
-	int format;
-	unsigned long nitems, bytes;
-	unsigned char *desktop;
-
-	if (XGetWindowProperty(dpy, w, netatom[NetWMDesktop], 0, 1, False,
-		XA_CARDINAL, &type, &format, &nitems, &bytes, &desktop) == Success && desktop)
-	{
-		return ( 1 << *(unsigned int *)desktop ) & TAGMASK;
-	}
-
-	return 0;
-}
-
 pid_t
 getwinpid(Window w)
 {
@@ -3667,12 +3665,14 @@ main(int argc, char *argv[])
 		die("dwm: cannot get xcb connection\n");
 	checkotherwm();
 	XrmInitialize();
+	init = 1;
 	setup();
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath proc exec ps", NULL) == -1)
 		die("pledge");
 #endif /* __OpenBSD__ */
 	scan();
+	init = 0;
 	run();
 	cleanup();
 	XCloseDisplay(dpy);
