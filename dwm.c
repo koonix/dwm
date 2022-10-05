@@ -1755,10 +1755,14 @@ manage(Window w, XWindowAttributes *wa)
 	if (XGetTransientForHint(dpy, c->win, &trans) && (t = wintoclient(trans))) {
 		c->mon = t->mon;
 		c->tags = t->tags;
+		c->x = t->x + (t->w - WIDTH(c)) / 2;
+		c->y = t->y + (t->h - HEIGHT(c)) / 2;
 	} else {
 		c->mon = selmon;
 		applyrules(c);
 		sametagapply(c);
+		c->x = c->mon->mx + (c->mon->mw - WIDTH(c)) / 2;
+		c->y = c->mon->my + (c->mon->mh - HEIGHT(c)) / 2;
 	}
 
 	if (init && (wintags = getwintags(c->win)))
