@@ -33,6 +33,7 @@ static const unsigned int systrayonleft  = 0;    /* 0: systray in the right corn
 /* other settings */
 static const unsigned int snap       = 32;  /* snap pixel */
 static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
+static const int barfullscreen       = 0;   /* the default barfullscreen rule; see the rules below */
 static const int swallowfloating     = 0;   /* 1 means swallow floating windows as well */
 static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
 static const unsigned char xkblayout = 0;   /* the default keyboard layout number; 0 is the main layout */
@@ -84,6 +85,10 @@ static const Layout layouts[] = {
 
 /* hint for rules
  *
+ * barfullscreen:
+ *    1 means show bar when the focused window is fullscreen as well.
+ *    a negative value means use the default value set above.
+ *
  * blockinput:
  *   sometimes you're typing and all of a sudden a window pops out of nowhere,
  *   steals yours input focus and receives some bogus input. this rule is here to stop that.
@@ -106,21 +111,26 @@ static const Layout layouts[] = {
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  *
- *   1 = tagmask,     2 = isfloating,       3 = blockinput,
- *   4 = sametagid,   5 = sametagparentid,  6 = isterminal,
- *   7 = noswallow,   8 = fixjump,          9 = monitor
+ *
+ *   1  = tagmask,       2  = isfloating,       3  = barfullscreen,
+ *   4  = blockinput,    5  = sametagid,        6  = sametagparentid,
+ *   7  = isterminal,    8  = noswallow,        9  = fixjump,
+ *   10 = monitor
+ *
  */
 static const Rule rules[] = {
-	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9 */
-	{ "TelegramDesktop", NULL, "Media viewer",  0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL,              0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
-	{ "Droidcam", NULL, NULL,                   0,  1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile droidcam */
-	{ ".exe", NULL, NULL,                       0,  0, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
-	{ "Steam", NULL, NULL,                      0,  0, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
-	{ "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
-	{ "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't block tabbed's input */
-	{ TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  0,  1,  0,  0, -1 }, /* set terminal's isterminal rule */
-	{ NULL, NULL, "Event Tester",               0,  0,  0,  0,  0,  0,  1,  0, -1 }, /* don't swallow xev's window */
+	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9   10 */
+	{ "TelegramDesktop", NULL, "Media viewer",  0,  1,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
+	{ "Qalculate-gtk", NULL, NULL,              0,  1, -1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
+	{ "Droidcam", NULL, NULL,                   0,  1, -1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile droidcam */
+	{ ".exe", NULL, NULL,                       0,  0, -1, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
+	{ "Steam", NULL, NULL,                      0,  0, -1, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
+	{ "firefox", NULL, NULL,                    0,  0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
+	{ "tabbed", NULL, NULL,                     0,  0, -1,  0,  0,  0,  0,  0,  0, -1 }, /* don't block tabbed's input */
+	{ "Sxiv", NULL, NULL,                       0,  0,  0, -1,  0,  0,  0,  0,  0, -1 }, /* no barfullscreen */
+	{ "mpv", NULL, NULL,                        0,  0,  0, -1,  0,  0,  0,  0,  0, -1 }, /* no barfullscreen */
+	{ TERMCLASS, NULL, NULL,                    0,  0,  1,  0,  0,  0,  1,  0,  0, -1 }, /* set isterminal and barfullscreen */
+	{ NULL, NULL, "Event Tester",               0,  0, -1,  0,  0,  0,  0,  1,  0, -1 }, /* don't swallow xev's window */
 };
 
 /* hint for attachdirection

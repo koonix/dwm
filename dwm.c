@@ -131,7 +131,7 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
-	int isterminal, noswallow, fixjump;
+	int barfullscreen, isterminal, noswallow, fixjump;
 	unsigned int blockinput;
 	pid_t pid;
 	Client *next;
@@ -194,6 +194,7 @@ typedef struct {
 	const char *title;
 	unsigned int tags;
 	int isfloating;
+	int barfullscreen;
 	int blockinput;
 	unsigned int sametagid;
 	unsigned int sametagparentid;
@@ -478,6 +479,7 @@ applyrules(Client *c)
 		{
 			c->sametagid  = r->sametagid;
 			c->sametagparentid = r->sametagparentid;
+			c->barfullscreen = r->barfullscreen >= 0 ? r->barfullscreen : barfullscreen ;
 			c->blockinput = r->blockinput >= 0 ? r->blockinput : blockinputmsec;
 			c->isterminal = r->isterminal;
 			c->noswallow  = r->noswallow;
@@ -1258,7 +1260,7 @@ drawbar(Monitor *m)
 			drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 			fribidi(m->sel->name, biditext);
 			drw_text(drw, x, 0, w, bh, lrpad / 2, biditext, 0);
-			if (m->sel->isfloating)
+			if (m->sel->isfloating && !m->sel->isfullscreen)
 				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 		} else {
 			drw_setscheme(drw, scheme[SchemeNorm]);
@@ -1750,6 +1752,7 @@ manage(Window w, XWindowAttributes *wa)
 	c->win = w;
 	c->pid = getwinpid(c->win);
 	c->bw = borderpx;
+	c->barfullscreen = barfullscreen;
 	c->blockinput = blockinputmsec;
 	c->xkblayout  = xkblayout;
 
@@ -2408,7 +2411,10 @@ setfullscreen(Client *c, int fullscreen)
 		c->oldbw = c->bw;
 		c->bw = 0;
 		c->isfloating = 1;
-		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
+		if (c->barfullscreen)
+			resizeclient(c, c->mon->wx, c->mon->wy, c->mon->ww, c->mon->wh);
+		else
+			resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
 		XRaiseWindow(dpy, c->win);
 	} else if (!fullscreen && c->isfullscreen){
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
@@ -3012,10 +3018,15 @@ updateclientlist()
 
 	XDeleteProperty(dpy, root, netatom[NetClientList]);
 	for (m = mons; m; m = m->next)
-		for (c = m->clients; c; c = c->next)
+		for (c = m->clients; c; c = c->next) {
 			XChangeProperty(dpy, root, netatom[NetClientList],
 				XA_WINDOW, 32, PropModeAppend,
 				(unsigned char *) &(c->win), 1);
+			if (c->swallowclient)
+				XChangeProperty(dpy, root, netatom[NetClientList],
+					XA_WINDOW, 32, PropModeAppend,
+					(unsigned char *) &(c->swallowclient->win), 1);
+		}
 }
 
 void
@@ -3499,7 +3510,8 @@ swallow(Client *c)
 	Client *t;
 	Window win, wtmp;
 	unsigned int uitmp;
-	int itmp;
+	int itmp, bfs;
+	int x, y, w, h;
 
 	if (c->noswallow || c->isterminal || (c->isfloating && !swallowfloating))
 		return 0;
@@ -3508,31 +3520,57 @@ swallow(Client *c)
 	if (!t)
 		return 0;
 
-	detach(c);
-	detachstack(c);
-
-	setclientstate(c, WithdrawnState);
+	setclientstate(t, WithdrawnState);
 	XUnmapWindow(dpy, t->win);
 
 	t->swallowclient = c;
 	c->mon = t->mon;
-	setfullscreen(c, t->isfullscreen);
+
 	win = t->win;
 	t->win = c->win;
 	c->win = win;
+
+	bfs = t->barfullscreen;
+	t->barfullscreen = c->barfullscreen;
+	c->barfullscreen = bfs;
+
+	x = t->x;
+	y = t->y;
+	w = t->w;
+	h = t->h;
+
+	if (t->isfullscreen)
+		XChangeProperty(dpy, t->win, netatom[NetWMState], XA_ATOM, 32,
+			PropModeReplace, (unsigned char*)&netatom[NetWMFullscreen], 1);
+
+	if (t->isfullscreen && t->barfullscreen != c->barfullscreen) {
+		if (t->barfullscreen) {
+			x = t->mon->wx;
+			y = t->mon->wy;
+			w = t->mon->ww;
+			h = t->mon->wh;
+		} else {
+			x = t->mon->mx;
+			y = t->mon->my;
+			w = t->mon->mw;
+			h = t->mon->mh;
+		}
+	}
+
+	c->isfullscreen = t->isfullscreen;
+
+	resizeclient(t, x, y, w, h);
 	XMoveResizeWindow(dpy, t->win, t->x, t->y, t->w, t->h);
-	configure(t);
 	updatetitle(t);
 	updateclientdesktop(t);
+	restack(t->mon);
+	XMapWindow(dpy, t->win);
 
 	XChangeProperty(dpy, t->win, swallowatom, XA_ATOM, 32,
 		PropModeReplace, (unsigned char *)&swallowatom, 1);
 
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
-		PropModeAppend, (unsigned char *) &(t->win), 1);
-
-	arrange(t->mon);
-	XMapWindow(dpy, t->win);
+		PropModeAppend, (unsigned char *)&(t->win), 1);
 
 	if (t->mon->stack == t) {
 		focus(t);
@@ -3548,19 +3586,45 @@ swallow(Client *c)
 void
 unswallow(Client *c)
 {
+	int x = c->x, y = c->y, w = c->w, h = c->h;
+
 	c->win = c->swallowclient->win;
-	setfullscreen(c->swallowclient, c->isfullscreen);
+
+	if (c->isfullscreen && !c->swallowclient->isfullscreen)
+		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+			PropModeReplace, (unsigned char*)&netatom[NetWMFullscreen], 1);
+	else if (!c->isfullscreen && c->swallowclient->isfullscreen)
+		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
+			PropModeReplace, (unsigned char*)0, 0);
+
+	if (c->isfullscreen && c->barfullscreen != c->swallowclient->barfullscreen) {
+		if (c->swallowclient->barfullscreen) {
+			x = c->mon->wx;
+			y = c->mon->wy;
+			w = c->mon->ww;
+			h = c->mon->wh;
+		} else {
+			x = c->mon->mx;
+			y = c->mon->my;
+			w = c->mon->mw;
+			h = c->mon->mh;
+		}
+	}
+
+	c->barfullscreen = c->swallowclient->barfullscreen;
+
 	free(c->swallowclient);
 	c->swallowclient = NULL;
-
-	updatetitle(c);
-	arrange(c->mon);
-	XMapWindow(dpy, c->win);
-	XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
-	setclientstate(c, NormalState);
-	focus(NULL);
-	arrange(c->mon);
 	updateclientlist();
+
+	setclientstate(c, NormalState);
+	resizeclient(c, x, y, w, h);
+	XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
+	updatetitle(c);
+	updateclientdesktop(c);
+	XMapWindow(dpy, c->win);
+	restack(c->mon);
+	focus(NULL);
 }
 
 Client *
