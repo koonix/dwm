@@ -1002,8 +1002,8 @@ createmon(void)
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
 
-	m->pertag = ecalloc(LENGTH(tags) + 1, sizeof(Pertag));
-	for (i = 0; i < LENGTH(tags) + 1; i++) {
+	m->pertag = ecalloc(LENGTH(tags), sizeof(Pertag));
+	for (i = 0; i < LENGTH(tags); i++) {
 		m->pertag[i].mfact = m->mfact;
 		m->pertag[i].nmaster = m->nmaster;
 		m->pertag[i].lt[0] = m->lt[0];
