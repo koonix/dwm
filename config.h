@@ -5,14 +5,14 @@
 #define TERMCLASS "st-256color"
 
 /* border */
-static const unsigned int borderpx          = 9;  /* border pixel of windows */
+static const unsigned int borderpx          = 7;  /* border pixel of windows */
 static const unsigned int innerborderpx     = 3;  /* inner border pixel of windows */
-static const unsigned int innerborderoffset = 3;  /* distance between inner border and window */
+static const unsigned int innerborderoffset = 2;  /* distance between inner border and window */
 
 /* layout settings */
 static const int pertag           = 1;    /* 1 means remember layout, mfact and nmaster per tag */
 static const int resettag         = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
-static const unsigned int gappx   = 20;   /* gaps between windows */
+static const unsigned int gappx   = 15;   /* gaps between windows */
 static const float mfact          = 0.5;  /* factor of master area size [0.05..0.95] */
 static const int nmaster          = 1;    /* number of clients in master area */
 static const unsigned int stairpx = 75;   /* depth of the stairs layout */
