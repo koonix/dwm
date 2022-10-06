@@ -245,7 +245,7 @@ static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static void focusstacktiled(const Arg *arg);
 static void fribidi(char *in, char *out);
-static Atom getatomprop(Client *c, Atom prop);
+static Atom getatomprop(Window w, Atom prop);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
@@ -354,6 +354,7 @@ static int swallow(Client *c);
 static void unswallow(Client *c);
 static Client *getswallowterminal(Client *c);
 static pid_t getwinpid(Window w);
+static int hasswallowprop(Window w);
 
 /* systray functions */
 static unsigned int getsystraywidth();
@@ -413,7 +414,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[ResizeRequest] = resizerequest,
 	[UnmapNotify] = unmapnotify
 };
-static Atom wmatom[WMLast], netatom[NetLast], xatom[XembedLast];
+static Atom wmatom[WMLast], netatom[NetLast], xatom[XembedLast], swallowatom;
 static volatile int running = 1;
 static volatile int mustrestart = 0;
 static Cur *cursor[CurLast];
@@ -1513,7 +1514,7 @@ fribidi(char *in, char *out)
 }
 
 Atom
-getatomprop(Client *c, Atom prop)
+getatomprop(Window w, Atom prop)
 {
 	int di;
 	unsigned long dl;
@@ -1526,7 +1527,7 @@ getatomprop(Client *c, Atom prop)
 	if (prop == xatom[XembedInfo])
 		req = xatom[XembedInfo];
 
-	if (XGetWindowProperty(dpy, c->win, prop, 0L, sizeof atom, False, req,
+	if (XGetWindowProperty(dpy, w, prop, 0L, sizeof atom, False, req,
 		&da, &di, &dl, &dl, &p) == Success && p) {
 		atom = *(Atom *)p;
 		if (da == xatom[XembedInfo] && dl == 2)
@@ -1676,6 +1677,12 @@ grabkeys(void)
 					XGrabKey(dpy, code, keys[i].mod | modifiers[j], root,
 						True, GrabModeAsync, GrabModeAsync);
 	}
+}
+
+int
+hasswallowprop(Window w)
+{
+	return getatomprop(w, swallowatom) == swallowatom;
 }
 
 void
@@ -2283,9 +2290,18 @@ scan(void)
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa)
-			|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
+			|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1)
+			|| hasswallowprop(wins[i]))
 				continue;
 			if (wa.map_state == IsViewable || getstate(wins[i]) == IconicState)
+				manage(wins[i], &wa);
+		}
+		for (i = 0; i < num; i++) { /* now swallowing windows */
+			if (!XGetWindowAttributes(dpy, wins[i], &wa)
+			|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
+				continue;
+			if (hasswallowprop(wins[i])
+			&& (wa.map_state == IsViewable || getstate(wins[i]) == IconicState))
 				manage(wins[i], &wa);
 		}
 		for (i = 0; i < num; i++) { /* now the transients */
@@ -2498,6 +2514,7 @@ setup(void)
 	xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
 	xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
 	xatom[XembedInfo] = XInternAtom(dpy, "_XEMBED_INFO", False);
+	swallowatom = XInternAtom(dpy, "_DWM_SWALLOW", False);
 
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
@@ -3191,7 +3208,7 @@ updatesystrayiconstate(Client *i, XPropertyEvent *ev)
 	int code = 0;
 
 	if (!showsystray || !i || ev->atom != xatom[XembedInfo]
-		|| !(flags = getatomprop(i, xatom[XembedInfo])))
+		|| !(flags = getatomprop(i->win, xatom[XembedInfo])))
 		return;
 
 	if (flags & XEMBED_MAPPED && !i->tags) {
@@ -3295,8 +3312,8 @@ updatetitle(Client *c)
 void
 updatewindowtype(Client *c)
 {
-	Atom state = getatomprop(c, netatom[NetWMState]);
-	Atom wtype = getatomprop(c, netatom[NetWMWindowType]);
+	Atom state = getatomprop(c->win, netatom[NetWMState]);
+	Atom wtype = getatomprop(c->win, netatom[NetWMWindowType]);
 
 	if (state == netatom[NetWMFullscreen])
 		setfullscreen(c, 1);
@@ -3507,6 +3524,9 @@ swallow(Client *c)
 	configure(t);
 	updatetitle(t);
 	updateclientdesktop(t);
+
+	XChangeProperty(dpy, t->win, swallowatom, XA_ATOM, 32,
+		PropModeReplace, (unsigned char *)&swallowatom, 1);
 
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
 		PropModeAppend, (unsigned char *) &(t->win), 1);
