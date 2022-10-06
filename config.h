@@ -22,6 +22,7 @@ static const int stairssamesize   = 0;    /* 1 means shrink all the staired wind
 /* bar and systray */
 static const int showbar                 = 1;    /* 0 means no bar */
 static const int topbar                  = 1;    /* 0 means bottom bar */
+static const int statuspad               = 4;    /* status text padding on the right */
 static const float cindfact              = 0.1;  /* size of client indicators */
 static const int showsystray             = 1;    /* 0 means no systray */
 static const int systrayoffset           = -5;   /* systray offset from the edge */
