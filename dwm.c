@@ -569,15 +569,19 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 void
 arrange(Monitor *m)
 {
-	if (m)
+	if (m) {
 		showhide(m->stack);
-	else for (m = mons; m; m = m->next)
-		showhide(m->stack);
+	} else {
+		for (m = mons; m; m = m->next)
+			showhide(m->stack);
+	}
 	if (m) {
 		arrangemon(m);
 		restack(m);
-	} else for (m = mons; m; m = m->next)
-		arrangemon(m);
+	} else {
+		for (m = mons; m; m = m->next)
+			arrangemon(m);
+	}
 }
 
 void
@@ -707,38 +711,43 @@ unblockinput(void)
 void
 buttonpress(XEvent *e)
 {
-	unsigned int i, x, click, occ = 0;
+	unsigned int i = 0, x = 0, occ = 0;
+	unsigned int click = ClkRootWin;
 	Arg arg = {0};
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
 
-	click = ClkRootWin;
 	/* focus monitor if necessary */
 	if ((m = wintomon(ev->window)) && m != selmon) {
 		unfocus(selmon->sel, 1);
 		selmon = m;
 		focus(NULL);
 	}
+
 	if (ev->window == selmon->barwin) {
-		i = x = 0;
+
 		for (c = m->clients; c; c = c->next)
-			occ |= c->tags == 255 ? 0 : c->tags;
+			occ |= c->tags;
+
 		do {
 			/* do not reserve space for vacant tags */
-			if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
+			if (!(occ & (1 << i) || m->tagset[m->seltags] & (1 << i)))
 				continue;
 			x += TEXTW(tags[i]);
 		} while (ev->x >= x && ++i < LENGTH(tags));
+
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else if (ev->x < x + TEXTW(selmon->ltsymbol))
+		} else if (ev->x < x + TEXTW(selmon->ltsymbol)) {
 			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - ssize - getsystraywidth())
+		} else if (ev->x > selmon->ww - ssize - getsystraywidth()) {
 			click = ClkStatusText;
-		else
+		} else {
 			click = ClkWinTitle;
+		}
+
 	} else if ((c = wintoclient(ev->window))) {
 		/* if modkey is pressed down, do not focus the window
 		 * under the cursor. this enables eg. mod+scroll to
@@ -750,10 +759,15 @@ buttonpress(XEvent *e)
 		XAllowEvents(dpy, ReplayPointer, CurrentTime);
 		click = ClkClientWin;
 	}
+
 	for (i = 0; i < LENGTH(buttons); i++)
-		if (click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
-		&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
+		if (click == buttons[i].click
+			&& buttons[i].func
+			&& buttons[i].button == ev->button
+			&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
+		{
 			buttons[i].func(click == ClkTagBar && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg);
+		}
 }
 
 void
@@ -849,7 +863,7 @@ clientmessage(XEvent *e)
 			c->h = c->oldh = wa.height;
 			c->oldbw = wa.border_width;
 			c->bw = 0;
-			c->isfloating = True;
+			c->isfloating = 1;
 			/* reuse tags field as mapped status */
 			c->tags = 1;
 			updatesizehints(c);
@@ -1422,11 +1436,11 @@ focus(Client *c)
 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
 	}
 	selmon->sel = c;
-	Client *at;
+	Client *f;
 	if (c && !c->isfloating)
-		for (at = selmon->clients; at; at = at->next)
-			if (at != c && at->isfullscreen && ISVISIBLE(at))
-				setfullscreen(at, 0);
+		for (f = selmon->clients; f; f = f->next)
+			if (f != c && f->isfullscreen && ISVISIBLE(f))
+				setfullscreen(f, 0);
 	drawbars();
 }
 
@@ -2359,11 +2373,10 @@ sendevent(Window w, Atom proto, int mask, long d0, long d1, long d2, long d3, lo
 				exists = protocols[n] == proto;
 			XFree(protocols);
 		}
-	}
-	else {
+	} else {
 		exists = True;
 		mt = proto;
-}
+	}
 
 	if (exists) {
 		ev.type = ClientMessage;
@@ -2910,8 +2923,8 @@ unmanage(Client *c, int destroyed)
 	if ((s = wintoswallowclient(c->win))) {
 		free(s->swallowclient);
 		s->swallowclient = NULL;
-		arrange(m);
 		focus(NULL);
+		arrange(m);
 		return;
 	}
 
@@ -2919,6 +2932,8 @@ unmanage(Client *c, int destroyed)
 	sametagcleanup(c);
 	detach(c);
 	detachstack(c);
+	updateclientlist();
+
 	if (!destroyed) {
 		wc.border_width = c->oldbw;
 		XGrabServer(dpy); /* avoid race conditions */
@@ -2933,9 +2948,8 @@ unmanage(Client *c, int destroyed)
 	}
 
 	free(c);
-	arrange(m);
 	focus(NULL);
-	updateclientlist();
+	arrange(m);
 }
 
 void
@@ -3257,8 +3271,7 @@ updatesystray(void)
 		x -= sw + lrpad / 2;
 	if (!systray) {
 		/* init systray */
-		if (!(systray = (Systray *)calloc(1, sizeof(Systray))))
-			die("fatal: could not malloc() %u bytes\n", sizeof(Systray));
+		systray = (Systray *)ecalloc(1, sizeof(Systray));
 		systray->win = XCreateSimpleWindow(dpy, root, x, m->by, w, bh, 0, 0,
 			scheme[SchemeSel][ColBg].pixel);
 		wa.event_mask        = ButtonPressMask | ExposureMask;
