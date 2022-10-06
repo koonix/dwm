@@ -358,7 +358,7 @@ static pid_t getwinpid(Window w);
 /* systray functions */
 static unsigned int getsystraywidth();
 static void removesystrayicon(Client *i);
-static void resizebarwin(Monitor *m);
+static unsigned int resizebarwin(Monitor *m);
 static void resizerequest(XEvent *e);
 static Monitor *systraytomon(Monitor *m);
 static void updatesystray(void);
@@ -1198,58 +1198,61 @@ drawstatus(Monitor *m, int trayw)
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0, stw = 0;
+	int i, j, w, x = 0, trayw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
-	int indn, cindpx = drw->fonts->h * cindfact;
-	unsigned int i, occ = 0, urg = 0;
-	Client *c;
+	int cindpx = drw->fonts->h * cindfact;
+	unsigned int occ = 0, urg = 0;
 	char biditext[1024];
+	Client *c;
 
 	if (!m->showbar)
 		return;
 
-	if (showsystray && m == systraytomon(m) && !systrayonleft)
-		stw = getsystraywidth();
+	trayw = resizebarwin(m);
 
 	/* draw status first so it can be overdrawn by tags later */
-	if (m == selmon) { /* status is only drawn on selected monitor */
-		ssize = tw = m->ww - drawstatus(m, stw);
-	}
+	if (m == selmon)   /* status is only drawn on selected monitor */
+		ssize = m->ww - drawstatus(m, trayw);
 
-	resizebarwin(m);
 	for (c = m->clients; c; c = c->next) {
-		occ |= c->tags == 255 ? 0 : c->tags;
+		occ |= c->tags;
 		if (c->isurgent)
 			urg |= c->tags;
 	}
-	x = 0;
+
+	/* draw tags */
 	for (i = 0; i < LENGTH(tags); i++) {
 
 		/* do not draw vacant tags */
-		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
+		if (!(occ & (1 << i) || m->tagset[m->seltags] & (1 << i)))
 			continue;
 
-		indn = 0;
 		w = TEXTW(tags[i]);
-		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
+		drw_setscheme(drw, scheme[m->tagset[m->seltags] & (1 << i) ? SchemeSel : SchemeNorm]);
+		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & (1 << i));
 
-		for (c = m->clients; c; c = c->next) {
+		/* draw client indicators */
+		j = 0;
+		for (c = m->clients; c; c = c->next)
 			if (c->tags & (1 << i)) {
-				drw_rect(drw, x, (indn * cindpx * 2) + 1, cindpx, cindpx, 1, urg & 1 << i);
-				indn++;
+				drw_rect(drw,
+					x + MAX(cindpx / 2, 1),
+					(j * cindpx * 2) + MAX(cindpx / 2, 1) + 1,
+					cindpx, cindpx, 1, urg & (1 << i));
+				j++;
 			}
-		}
 
 		x += w;
 	}
 
+	/* draw layout symbol */
 	w = TEXTW(m->ltsymbol);
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 
-	if ((w = m->ww - tw - x) > bh) {
+	/* draw window name */
+	if ((w = m->ww - x - (m == selmon ? ssize : 0)) > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeTitle : SchemeNorm]);
 			fribidi(m->sel->name, biditext);
@@ -1261,7 +1264,8 @@ drawbar(Monitor *m)
 			drw_rect(drw, x, 0, w, bh, 1, 1);
 		}
 	}
-	drw_map(drw, m->barwin, 0, 0, m->ww - stw, bh);
+
+	drw_map(drw, m->barwin, 0, 0, m->ww - trayw, bh);
 }
 
 void
@@ -2089,13 +2093,14 @@ resize(Client *c, int x, int y, int w, int h, int interact)
 		resizeclient(c, x, y, w, h);
 }
 
-void
+unsigned int
 resizebarwin(Monitor *m)
 {
-	unsigned int w = m->ww;
+	unsigned int w = m->ww, trayw = 0;
 	if (showsystray && m == systraytomon(m) && !systrayonleft)
-		w -= getsystraywidth();
+		w -= trayw = getsystraywidth();
 	XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, w, bh);
+	return trayw;
 }
 
 void
