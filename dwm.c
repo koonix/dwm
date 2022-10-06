@@ -272,6 +272,7 @@ static void sighup(int unused);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
+static void resizefullscreen(Client *c, int barfullscreen);
 static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
 static void run(void);
@@ -938,7 +939,7 @@ configurenotify(XEvent *e)
 			for (m = mons; m; m = m->next) {
 				for (c = m->clients; c; c = c->next)
 					if (c->isfullscreen)
-						resizeclient(c, m->mx, m->my, m->mw, m->mh);
+						resizefullscreen(c, 0);
 				resizebarwin(m);
 			}
 			focus(NULL);
@@ -2143,6 +2144,15 @@ resizeclient(Client *c, int x, int y, int w, int h)
 }
 
 void
+resizefullscreen(Client *c, int barfullscreen)
+{
+	if (barfullscreen)
+		resizeclient(c, c->mon->wx, c->mon->wy, c->mon->ww, c->mon->wh);
+	else
+		resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
+}
+
+void
 resizemouse(const Arg *arg)
 {
 	int ocx, ocy, nw, nh;
@@ -2424,10 +2434,7 @@ setfullscreen(Client *c, int fullscreen)
 		c->oldbw = c->bw;
 		c->bw = 0;
 		c->isfloating = 1;
-		if (c->barfullscreen)
-			resizeclient(c, c->mon->wx, c->mon->wy, c->mon->ww, c->mon->wh);
-		else
-			resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
+		resizefullscreen(c, c->barfullscreen);
 		XRaiseWindow(dpy, c->win);
 	} else if (!fullscreen && c->isfullscreen){
 		XChangeProperty(dpy, c->win, netatom[NetWMState], XA_ATOM, 32,
@@ -2821,6 +2828,8 @@ togglebar(const Arg *arg)
 	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
 	resizebarwin(selmon);
+	if (selmon->sel && selmon->sel->isfullscreen && selmon->sel->barfullscreen)
+		resizefullscreen(selmon->sel, 1);
 	if (showsystray) {
 		XWindowChanges wc;
 		if (!selmon->showbar)
