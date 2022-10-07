@@ -3585,7 +3585,7 @@ swallow(Client *c)
 	XMoveResizeWindow(dpy, t->win, t->x, t->y, t->w, t->h);
 	updatetitle(t);
 	updateclientdesktop(t);
-	restack(t->mon);
+	arrange(t->mon);
 	XMapWindow(dpy, t->win);
 
 	XChangeProperty(dpy, t->win, swallowatom, XA_ATOM, 32,
