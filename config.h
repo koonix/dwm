@@ -16,6 +16,7 @@ static const int resettag          = 1;    /* 1 means reset layout, mfact and nm
 static const unsigned int gappx    = 15;   /* gaps between windows */
 static const float mfact           = 0.5;  /* factor of master area size [0.05..0.95] */
 static const int nmaster           = 1;    /* number of clients in master area */
+static const int nmasterbias   = nmaster;  /* reduce nmaster if masters are gone when they're more than nmasterbias. <0 to disable. */
 static const unsigned int stairpx  = 75;   /* depth of the stairs layout */
 static const int stairsdirection   = 1;    /* alignment of the stairs layout; 0: left-aligned, 1: right-aligned */
 static const int stairssamesize    = 0;    /* 1 means shrink all the staired windows to the same size */
@@ -29,18 +30,10 @@ static const float cindfact   = 0.1;  /* size of client indicators */
 /* other settings */
 static const unsigned int snap        = 32;  /* snap pixel */
 static const int lockfullscreen       = 0;   /* 1 will force focus on the fullscreen window */
-static const int barfullscreen        = 1;   /* the default barfullscreen rule; see the rules below */
 static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
 static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
 static const unsigned char xkblayout  = 0;   /* the default keyboard layout number; 0 is the main layout */
-
-/* reduce nmaster if a master is tagged away or killed when nmaster is greater
- * than nmasterbias. set to a negative value to disable. */
-static const int nmasterbias = nmaster;
-
-/* the default input block time of new windows (in milliseconds).
- * see the rules below for explanation. */
-static const unsigned int blockinputmsec = 1000;
+static const unsigned int blockinputmsec = 1000;  /* input block time of new windows; see rules below */
 
 /* fonts */
 static const char *fonts[] = {
@@ -84,16 +77,16 @@ static const Layout layouts[] = {
 
 /* hint for rules
  *
- * barfullscreen:
- *    1 means fullscreen window won't cover the bar.
- *    a negative value means use the default value set above.
+ * completefullscreen:
+ *   1 means make the window cover the entire monitor (even the bar) when
+ *   it's fullscreen.
  *
- * blockinput:
+ * noblockinput:
  *   sometimes you're typing and all of a sudden a window pops out of nowhere,
- *   steals yours input focus and receives some bogus input. this rule is here to stop that.
- *   this rule blocks the input of newly opened windows for the specified amount of time in milliseconds.
- *   set to 0 to disable, set to a negative value to use the default value (blockinputmsec).
- *   swallowing windows won't be input-blocked because they don't steal the focus.
+ *   steals your input focus and receives some bogus input. for this reason,
+ *   dwm blocks the input of newly opened windows for the configured amount
+ *   of time above in the 'blockinputmsec' variable.
+ *   1 means don't block the input.
  *
  * sametagid, sametagparentid:
  *   with these rules you can have some windows open in the same tag and monitor
@@ -111,32 +104,33 @@ static const Layout layouts[] = {
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  *
- * isf : isfloating
- * bfu : barfullscreen
- * blk : blockinput
+ * flo : isfloating
+ * cfs : completefullscreen
+ * nbk : noblockinput
  * sti : sametagid
  * stp : sametagparentid
- * nos : noswallow
+ * nsl : noswallow
  * ist : isterminal
- * noj : nojitter
+ * njt : nojitter
  * tag : tagmask
  * mon : monitor
  */
 static const Rule rules[] = {
-    /* class, instance, title,                 isf bfu blk sti stp nos ist fxj tag mon  */
-    { "TelegramDesktop", NULL, "Media viewer",  1,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "Qalculate-gtk", NULL, NULL,              1, -1, -1,  0,  0,  0,  0,  0,  0, -1 },
-    { "Droidcam", NULL, NULL,                   1, -1, -1,  0,  0,  0,  0,  0,  0, -1 },
-    { ".exe", NULL, NULL,                       0, -1, -1,  1,  1,  0,  0,  0,  0, -1 },
-    { "Steam", NULL, NULL,                      0, -1, -1,  2,  2,  0,  0,  1,  0, -1 },
-    { "firefox", NULL, NULL,                    0,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "firefox", NULL, "Picture-in-Picture",    0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "chromium", NULL, NULL,                   0,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "tabbed", NULL, NULL,                     0, -1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "Sxiv", NULL, NULL,                       0,  0, -1,  0,  0,  0,  0,  0,  0, -1 },
-    { "mpv", NULL, NULL,                        0,  0, -1,  0,  0,  0,  0,  0,  0, -1 },
-    { TERMCLASS, NULL, NULL,                    0,  1,  0,  0,  0,  0,  1,  0,  0, -1 },
-    { NULL, NULL, "Event Tester",               0, -1,  0,  0,  0,  1,  0,  0,  0, -1 },
+    /* class, instance, title,                 flo cfs nbk sti stp nsl ist njt tag mon  */
+    { "TelegramDesktop", NULL, NULL,            0,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "TelegramDesktop", NULL, "Media viewer",  1,  0,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Qalculate-gtk", NULL, NULL,              1,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Droidcam", NULL, NULL,                   1,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { ".exe", NULL, NULL,                       0,  0,  0,  1,  1,  0,  0,  0,  0, -1 },
+    { "Steam", NULL, NULL,                      0,  0,  0,  2,  2,  0,  0,  1,  0, -1 },
+    { "firefox", NULL, NULL,                    0,  0,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "firefox", NULL, "Picture-in-Picture",    0,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "chromium", NULL, NULL,                   0,  0,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "tabbed", NULL, NULL,                     0,  0,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Sxiv", NULL, NULL,                       0,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "mpv", NULL, NULL,                        0,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
+    { TERMCLASS, NULL, NULL,                    0,  0,  1,  0,  0,  0,  1,  0,  0, -1 },
+    { NULL, NULL, "Event Tester",               0,  0,  1,  0,  0,  1,  0,  0,  0, -1 },
 };
 
 /* hint for attachdirection
