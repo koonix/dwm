@@ -104,7 +104,7 @@ static const Layout layouts[] = {
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  *
- * flo : isfloating
+ * flt : isfloating
  * cfs : completefullscreen
  * nbk : noblockinput
  * sti : sametagid
@@ -116,10 +116,10 @@ static const Layout layouts[] = {
  * mon : monitor
  */
 static const Rule rules[] = {
-    /* class, instance, title,                 flo cfs nbk sti stp nsl ist njt tag mon  */
+    /* class, instance, title,                 flt cfs nbk sti stp nsl ist njt tag mon  */
     { "TelegramDesktop", NULL, NULL,            0,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
     { "TelegramDesktop", NULL, "Media viewer",  1,  0,  1,  0,  0,  0,  0,  0,  0, -1 },
-    { "Qalculate-gtk", NULL, NULL,              1,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Qalculate", NULL, NULL,                  1,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
     { "Droidcam", NULL, NULL,                   1,  1,  1,  0,  0,  0,  0,  0,  0, -1 },
     { ".exe", NULL, NULL,                       0,  0,  0,  1,  1,  0,  0,  0,  0, -1 },
     { "Steam", NULL, NULL,                      0,  0,  0,  2,  2,  0,  0,  1,  0, -1 },
