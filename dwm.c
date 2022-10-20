@@ -54,6 +54,9 @@
 #include "drw.h"
 #include "util.h"
 
+/* TODO: implement a double-tap-to-quit functionality */
+/* TODO: merge https://github.com/cdown/dwm/commit/62cd7e9 after a while once it's stable */
+
 /* =============
  * = Macros
  * ============= */
