@@ -68,7 +68,7 @@
 #define HEIGHT(X)             ((X)->h + 2 * (X)->bw)
 #define TEXTWR(X)             (drw_fontset_getwidth(drw, (X)))
 #define TEXTW(X)              (TEXTWR(X) + lrpad)
-#define ISUTILWIN(W)          (W == root || w == selmon->barwin || w == systray->win)
+#define ISUTILWIN(W)          (W == root || w == selmon->barwin || (systray && w == systray->win))
 #define NSECPERMSEC           1000000
 #define MSECPERSEC            1000
 
@@ -496,6 +496,7 @@ static int starting = 0;
 static int currentdesktop = -1;
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 
+/* event handlers */
 static void (*handler[LASTEvent]) (XEvent *) = {
 	[MapRequest]        =  maprequest,
 	[DestroyNotify]     =  destroynotify,
@@ -740,7 +741,7 @@ destroynotify(XEvent *e)
 	if (timerexec(ev->window))
 		return;
 
-	if (ev->window == systray->win) {
+	if (systray && ev->window == systray->win) {
 		free(systray);
 		systray = NULL;
 	}
@@ -954,7 +955,7 @@ clientmessage(XEvent *e)
 	XClientMessageEvent *cme = &e->xclient;
 	Client *c;
 
-	if (showsystray
+	if (systray
 		&& cme->window == systray->win
 		&& cme->message_type == netatom[NetSystemTrayOP])
 	{
@@ -1154,13 +1155,13 @@ unmanage(Client *c, int destroyed)
 void
 cleanup(void)
 {
-	Layout foo = { "", NULL };
+	Layout lt = { "", NULL };
 	Monitor *m;
 	Client *c, *f;
 	size_t i;
 
 	selmon->tagset[selmon->seltags] = ~0 & TAGMASK;
-	selmon->lt[selmon->sellt] = &foo;
+	selmon->lt[selmon->sellt] = &lt;
 	arrange(selmon);
 
 	XGrabServer(dpy);
@@ -1193,16 +1194,19 @@ cleanup(void)
 		}
 	}
 
-	XUngrabKey(dpy, AnyKey, AnyModifier, root);
-
-	while (mons)
-		cleanupmon(mons);
-
 	if (systray) {
 		XUnmapWindow(dpy, systray->win);
 		XDestroyWindow(dpy, systray->win);
+		for (c = systray->icons; c;) {
+			f = c;
+			c = c->next;
+			free(f);
+		}
 		free(systray);
 	}
+
+	while (mons)
+		cleanupmon(mons);
 
 	for (i = 0; i < CurLast; i++)
 		drw_cur_free(drw, cursor[i]);
@@ -1213,6 +1217,7 @@ cleanup(void)
 	free(scheme);
 	XDestroyWindow(dpy, wmcheckwin);
 	drw_free(drw);
+	XUngrabKey(dpy, AnyKey, AnyModifier, root);
 	XSync(dpy, False);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
@@ -2403,7 +2408,7 @@ buttonpress(XEvent *e)
 		}
 }
 
-/* TODO: analyze how drawstatus() works */
+/* TODO: implement a simpler version of status2d */
 int
 drawstatus(Monitor *m)
 {
@@ -2633,7 +2638,7 @@ systrayupdate(void)
 	unsigned int x = 0;
 	Client *c;
 
-	if (!showsystray || !systrayinit())
+	if (!systrayinit())
 		return;
 
 	for (c = systray->icons; c; c = c->next) {
@@ -2755,6 +2760,9 @@ systrayinit(void)
 		.event_mask = ButtonPressMask|ExposureMask,
 	};
 
+	if (!showsystray)
+		return 0;
+
 	if (systray)
 		return 1;
 
@@ -2774,6 +2782,7 @@ systrayinit(void)
 			netatom[NetSystemTray], systray->win, 0, 0);
 	} else {
 		fprintf(stderr, "dwm: unable to obtain system tray.\n");
+		XDestroyWindow(dpy, systray->win);
 		free(systray);
 		systray = NULL;
 		return 0;
@@ -2978,7 +2987,7 @@ wintosystrayicon(Window w)
 {
 	Client *c;
 
-	if (!showsystray || ISUTILWIN(w))
+	if (!systray || ISUTILWIN(w))
 		return NULL;
 
 	for (c = systray->icons; c && c->win != w; c = c->next);
@@ -3712,7 +3721,7 @@ grabbuttons(Client *c, int focused)
 			if (buttons[i].click == ClkClientWin)
 				for (j = 0; j < LENGTH(modifiers); j++)
 					XGrabButton(dpy, buttons[i].button,
-						buttons[i].mask | modifiers[j],
+						buttons[i].mask|modifiers[j],
 						c->win, False, BUTTONMASK,
 						GrabModeAsync, GrabModeSync, None, None);
 	}
@@ -3854,7 +3863,7 @@ grabkeys(void)
 		for (i = 0; i < LENGTH(keys); i++)
 			if ((code = XKeysymToKeycode(dpy, keys[i].keysym)))
 				for (j = 0; j < LENGTH(modifiers); j++)
-					XGrabKey(dpy, code, keys[i].mod | modifiers[j], root,
+					XGrabKey(dpy, code, keys[i].mod|modifiers[j], root,
 						True, GrabModeAsync, GrabModeAsync);
 	}
 }
@@ -4103,7 +4112,7 @@ seturgent(Client *c, int urg)
 	c->isurgent = urg;
 	if (!(wmh = XGetWMHints(dpy, c->win)))
 		return;
-	wmh->flags = urg ? (wmh->flags | XUrgencyHint) : (wmh->flags & ~XUrgencyHint);
+	wmh->flags = urg ? (wmh->flags|XUrgencyHint) : (wmh->flags & ~XUrgencyHint);
 	XSetWMHints(dpy, c->win, wmh);
 	XFree(wmh);
 }
