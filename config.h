@@ -1,5 +1,5 @@
 /* See LICENSE file for copyright and license details. */
-#ifndef TAGS
+#ifdef CONFINIT
 
 /* terminal */
 #define TERM "st"
@@ -28,14 +28,13 @@ static const int showsystray  = 1;    /* 0 means no systray */
 static const float cindfact   = 0.1;  /* size of client indicators */
 
 /* other settings */
-static const unsigned int snap           = 32;  /* snap pixel */
-static const int lockfullscreen          = 0;   /* 1 will force focus on the fullscreen window */
-static const int swallowfloating         = 0;   /* 1 means swallow floating windows as well */
-static const int resizehints             = 1;   /* 1 means respect size hints in tiled resizals */
-static const unsigned char xkblayout     = 0;   /* the default keyboard layout number; 0 is the main layout */
-static const int noautofocus             = 1;   /* the default noautofocus setting; see the noautofocus rule below */
-static const unsigned int blockinputmsec = 1000;  /* input block time of new windows; see the noautofocus rule below */
-static const unsigned int dpkillmsec = 500;       /* killclient double press threshold; set 0 to disable  */
+static const unsigned int snap            = 32;  /* snap pixel */
+static const int lockfullscreen           = 0;   /* 1 will force focus on the fullscreen window */
+static const int swallowfloating          = 0;   /* 1 means swallow floating windows as well */
+static const int resizehints              = 1;   /* 1 means respect size hints in tiled resizals */
+static const unsigned char xkblayout      = 0;   /* the default keyboard layout number; 0 is the main layout */
+static const int noautofocus              = 1;   /* the default noautofocus setting; see the noautofocus rule below */
+static const unsigned int killdoublepress = 500; /* killclient double press time in milliseconds; set 0 to disable  */
 
 /* fonts */
 static const char *fonts[] = {
@@ -46,27 +45,24 @@ static const char *fonts[] = {
 
 /* colors */
 static const char normfg[]    = "#666666";
-static const char bgcol[]     = "#181b1c";
-static const char bordercol[] = "#000000";
-static const char textcol[]   = "#bfbfbf";
-static const char *colors[][4] = {
-    /*                    fg           bg      innerborder    outerborder */
-    [SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
-    [SchemeSel]       = { "#bfbfbf",   bgcol,  "#ffffff",     bordercol }, /* colors of selected items, tags and and window borders */
-    [SchemeTitle]     = { textcol,     bgcol,  NULL,          NULL      }, /* fg and bg color of the window title area in the bar */
-    [SchemeUrg]       = { NULL,        NULL,   "#ff0000",     bordercol }, /* border color of urgent windows */
-    [SchemeBlockNorm] = { NULL,        NULL,   "#004d00",     bordercol }, /* border color of unselected input-blocked windows */
-    [SchemeBlockSel]  = { NULL,        NULL,   "#00b301",     bordercol }, /* border color of selected input-blocked windows */
+static const char bgclr[]     = "#181b1c";
+static const char borderbg[]  = "#000000";
+static const char textclr[]   = "#bfbfbf";
+static const char *colors[SchemeLast][ClrLast] = {
+    /*                    FG           BG      Border         BorderBG */
+    [SchemeNorm]      = { normfg,      bgclr,  "#333333",     borderbg }, /* colors of normal (unselected) items, tags, and window borders */
+    [SchemeSel]       = { "#bfbfbf",   bgclr,  "#ffffff",     borderbg }, /* colors of selected items, tags and and window borders */
+    [SchemeTitle]     = { textclr,     bgclr,  NULL,          NULL     }, /* fg and bg color of the window title area in the bar */
+    [SchemeUrg]       = { NULL,        NULL,   "#ff0000",     borderbg }, /* border color of urgent windows */
 };
 
 /* colors that can be used by the statusbar */
-static const char *statuscolors[] = { "#333333", textcol };
+static const char *statuscolors[] = { "#333333", textclr };
 
 /* tags */
-#endif /* TAGS */
-#ifdef TAGS
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
-#else
+
+#else /* CONFINIT */
 
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
@@ -84,15 +80,8 @@ static const Layout layouts[] = {
  *   it's fullscreen.
  *
  * noautofocus:
- *   2 means don't focus the window initially, 1 means focus the window but block
- *   it's keyboard input for a short period, 0 means default behavior (autofocus).
- *
- * sametagid, sametagparentid:
- *   with these rules you can have some windows open in the same tag and monitor
- *   as other windows. ex. if window A has a sametagid of 10, and window B has a
- *   sametagparentid of 10, window B will be opened next to window A.
- *   can be an integer between 0 and (SameTagStacksSize -1).
- *   a value of zero disables this feature.
+ *   1 means don't focus the window initially,
+ *   0 means default behavior (autofocus).
  *
  * nojitter:
  *   some clients jump around every time their focue changes because they send
@@ -107,8 +96,6 @@ static const Layout layouts[] = {
  * flt : isfloating
  * cfs : completefullscreen
  * naf : noautofocus
- * sti : sametagid
- * stp : sametagparentid
  * nsl : noswallow
  * ist : isterminal
  * njt : nojitter
@@ -116,21 +103,21 @@ static const Layout layouts[] = {
  * mon : monitor
  */
 static const Rule rules[] = {
-    /* class, instance, title,                 flt cfs naf sti stp nsl ist njt tag mon  */
-    { "TelegramDesktop", NULL, NULL,            0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "TelegramDesktop", NULL, "Media viewer",  1,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "Qalculate", NULL, NULL,                  1,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "Droidcam", NULL, NULL,                   1,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { ".exe", NULL, NULL,                       0,  0,  2,  1,  1,  0,  0,  0,  0, -1 },
-    { "Steam", NULL, NULL,                      0,  0,  2,  2,  2,  0,  0,  1,  0, -1 },
-    { "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "firefox", NULL, "Picture-in-Picture",    0,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "chromium", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "Sxiv", NULL, NULL,                       0,  1,  0,  0,  0,  0,  0,  0,  0, -1 },
-    { "mpv", NULL, NULL,                        0,  1,  2,  0,  0,  0,  0,  0,  0, -1 },
-    { TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  0,  0,  1,  0,  0, -1 },
-    { NULL, NULL, "Event Tester",               0,  0,  0,  0,  0,  1,  0,  0,  0, -1 },
+    /* class, instance, title,                 flt cfs naf nsl ist njt tag mon  */
+    { "TelegramDesktop", NULL, NULL,            0,  0,  0,  0,  0,  0,  0, -1 },
+    { "TelegramDesktop", NULL, "Media viewer",  1,  1,  0,  0,  0,  0,  0, -1 },
+    { "Qalculate", NULL, NULL,                  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Droidcam", NULL, NULL,                   1,  0,  0,  0,  0,  0,  0, -1 },
+    { ".exe", NULL, NULL,                       0,  0,  1,  0,  0,  0,  0, -1 },
+    { "Steam", NULL, NULL,                      0,  0,  1,  0,  0,  1,  0, -1 },
+    { "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0, -1 },
+    { "firefox", NULL, "Picture-in-Picture",    0,  1,  0,  0,  0,  0,  0, -1 },
+    { "chromium", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
+    { "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0, -1 },
+    { "Sxiv", NULL, NULL,                       0,  1,  1,  0,  0,  0,  0, -1 },
+    { "mpv", NULL, NULL,                        0,  1,  1,  0,  0,  0,  0, -1 },
+    { TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  1,  0,  0, -1 },
+    { NULL, NULL, "Event Tester",               0,  0,  0,  1,  0,  0,  0, -1 },
 };
 
 /* hint for attachdirection
@@ -377,5 +364,5 @@ static const Button buttons[] = {
     GLOBALSCROLL(       ModCtrl,               setmfact,         {.f = +0.05 },  {.f = -0.05 } ), /* super+control+scroll:  change mfact */
 };
 
-#endif /* TAGS */
+#endif /* CONFINIT */
 // vim:expandtab
