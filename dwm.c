@@ -63,6 +63,11 @@
 #include <execinfo.h>
 #endif /* BACKTRACE */
 
+/* TODO: focus all windows by default, except if we specify specifically with rules,
+ *       AND when we're sure (through whatever method we can find) a window is
+ *       impolite and has opened up out of nowhere.
+ *       also, blockinput can be done with time. duh. */
+/* TODO: make resettag work with floating and fullscreen clients too */
 /* TODO: do sth like damage tracking for drawbar(), arrange(), restack(), focus(), etc.
  * TODO: at the end of manage(), handle attaching a noautofocus client and stuff
  *       ideally, we want new functions or new code to attach not at the top of the stack;
@@ -308,7 +313,7 @@ struct Client {
 	unsigned int tags, pid, xkblayout;
 	int isfixed, isfloating, isurgent, neverfocus, oldfloating, isfullscreen;
 	int compfullscreen, isterminal, noswallow, nojitter, origcompfullscreen;
-	int desktop, geomvalid, noautofocus;
+	int desktop, geomvalid, noautofocus, isfocused;
 	Client *next;
 	Client *snext;
 	Client *swallow;
@@ -395,6 +400,7 @@ static int sw, sh; /* screen width, height */
 static int depth;
 static Visual *visual;
 static Colormap colormap;
+
 static Window root, wmcheckwin, ignoreenterwin = 0;
 static Monitor *mons, *selmon, **statusmonptr;
 static Systray *systray = NULL;
@@ -407,8 +413,8 @@ static volatile int running = 1, mustrestart = 0;
 static int startup = 0;
 static int currentdesktop = -1;
 static int (*xerrorxlib)(Display *, XErrorEvent *);
-static Time keypresstime, killclienttime = 0;
-static Client *killedclient = NULL;
+/* static Time keypresstime, killclienttime = 0; */
+/* static Client *killedclient = NULL; */
 
 /* event handlers */
 static void (*handler[LASTEvent]) (XEvent *) = {
@@ -627,9 +633,10 @@ run(void)
 	XEvent ev;
 
 	XSync(dpy, False);
-	while (running && !XNextEvent(dpy, &ev))
+	while (running && !XNextEvent(dpy, &ev)) {
 		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+	}
 }
 
 void
@@ -686,49 +693,41 @@ void
 enternotify(XEvent *e)
 {
 	Client *c;
-	Monitor *m;
+	/* Monitor *m; */
 	XCrossingEvent *ev = &e->xcrossing;
 
 	if ((ev->mode != NotifyNormal || ev->detail == NotifyInferior) && ev->window != root)
 		return;
 
-	/* ignore incorrect enternotify events related to swallowing */
-	if (ev->window == ignoreenterwin || (ignoreenterwin = 0)) {
-		ignoreenterwin = 0;
-		return;
-	}
-	if (selmon->sel && selmon->sel->swallow && !ismapped(selmon->sel->win))
+	/* ignore incorrect and parasitic enternotify events  */
+	if (isenterignored(ev->window))
 		return;
 
 	c = wintoclient(ev->window);
-	m = c ? c->mon : wintomon(ev->window);
-
-	if (m != selmon) {
-		unfocus(selmon->sel, 1);
-		selmon = m;
-	} else if (!c || c == selmon->sel)
-		return;
-
+	selmon = c ? c->mon : wintomon(ev->window);
 	focus(c);
+
+	/* if (m != selmon) { */
+	/* 	unfocus(selmon->sel, 1); */
+	/* 	selmon = m; */
+	/* } else if (!c || c == selmon->sel) */
+	/* 	return; */
 }
 
 void
 motionnotify(XEvent *e)
 {
-	static Monitor *mon = NULL;
+	static Monitor *prev = NULL;
 	Monitor *m;
 	XMotionEvent *ev = &e->xmotion;
 
 	if (ev->window != root)
 		return;
 
-	if ((m = recttomon(ev->x_root, ev->y_root, 1, 1)) != mon && mon) {
-		unfocus(selmon->sel, 1);
-		selmon = m;
-		focus(NULL);
-	}
+	if ((m = recttomon(ev->x_root, ev->y_root, 1, 1)) != prev && prev)
+		focusmon(m);
 
-	mon = m;
+	prev = m;
 }
 
 void
@@ -767,7 +766,7 @@ configurerequest(XEvent *e)
 		wc.sibling = ev->above;
 		wc.stack_mode = ev->detail;
 		XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
-		XSync(dpy, False);
+		/* XSync(dpy, False); */
 		return;
 	}
 
@@ -776,7 +775,7 @@ configurerequest(XEvent *e)
 
 	if (c->isfullscreen || !afloat(c)) {
 		configure(c);
-		XSync(dpy, False);
+		/* XSync(dpy, False); */
 		return;
 	}
 
@@ -799,7 +798,7 @@ configurerequest(XEvent *e)
 	if (ISVISIBLE(c))
 		XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
 
-	XSync(dpy, False);
+	/* XSync(dpy, False); */
 }
 
 void
@@ -808,8 +807,10 @@ propertynotify(XEvent *e)
 	Client *c;
 	XPropertyEvent *ev = &e->xproperty;
 
-	if ((ev->window == root) && (ev->atom == XA_WM_NAME))
+	if ((ev->window == root) && (ev->atom == XA_WM_NAME)) {
 		updatestatustext();
+		drawbar(STATUSMON);
+	}
 	else if (ev->state == PropertyDelete)
 		return;
 
@@ -902,7 +903,7 @@ keypress(XEvent *e)
 		&& CLEANMASK(keys[i].mod) == CLEANMASK(ev->state)
 		&& keys[i].func)
 		{
-			keypresstime = ev->time;
+			/* keypresstime = ev->time; */
 			keys[i].func(&(keys[i].arg));
 		}
 }
@@ -927,7 +928,7 @@ focusin(XEvent *e)
 	XFocusChangeEvent *ev = &e->xfocus;
 
 	if (selmon->sel && ev->window != selmon->sel->win)
-		setfocus(selmon->sel);
+		focusinput(selmon->sel);
 }
 
 void
@@ -1033,11 +1034,11 @@ manage(Window w, XWindowAttributes *wa)
 		arrange(c->mon);
 		XMapWindow(dpy, c->win);
 		ignoreenter(c->win);
-		focus(c->mon->sel);
 		restack(c->mon);
+		focus(c->mon->sel);
 	} else {
-		if (c->mon == selmon)
-			unfocus(selmon->sel, 0);
+		/* if (c->mon == selmon) */
+		/* 	unfocus(selmon->sel, 0); */
 		c->mon->sel = c;
 		arrange(c->mon);
 		XMapWindow(dpy, c->win);
@@ -1266,8 +1267,21 @@ ignoreenter(Window w)
 	int itmp;
 
 	XQueryPointer(dpy, root, &wtmp, &win, &itmp, &itmp, &itmp, &itmp, &uitmp);
-	if (win == w)
+	if (!w)
+		ignoreenterwin = win;
+	else if (win == w)
 		ignoreenterwin = w;
+}
+
+/* ignore incorrect enternotify events related to swallowing */
+int
+isenterignored(Window w)
+{
+	int ignored = (w == ignoreenterwin)
+		   /* ignore enternotify events caused by an unswallow */
+		|| (selmon->sel && selmon->sel->swallow && !ismapped(selmon->sel->win));
+	ignoreenterwin = 0;
+	return ignored;
 }
 
 void
@@ -1468,14 +1482,29 @@ void
 focus(Client *c)
 {
 	Client *f;
+	Monitor *m;
+	XkbStateRec xkbstate;
 
 	if (!c || !ISVISIBLE(c))
 		for (c = selmon->stack; c && !ISVISIBLE(c); c = c->snext);
 
-	if (selmon->sel && selmon->sel != c)
-		unfocus(selmon->sel, 0);
+	if (c && c->isfocused)
+		return;
+
+	for (m = mons; m; m = m->next)
+		for (f = m->clients; f; f = f->next)
+			if (f->isfocused) {
+				f->isfocused = 0;
+				grabbuttons(f, 0);
+				drawborder(f->win, SchemeNorm);
+				XkbGetState(dpy, XkbUseCoreKbd, &xkbstate);
+				f->xkblayout = xkbstate.group;
+				XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
+				break;
+			}
 
 	if (c) {
+		c->isfocused = 1;
 		selmon = c->mon;
 		if (c->isurgent)
 			seturgent(c, 0);
@@ -1483,8 +1512,8 @@ focus(Client *c)
 		grabbuttons(c, 1);
 		detachstack(c);
 		attachstack(c);
-		setfocus(c);
 		selmon->sel = c;
+		focusinput(c);
 		updateborder(c);
 	} else {
 		selmon->sel = NULL;
@@ -1499,32 +1528,18 @@ focus(Client *c)
 
 	drawbar(NULL);
 	updatecurrentdesktop();
-	updatekilldoublepress();
+	/* updatekilldoublepress(); */
 }
 
 void
-unfocus(Client *c, int setfocus)
+focusmon(Monitor *m)
 {
-	XkbStateRec xkbstate;
-
-	if (!c)
-		return;
-
-	grabbuttons(c, 0);
-	drawborder(c->win, SchemeNorm);
-
-	if (setfocus) {
-		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
-		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
-	}
-
-	XkbGetState(dpy, XkbUseCoreKbd, &xkbstate);
-	c->xkblayout = xkbstate.group;
-	XkbLockGroup(dpy, XkbUseCoreKbd, xkblayout);
+	selmon = m;
+	focus(NULL);
 }
 
 void
-setfocus(Client *c)
+focusinput(Client *c)
 {
 	if (!c->neverfocus) {
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -1615,7 +1630,7 @@ restack(Monitor *m)
 			}
 		}
 	}
-	XSync(dpy, False);
+	/* XSync(dpy, False); */
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
@@ -1640,7 +1655,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	updateborder(c);
-	XSync(dpy, False);
+	/* XSync(dpy, False); */
 }
 
 void
@@ -2197,11 +2212,8 @@ buttonpress(XEvent *e)
 	unsigned int i = 0, click = ClkRootWin;
 
 	/* focus monitor if necessary */
-	if ((m = wintomon(ev->window)) && m != selmon) {
-		unfocus(selmon->sel, 1);
-		selmon = m;
-		focus(NULL);
-	}
+	if ((m = wintomon(ev->window)) && m != selmon)
+		focusmon(m);
 
 	if (ev->window == root)
 		click = ClkRootWin;
@@ -2549,7 +2561,7 @@ systrayupdateicon(Client *c, XResizeRequestEvent *resize)
 
 	if (resize) {
 		XMoveResizeWindow(dpy, c->win, c->x, c->y, resize->width, resize->height);
-		XSync(dpy, False);
+		/* XSync(dpy, False); */
 		systrayupdate();
 		return;
 	}
@@ -3005,31 +3017,26 @@ toggletag(const Arg *arg)
 }
 
 void
-focusmon(const Arg *arg)
+viewmon(const Arg *arg)
 {
 	Monitor *m;
 
-	if (!mons->next || (m = dirtomon(arg->i)) == selmon)
-		return;
-
-	unfocus(selmon->sel, 0);
-	selmon = m;
-	focus(NULL);
+	if (mons->next && (m = dirtomon(arg->i)) != selmon)
+		focusmon(m);
 }
 
 void
 tagmon(const Arg *arg)
 {
 	if (selmon->sel && mons->next)
-		sendmon(selmon->sel, dirtomon(arg->i));
+		setclientmon(selmon->sel, dirtomon(arg->i));
 }
 
 void
-sendmon(Client *c, Monitor *m)
+setclientmon(Client *c, Monitor *m)
 {
 	if (c->mon == m)
 		return;
-	unfocus(c, 1);
 	detach(c);
 	detachstack(c);
 	c->mon = m;
@@ -3177,11 +3184,8 @@ incnmaster(const Arg *arg)
 void
 killclient(const Arg *arg)
 {
-	if (!selmon->sel || !killdoublepressed()
-		|| sendevent(selmon->sel, atom[WMDelete]))
-	{
+	if (!selmon->sel || sendevent(selmon->sel, atom[WMDelete]))
 		return;
-	}
 
 	/* XGrabServer(dpy); */
 	/* XSetErrorHandler(xerrordummy); */
@@ -3388,9 +3392,8 @@ movemouse(const Arg *arg)
 	XUngrabPointer(dpy, CurrentTime);
 
 	if ((m = recttomon(GEOM(c))) != selmon) {
-		sendmon(c, m);
-		selmon = m;
-		focus(NULL);
+		setclientmon(c, m);
+		focusmon(m);
 	}
 }
 
@@ -3462,37 +3465,36 @@ resizemouse(const Arg *arg)
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 
 	if ((m = recttomon(GEOM(c))) != selmon) {
-		sendmon(c, m);
-		selmon = m;
-		focus(NULL);
+		setclientmon(c, m);
+		focusmon(m);
 	}
 }
 
-void
-updatekilldoublepress(void)
-{
-	if (killdoublepress && killedclient != selmon->sel)
-		killclienttime = 0;
-}
+/* void */
+/* updatekilldoublepress(void) */
+/* { */
+/* 	if (killdoublepress && killedclient != selmon->sel) */
+/* 		killclienttime = 0; */
+/* } */
 
-int
-killdoublepressed(void)
-{
-	int ret;
+/* int */
+/* killdoublepressed(void) */
+/* { */
+/* 	int ret; */
 
-	if (!killdoublepress) {
-		ret = 1;
-	} else {
-		ret =
-			killclienttime
-		 && (keypresstime - killclienttime) < killdoublepress
-		 && (keypresstime - killclienttime) > 5;
-		killclienttime = keypresstime;
-		killedclient = selmon->sel;
-	}
+/* 	if (!killdoublepress) { */
+/* 		ret = 1; */
+/* 	} else { */
+/* 		ret = */
+/* 			killclienttime */
+/* 		 && (keypresstime - killclienttime) < killdoublepress */
+/* 		 && (keypresstime - killclienttime) > 5; */
+/* 		killclienttime = keypresstime; */
+/* 		killedclient = selmon->sel; */
+/* 	} */
 
-	return ret;
-}
+/* 	return ret; */
+/* } */
 
 void
 setfullscreen(Client *c, int fullscreen)
@@ -4271,7 +4273,7 @@ void
 drwmap(Window win, int x, int y, unsigned int w, unsigned int h)
 {
 	XCopyArea(dpy, drw.pixmap, win, drw.gc, x, y, w, h, x, y);
-	XSync(dpy, False);
+	/* XSync(dpy, False); */
 }
 
 unsigned int
