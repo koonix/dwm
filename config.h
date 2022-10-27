@@ -16,7 +16,7 @@ static const int resettag          = 1;    /* 1 means reset layout, mfact and nm
 static const unsigned int gappx    = 15;   /* gaps between windows */
 static const float mfact           = 0.5;  /* factor of master area size [0.05..0.95] */
 static const int nmaster           = 1;    /* number of clients in master area */
-static const int nmasterbias   = nmaster;  /* reduce nmaster if masters are gone when they're more than nmasterbias. <0 to disable. */
+static const int nmasterbias       = 1;    /* reduce nmaster if masters are removed when nmaster > nmasterbias; <0 to disable */
 static const unsigned int stairpx  = 75;   /* depth of the stairs layout */
 static const int stairsdirection   = 1;    /* alignment of the stairs layout; 0: left-aligned, 1: right-aligned */
 static const int stairssamesize    = 0;    /* 1 means shrink all the staired windows to the same size */
@@ -25,6 +25,7 @@ static const int stairssamesize    = 0;    /* 1 means shrink all the staired win
 static const int showbar      = 1;    /* 0 means no bar */
 static const int topbar       = 1;    /* 0 means bottom bar */
 static const int showsystray  = 1;    /* 0 means no systray */
+static const int statusmonnum = -1;   /* monitor number to show status and systray on; <0 means follow selected monitor */
 static const float cindfact   = 0.1;  /* size of client indicators */
 
 /* other settings */
