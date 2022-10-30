@@ -1,5 +1,4 @@
 /* See LICENSE file for copyright and license details. */
-#ifdef CONFINIT
 
 /* terminal */
 #define TERM "st"
@@ -22,20 +21,21 @@ static const int stairsdirection   = 1;    /* alignment of the stairs layout; 0:
 static const int stairssamesize    = 0;    /* 1 means shrink all the staired windows to the same size */
 
 /* bar and systray */
-static const int showbar      = 1;    /* 0 means no bar */
-static const int topbar       = 1;    /* 0 means bottom bar */
-static const int showsystray  = 1;    /* 0 means no systray */
-static const int statusmonnum = -1;   /* monitor number to show status and systray on; <0 means follow selected monitor */
-static const float cindfact   = 0.1;  /* size of client indicators */
+static const int showbar          = 1;     /* 0 means no bar */
+static const int topbar           = 1;     /* 0 means bottom bar */
+static const float barheightfact  = 1.30;  /* multiply bar height by this value */
+static const int showsystray      = 1;     /* 0 means no systray */
+static const int statusmonnum     = -1;    /* monitor number to show status and systray on; <0 means follow selected monitor */
+static const float cindfact       = 0.1;   /* size of client indicators relative to font height */
 
 /* other settings */
-static const unsigned int snap            = 32;  /* snap pixel */
-static const int lockfullscreen           = 0;   /* 1 will force focus on the fullscreen window */
-static const int swallowfloating          = 0;   /* 1 means swallow floating windows as well */
-static const int resizehints              = 1;   /* 1 means respect size hints in tiled resizals */
-static const unsigned char xkblayout      = 0;   /* the default keyboard layout number; 0 is the main layout */
-static const int noautofocus              = 1;   /* the default noautofocus setting; see the noautofocus rule below */
-static const unsigned int killdoublepress = 500; /* killclient double press time in milliseconds; set 0 to disable  */
+static const unsigned int snap        = 32;  /* snap pixel */
+static const int lockfullscreen       = 0;   /* 1 will force focus on the fullscreen window */
+static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
+static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
+static const unsigned char xkblayout  = 0;   /* the default keyboard layout number; 0 is the main layout */
+static const int noautofocus          = 1;   /* the default noautofocus setting; see the noautofocus rule below */
+static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
 
 /* fonts */
 static const char *fonts[] = {
@@ -46,24 +46,24 @@ static const char *fonts[] = {
 
 /* colors */
 static const char normfg[]    = "#666666";
-static const char bgclr[]     = "#181b1c";
+static const char bgcolor[]   = "#181b1c";
 static const char borderbg[]  = "#000000";
-static const char textclr[]   = "#bfbfbf";
-static const char *colors[SchemeLast][ClrLast] = {
-    /*                    FG           BG      Border         BorderBG */
-    [SchemeNorm]      = { normfg,      bgclr,  "#333333",     borderbg }, /* colors of normal (unselected) items, tags, and window borders */
-    [SchemeSel]       = { "#bfbfbf",   bgclr,  "#ffffff",     borderbg }, /* colors of selected items, tags and and window borders */
-    [SchemeTitle]     = { textclr,     bgclr,  NULL,          NULL     }, /* fg and bg color of the window title area in the bar */
-    [SchemeUrg]       = { NULL,        NULL,   "#ff0000",     borderbg }, /* border color of urgent windows */
+static const char textcolor[] = "#bfbfbf";
+static const char *colors[SchemeLast][ColorLast] = {
+    /*                    FG           BG        Border       BorderBG */
+    [SchemeNorm]      = { normfg,      bgcolor,  "#333333",   borderbg }, /* colors of normal (unselected) items, tags, and window borders */
+    [SchemeSel]       = { "#bfbfbf",   bgcolor,  "#ffffff",   borderbg }, /* colors of selected items, tags and and window borders */
+    [SchemeUrg]       = { NULL,        NULL,     "#ff0000",   borderbg }, /* border color of urgent windows */
+    [SchemeTitle]     = { textcolor,   bgcolor,  NULL,        NULL     }, /* fg and bg color of the window title area in the bar */
+    [SchemeStatus]    = { "#999999",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar */
+    [SchemeStatusSep] = { "#333333",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar separator characters */
 };
 
-/* colors that can be used by the statusbar */
-static const char *statuscolors[] = { "#333333", textclr };
+/* statusbar module separator characters */
+static const char statusseparators[]  = { '|' };
 
 /* tags */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
-
-#else /* CONFINIT */
 
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
@@ -172,9 +172,9 @@ static void (*attachdirection)(Client *) = attachbelow;
 /* key pair definition */
 #define K1(K1, K2) K1
 #define K2(K1, K2) K2
-#define PAIR(MOD, PAIR, FN, ARG1, ARG2) \
-    { MOD, K1(PAIR), FN, ARG1 }, \
-    { MOD, K2(PAIR), FN, ARG2 }
+#define PAIR(PAIR, MOD, FN, ARG1, ARG2) \
+    { K1(PAIR), MOD, FN, ARG1 }, \
+    { K2(PAIR), MOD, FN, ARG2 }
 
 /* common key pairs */
 #define PAIR_JK            XK_j, XK_k
@@ -185,10 +185,10 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define PAIR_BRIGHTNESS    XF86XK_MonBrightnessDown, XF86XK_MonBrightnessUp
 
 #define TAGKEYS(KEY,TAG) \
-    { Mod,              KEY,    view,           {.ui = 1 << TAG} }, \
-    { ModCtrl,          KEY,    toggleview,     {.ui = 1 << TAG} }, \
-    { ModShift,         KEY,    tag,            {.ui = 1 << TAG} }, \
-    { ModCtrlShift,     KEY,    toggletag,      {.ui = 1 << TAG} }
+    { KEY,  Mod,           view,        {.ui = 1 << TAG} }, \
+    { KEY,  ModCtrl,       toggleview,  {.ui = 1 << TAG} }, \
+    { KEY,  ModShift,      tag,         {.ui = 1 << TAG} }, \
+    { KEY,  ModCtrlShift,  toggletag,   {.ui = 1 << TAG} }
 
 /* ============ */
 /* = Commands = */
@@ -253,117 +253,121 @@ static void (*attachdirection)(Client *) = attachbelow;
  * - audio and music related bindings start with super+alt (ModAlt)
  * - most bindings that have a similar function only differ by a shift modifier */
 static const Key keys[] = {
-  /*  modifier          key                   function          argument */
-    { Mod,              XK_q,                 spawn,            CMD("sysact") },
-    { Mod,              XK_m,                 spawn,            CMD("manuals") },
-    { Mod,              XK_p,                 spawn,            CMD("stuff", "-m") },
-    { ModShift,         XK_p,                 spawn,            CMD("dmenu_run", "-p", "Programs") },
-    { Mod,              XK_t,                 spawn,            CMD(TERM) },
-    { ModShift,         XK_t,                 spawn,            TERMCWD },
-    { Mod,              XK_b,                 spawn,            SHCMD("exec $BROWSER") },
-    { Mod,              XK_g,                 spawn,            XMOUSELESS },
-    { Mod,              XK_n,                 spawn,            CMD("dunstctl", "close") },
-    { ModShift,         XK_n,                 spawn,            CMD("dunstctl", "action") },
-    { ModCtrl,          XK_n,                 spawn,            CMD("dunstctl", "history-pop") },
-    { Mod,              XK_v,                 spawn,            SHTUI("exec ${EDITOR:-nvim}") },
-    { Mod,              XK_e,                 spawn,            CMD("loginctl", "lock-session") },
-    { Mod,              XK_d,                 spawn,            TUI("dictfzf") },
-    { Mod,              XK_x,                 spawn,            COPYTOXEPHYR },
-    { ModShift,         XK_q,                 restart,          {0} },
+  /*  modifier          key               function          argument */
+    { XK_q,             Mod,              spawn,            CMD("sysact") },
+    { XK_m,             Mod,              spawn,            CMD("manuals") },
+    { XK_p,             Mod,              spawn,            CMD("stuff", "-m") },
+    { XK_p,             ModShift,         spawn,            CMD("dmenu_run", "-p", "Programs") },
+    { XK_t,             Mod,              spawn,            CMD(TERM) },
+    { XK_t,             ModShift,         spawn,            TERMCWD },
+    { XK_b,             Mod,              spawn,            SHCMD("exec $BROWSER") },
+    { XK_g,             Mod,              spawn,            XMOUSELESS },
+    { XK_n,             Mod,              spawn,            CMD("dunstctl", "close") },
+    { XK_n,             ModShift,         spawn,            CMD("dunstctl", "action") },
+    { XK_n,             ModCtrl,          spawn,            CMD("dunstctl", "history-pop") },
+    { XK_v,             Mod,              spawn,            SHTUI("exec ${EDITOR:-nvim}") },
+    { XK_e,             Mod,              spawn,            CMD("loginctl", "lock-session") },
+    { XK_d,             Mod,              spawn,            TUI("dictfzf") },
+    { XK_x,             Mod,              spawn,            COPYTOXEPHYR },
+    { XK_q,             ModShift,         restart,          {0} },
 
-PAIR( 0,                PAIR_VOL,             spawn,            VOL(-3), VOL(+3) ),
-PAIR( ModAlt,           PAIR_JK,              spawn,            VOL(-3), VOL(+3) ),
-PAIR( ModAltShift,      PAIR_JK,              spawn,            MPCVOL(-10), MPCVOL(+10) ),
-    { ModAlt,           XK_m,                 spawn,            MUTE },
-    { ModAltShift,      XK_m,                 spawn,            TOGGLE_MIC_MUTE },
-    { ModCtrl,          XK_s,                 spawn,            PACYCLE },
-    { 0,                XF86XK_AudioMute,     spawn,            MUTE },
-    { 0,                XF86XK_AudioMicMute,  spawn,            TOGGLE_MIC_MUTE },
+PAIR( PAIR_VOL,         0,                spawn,            VOL(-3), VOL(+3) ),
+PAIR( PAIR_JK,          ModAlt,           spawn,            VOL(-3), VOL(+3) ),
+PAIR( PAIR_JK,          ModAltShift,      spawn,            MPCVOL(-10), MPCVOL(+10) ),
+    { XK_m,             ModAlt,           spawn,            MUTE },
+    { XK_m,             ModAltShift,      spawn,            TOGGLE_MIC_MUTE },
+    { XK_s,             ModCtrl,          spawn,            PACYCLE },
+    { XF86XK_AudioMute,     0,            spawn,            MUTE },
+    { XF86XK_AudioMicMute,  0,            spawn,            TOGGLE_MIC_MUTE },
 
-    { ModAltShift,      XK_p,                 spawn,            CMD("mpc", "toggle") },
-    { ModAlt,           XK_p,                 spawn,            MEDIA_PLAYPAUSE },
-PAIR( ModAlt,           PAIR_HL,              spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
-PAIR( ModAltShift,      PAIR_HL,              spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
-    { ModAlt,           XK_n,                 spawn,            NOTIFYSONG },
-    { 0,                XF86XK_AudioPlay,     spawn,            MEDIA_PLAYPAUSE },
-    { 0,                XF86XK_AudioPrev,     spawn,            MEDIA_PREV },
-    { 0,                XF86XK_AudioNext,     spawn,            MEDIA_NEXT },
+    { XK_p,             ModAltShift,      spawn,            CMD("mpc", "toggle") },
+    { XK_p,             ModAlt,           spawn,            MEDIA_PLAYPAUSE },
+PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
+PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
+    { XK_n,             ModAlt,           spawn,            NOTIFYSONG },
+    { XF86XK_AudioPlay, 0,                spawn,            MEDIA_PLAYPAUSE },
+    { XF86XK_AudioPrev, 0,                spawn,            MEDIA_PREV },
+    { XF86XK_AudioNext, 0,                spawn,            MEDIA_NEXT },
 
-PAIR( 0,                PAIR_BRIGHTNESS,      spawn,            LIGHTDEC(10), LIGHTINC(10) ),
-PAIR( Shift,            PAIR_BRIGHTNESS,      spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
-PAIR( Mod,              PAIR_BRACKET,         spawn,            LIGHTDEC(10), LIGHTINC(10) ),
-PAIR( ModShift,         PAIR_BRACKET,         spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
+PAIR( PAIR_BRIGHTNESS,  0,                spawn,            LIGHTDEC(10), LIGHTINC(10) ),
+PAIR( PAIR_BRIGHTNESS,  Shift,            spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
+PAIR( PAIR_BRACKET,     Mod,              spawn,            LIGHTDEC(10), LIGHTINC(10) ),
+PAIR( PAIR_BRACKET,     ModShift,         spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
 
-    { Mod,              XK_r,                 spawn,            PIPEURL },
-    { ModShift,         XK_r,                 spawn,            CMD("pipeurl", "history") },
-    { Mod,              XK_y,                 spawn,            CMD("qrsend") },
+    { XK_r,             Mod,              spawn,            PIPEURL },
+    { XK_r,             ModShift,         spawn,            CMD("pipeurl", "history") },
+    { XK_y,             Mod,              spawn,            CMD("qrsend") },
 
-PAIR( Mod,              PAIR_JK,              focusstack,       {.i = +1 },    {.i = -1 } ),
-PAIR( ModShift,         PAIR_JK,              push,             {.i = +1 },    {.i = -1 } ),
-PAIR( Mod,              PAIR_HL,              setmfact,         {.f = -0.05 }, {.f = +0.05 } ),
-    { Mod,              XK_s,                 switchcol,        {0} },
-    { Mod,              XK_space,             zoom,             {0} },
-    { ModShift,         XK_space,             transfer,         {0} },
-    { Mod,              XK_Tab,               view,             {0} },
-    { ModShift,         XK_w,                 killclient,       {0} },
-    { ModCtrl,          XK_b,                 togglebar,        {0} },
-    { Mod,              XK_f,                 togglefullscreen, {0} },
-    { Mod,              XK_semicolon,         setlayout,        {.lt = tile } },
-    { ModShift,         XK_semicolon,         setlayout,        {.lt = stairs } },
-    { ModCtrl,          XK_semicolon,         setlayout,        {.lt = monocle } },
-PAIR( ModCtrl,          PAIR_JK,              incnmaster,       {.i = -1 }, {.i = +1 } ),
-    { ModShift,         XK_f,                 togglefloating,   {0} },
-    { Mod,              XK_0,                 view,             {.ui = ~0 } },
-    { ModShift,         XK_0,                 tag,              {.ui = ~0 } },
+PAIR( PAIR_JK,          Mod,              focusstack,       {.i = +1 },    {.i = -1 } ),
+PAIR( PAIR_JK,          ModShift,         push,             {.i = +1 },    {.i = -1 } ),
+PAIR( PAIR_HL,          Mod,              setmfact,         {.f = -0.05 }, {.f = +0.05 } ),
+    { XK_s,             Mod,              switchcol,        {0} },
+    { XK_space,         Mod,              zoom,             {0} },
+    { XK_space,         ModShift,         transfer,         {0} },
+    { XK_Tab,           Mod,              view,             {0} },
+    { XK_w,             ModShift,         killclient,       {0} },
+    { XK_b,             ModCtrl,          togglebar,        {0} },
+    { XK_f,             Mod,              togglefullscreen, {0} },
+    { XK_semicolon,     Mod,              setlayout,        {.lt = tile } },
+    { XK_semicolon,     ModShift,         setlayout,        {.lt = stairs } },
+    { XK_semicolon,     ModCtrl,          setlayout,        {.lt = monocle } },
+PAIR( PAIR_JK,          ModCtrl,          incnmaster,       {.i = -1 }, {.i = +1 } ),
+    { XK_f,             ModShift,         togglefloating,   {0} },
+    { XK_0,             Mod,              view,             {.ui = ~0 } },
+    { XK_0,             ModShift,         tag,              {.ui = ~0 } },
 
-PAIR( Mod,              PAIR_COMMAPERIOD,     viewmon,          {.i = +1 }, {.i = -1 } ),
-PAIR( ModShift,         PAIR_COMMAPERIOD,     tagmon,           {.i = +1 }, {.i = -1 } ),
-    { Mod,              XK_comma,             viewmon,          {.i = -1 } },
-    { Mod,              XK_period,            viewmon,          {.i = +1 } },
-    { ModShift,         XK_comma,             tagmon,           {.i = -1 } },
-    { ModShift,         XK_period,            tagmon,           {.i = +1 } },
+PAIR( PAIR_COMMAPERIOD, Mod,              viewmon,          {.i = +1 }, {.i = -1 } ),
+PAIR( PAIR_COMMAPERIOD, ModShift,         tagmon,           {.i = +1 }, {.i = -1 } ),
+    { XK_comma,         Mod,              viewmon,          {.i = -1 } },
+    { XK_period,        Mod,              viewmon,          {.i = +1 } },
+    { XK_comma,         ModShift,         tagmon,           {.i = -1 } },
+    { XK_period,        ModShift,         tagmon,           {.i = +1 } },
 
     TAGKEYS(XK_1, 0), TAGKEYS(XK_2, 1), TAGKEYS(XK_3, 2),
     TAGKEYS(XK_4, 3), TAGKEYS(XK_5, 4), TAGKEYS(XK_6, 5),
     TAGKEYS(XK_7, 6), TAGKEYS(XK_8, 7), TAGKEYS(XK_9, 8),
 };
 
-/* macro for defining scroll actions for when the cursor is on any window or the root window */
-#define GLOBALSCROLL(MOD, FN, ARG_UP, ARG_DOWN) \
-    { ClkRootWin,   MOD, Button4, FN, ARG_UP   }, \
-    { ClkRootWin,   MOD, Button5, FN, ARG_DOWN }, \
-    { ClkClientWin, MOD, Button4, FN, ARG_UP   }, \
-    { ClkClientWin, MOD, Button5, FN, ARG_DOWN }
-
-/* same as above, but for clicking instead of scrolling */
-#define GLOBALCLICK(MOD, FN, ARG) \
-    { ClkRootWin,   MOD, Button1, FN, ARG }, \
-    { ClkClientWin, MOD, Button1, FN, ARG }
-
-/* button definitions */
-/* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
-static const Button buttons[] = {
-    /* click            modifier   key         function          argument */
-    { ClkLtSymbol,      0,         Button1,    setlayout,        {0} },
-    { ClkLtSymbol,      0,         Button2,    setlayout,        {.lt = tile } },
-    { ClkLtSymbol,      0,         Button3,    setlayout,        {.lt = stairs } },
-    { ClkWinTitle,      0,         Button1,    spawn,            PIPEURL },
-    { ClkStatusText,    0,         Button2,    spawn,            CMD(TERM) },
-    { ClkClientWin,     Mod,       Button1,    movemouse,        {0} },
-    { ClkClientWin,     Mod,       Button2,    togglefloating,   {0} },
-    { ClkClientWin,     Mod,       Button3,    resizemouse,      {0} },
-    { ClkTagBar,        0,         Button1,    view,             {0} },
-    { ClkTagBar,        0,         Button3,    toggleview,       {0} },
-    { ClkTagBar,        Mod,       Button1,    tag,              {0} },
-    { ClkTagBar,        Mod,       Button3,    toggletag,        {0} },
-    { ClkStatusText,    0,         Button1,    spawn,            MUTE },
-    { ClkStatusText,    0,         Button3,    spawn,            PACYCLE },
-    { ClkStatusText,    0,         Button4,    spawn,            VOL(+3) },
-    { ClkStatusText,    0,         Button5,    spawn,            VOL(-3) },
-    GLOBALSCROLL(       Mod,                   focusstacktiled,  {.i = -1 },     {.i = +1 }    ), /* super+scroll:          change focus */
-    GLOBALSCROLL(       ModShift,              push,             {.i = -1 },     {.i = +1 }    ), /* super+shift+scroll:    push the focused window */
-    GLOBALSCROLL(       ModCtrl,               setmfact,         {.f = +0.05 },  {.f = -0.05 } ), /* super+control+scroll:  change mfact */
+/* statusbar module click actions */
+static const StatusClick statusclick[] = {
+    /* module       button     modifier    function          argument */
+    { "audio",      Button1,   0,          spawn,            PACYCLE },
+    { "audio",      Button3,   0,          spawn,            TUI("pulsemixer") },
+    { "audio",      Button4,   0,          spawn,            VOL(+3) },
+    { "audio",      Button5,   0,          spawn,            VOL(-3) },
+    { "network",    Button1,   0,          spawn,            CMD("networkmanager_dmenu") },
 };
 
-#endif /* CONFINIT */
+/* macro for defining click actions for when the cursor is on any window or the root window */
+#define GLOBALCLICK(MOD, FN, ARG) \
+    { ClickRootWin,   Button1, MOD, FN, ARG }, \
+    { ClickClientWin, Button1, MOD, FN, ARG }
+
+/* same as above, but for scrolling */
+#define GLOBALSCROLL(MOD, FN, ARG_UP, ARG_DOWN) \
+    { ClickRootWin,   Button4, MOD, FN, ARG_UP   }, \
+    { ClickRootWin,   Button5, MOD, FN, ARG_DOWN }, \
+    { ClickClientWin, Button4, MOD, FN, ARG_UP   }, \
+    { ClickClientWin, Button5, MOD, FN, ARG_DOWN }
+
+/* button definitions */
+/* click can be ClickTagBar, ClickLtSymbol, ClickWinTitle, ClickClientWin, or ClickRootWin */
+static const Button buttons[] = {
+    /* click              button     modifier    function          argument */
+    { ClickLtSymbol,      Button1,   0,          setlayout,        {0} },
+    { ClickLtSymbol,      Button2,   0,          setlayout,        {.lt = tile } },
+    { ClickLtSymbol,      Button3,   0,          setlayout,        {.lt = stairs } },
+    { ClickClientWin,     Button1,   Mod,        movemouse,        {0} },
+    { ClickClientWin,     Button2,   Mod,        togglefloating,   {0} },
+    { ClickClientWin,     Button3,   Mod,        resizemouse,      {0} },
+    { ClickTagBar,        Button1,   0,          view,             {0} },
+    { ClickTagBar,        Button3,   0,          toggleview,       {0} },
+    { ClickTagBar,        Button1,   Mod,        tag,              {0} },
+    { ClickTagBar,        Button3,   Mod,        toggletag,        {0} },
+
+    GLOBALSCROLL( Mod,        focusstacktiled,  {.i = -1 },     {.i = +1 }    ), /* super+scroll:          change focus */
+    GLOBALSCROLL( ModShift,   push,             {.i = -1 },     {.i = +1 }    ), /* super+shift+scroll:    push the focused window */
+    GLOBALSCROLL( ModCtrl,    setmfact,         {.f = +0.05 },  {.f = -0.05 } ), /* super+control+scroll:  change mfact */
+};
+
 // vim:expandtab
