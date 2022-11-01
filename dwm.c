@@ -66,7 +66,17 @@
 
 #include "dwm.h"
 
-/* TODO: instead of having a c->isfullscreen and c->isfloating, we should have a c->state = {Fullscreen,Float,Tile} and a c->oldstate. */
+/* TODO: give functions (yes, all of them) (and variables?) more sensible names */
+/* TODO: either fix the backtrace or get rid of it */
+/* TODO: rewrite drwtext in a non-stupid way, then add farsi font support to it,
+ *       (maybe then do the same thing to dmenu to draw icons with a mono nerd font?) */
+/* TODO: see if we can move to a circular doubly-linked list */
+/* TODO: maybe let's not define all the fucking variables of a function at the top, shall we? */
+/* TODO: analyze and simplify switchcol and push */
+/* TODO: analyze in what functions should restack(), focus(), arrange(), etc. be called  */
+/* TODO: instead of having a c->isfullscreen and c->isfloating, we should have a c->state = {Fullscreen,Float,Tile} and a c->oldstate.
+ *       after we do this, we can track the previous state of a client, and do some cool stuff. for example, if a client
+ *       becomes floating from a state of being tiled, we can center it in the monitor. */
 /* TODO: have a c->isinfloatlt for clients that are in a tag with a floating layout. */
 /* TODO: focus all windows by default, except if we specify specifically with rules,
  *       AND when we're sure (through whatever method we can find) a window is
@@ -85,6 +95,8 @@
 /* TODO: can come up with a solution to call updatebar only at the end of the event loop */
 /* TODO: probably can come up with a solution to call focus/arrange/restack only at the end of the event loop */
 /* TODO: track where updatebar/updatebars is called */
+/* TODO: dick-hardening and possibly completely useless and ridiculous feature:
+ *       highlight bar buttons on mouse-over */
 
 /* ======================
  * = Public Data Types
@@ -227,6 +239,14 @@ static const unsigned char utfbyte[UTF_SIZ + 1] = { 0x80,    0, 0xC0, 0xE0, 0xF0
 static const unsigned char utfmask[UTF_SIZ + 1] = { 0xC0, 0x80, 0xE0, 0xF0, 0xF8  };
 static const long utfmax[UTF_SIZ + 1] = { 0x10FFFF, 0x7F, 0x7FF, 0xFFFF, 0x10FFFF };
 static const long utfmin[UTF_SIZ + 1] = { 0, 0, 0x80, 0x800, 0x10000 };
+static const long utffarsi[][2] = {
+	{ 0x600,     0x6FF   },
+	{ 0x750,     0x77F   },
+	{ 0x8A0,     0x8FF   },
+	{ 0xFB50,    0xFDFF  },
+	{ 0xFE70,    0xFEFF  },
+	{ 0x1EE00,   0x1EEFF },
+};
 
 /* =============
  * = Atoms
@@ -386,7 +406,7 @@ struct Drw {
 
 struct DrwFont {
 	unsigned int h;
-	XftFont *xfont;
+	XftFont *xftfont;
 	FcPattern *pattern;
 	DrwFont *next;
 };
@@ -437,9 +457,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MappingNotify]     =  mappingnotify,
 };
 
-/* configuration, allows nested code to access above variables */
-/* #include "config.h" */
-
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
@@ -485,9 +502,9 @@ checkotherwm(void)
 	xerrorxlib = XSetErrorHandler(xerrorstart);
 	/* this causes an error if some other window manager is running */
 	XSelectInput(dpy, DefaultRootWindow(dpy), SubstructureRedirectMask);
-	XSync(dpy, False);
+	XSync(dpy, 0);
 	XSetErrorHandler(xerror);
-	XSync(dpy, False);
+	XSync(dpy, 0);
 }
 
 void
@@ -519,10 +536,10 @@ setup(void)
 	colormap = DefaultColormap(dpy, screen);
 
 	/* init atoms */
-	XInternAtoms(dpy, atom_names, LENGTH(atom_names), False, atom);
-	XInternAtoms(dpy, netatom_names, LENGTH(netatom_names), False, netatom);
+	XInternAtoms(dpy, atom_names, LENGTH(atom_names), 0, atom);
+	XInternAtoms(dpy, netatom_names, LENGTH(netatom_names), 0, netatom);
 	snprintf(trayatom_name, sizeof(trayatom_name), "_NET_SYSTEM_TRAY_S%d", screen);
-	netatom[NetSystemTray] = XInternAtom(dpy, trayatom_name, False);
+	netatom[NetSystemTray] = XInternAtom(dpy, trayatom_name, 0);
 
 	/* init graphics */
 	drwinit();
@@ -537,7 +554,7 @@ setup(void)
 	setwinprop(root, netatom[NetWMCheck], wmcheckwin);
 	setwinprop(wmcheckwin, netatom[NetWMCheck], wmcheckwin);
 	XChangeProperty(dpy, wmcheckwin, netatom[NetWMName],
-		XInternAtom(dpy, "UTF8_STRING", False), 8,
+		XInternAtom(dpy, "UTF8_STRING", 0), 8,
 		PropModeReplace, (unsigned char *)"dwm", 3);
 
 	/* init EWMH props */
@@ -619,7 +636,7 @@ run(void)
 {
 	XEvent ev;
 
-	XSync(dpy, False);
+	XSync(dpy, 0);
 	while (running && !XNextEvent(dpy, &ev)) {
 		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
@@ -753,7 +770,7 @@ configurerequest(XEvent *e)
 		wc.sibling = ev->above;
 		wc.stack_mode = ev->detail;
 		XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
-		/* XSync(dpy, False); */
+		/* XSync(dpy, 0); */
 		return;
 	}
 
@@ -762,7 +779,7 @@ configurerequest(XEvent *e)
 
 	if (c->isfullscreen || !afloat(c)) {
 		sendconfigurenotify(c);
-		/* XSync(dpy, False); */
+		/* XSync(dpy, 0); */
 		return;
 	}
 
@@ -787,7 +804,7 @@ configurerequest(XEvent *e)
 	else if ((ev->value_mask & (CWX|CWY)) && !(ev->value_mask & (CWWidth|CWHeight)))
 		sendconfigurenotify(c);
 
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 }
 
 void
@@ -1047,7 +1064,7 @@ unmanage(Client *c, int destroyed)
 		XSetWindowBorderWidth(dpy, c->win, c->oldbw);
 		XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
 		setclientstate(c, WithdrawnState);
-		/* XSync(dpy, False); */
+		/* XSync(dpy, 0); */
 		/* XSetErrorHandler(xerror); */
 		/* XUngrabServer(dpy); */
 	}
@@ -1075,7 +1092,8 @@ cleanup(void)
 	/* unmanage clients */
 	/* XGrabServer(dpy); */
 	/* XSetErrorHandler(xerrordummy); */
-	for (m = mons; m; m = m->next) {
+
+	for (m = mons; m; m = m->next)
 		for (c = m->clients; c; c = c->next) {
 			XSelectInput(dpy, c->win, NoEventMask);
 			XSetWindowBorderWidth(dpy, c->win, c->oldbw);
@@ -1090,8 +1108,8 @@ cleanup(void)
 				c->next = c->swallow;
 			}
 		}
-	}
-	/* XSync(dpy, False); */
+
+	/* XSync(dpy, 0); */
 	/* XSetErrorHandler(xerror); */
 	/* XUngrabServer(dpy); */
 
@@ -1111,7 +1129,7 @@ cleanup(void)
 
 	XDestroyWindow(dpy, wmcheckwin);
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
@@ -1150,7 +1168,7 @@ swallow(Client *c)
 	XUngrabButton(dpy, AnyButton, AnyModifier, t->win);
 	setclientstate(t, WithdrawnState);
 	XUnmapWindow(dpy, t->win);
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 	/* XSetErrorHandler(xerror); */
 
 	t->swallow = c;
@@ -1191,7 +1209,7 @@ unswallow(Client *c, int destroyed, int reattach)
 		XSetWindowBorderWidth(dpy, c->win, c->swallow->oldbw);
 		XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
 		setclientstate(c, WithdrawnState);
-		/* XSync(dpy, False); */
+		/* XSync(dpy, 0); */
 		/* XSetErrorHandler(xerror); */
 		/* XUngrabServer(dpy); */
 	}
@@ -1419,7 +1437,7 @@ createmon(void)
 	m->gappx = gappx;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
-	strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1);
+	/* strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1); */
 
 	for (i = 0; i < LENGTH(tags); i++) {
 		m->pertag[i].mfact = m->mfact;
@@ -1528,26 +1546,21 @@ arrange(Monitor *m)
 {
 	Client *c;
 
-	if (m)
-		showhide(m->stack);
-	else
+	if (!m) {
 		for (m = mons; m; m = m->next)
-			showhide(m->stack);
+			arrange(m);
+		return;
+	}
 
-	if (m) {
-		arrangemon(m);
-		restack(m);
-	} else
-		for (m = mons; m; m = m->next)
-			arrangemon(m);
+	showhide(m->stack);
 
-	if (m)
-		for (c = m->clients; c; c = c->next)
-			updateclientdesktop(c);
-	else
-		for (m = mons; m; m = m->next)
-			for (c = m->clients; c; c = c->next)
-				updateclientdesktop(c);
+	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol) - 1);
+	if (m->lt[m->sellt]->arrange)
+		m->lt[m->sellt]->arrange(m);
+
+	restack(m);
+	for (c = m->clients; c; c = c->next)
+		updateclientdesktop(c);
 }
 
 void
@@ -1582,14 +1595,6 @@ showhide(Client *c)
 }
 
 void
-arrangemon(Monitor *m)
-{
-	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol) - 1);
-	if (m->lt[m->sellt]->arrange)
-		m->lt[m->sellt]->arrange(m);
-}
-
-void
 restack(Monitor *m)
 {
 	Client *c;
@@ -1607,20 +1612,22 @@ restack(Monitor *m)
 	{
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
+		for (c = m->stack; c; c = c->snext)
+			if (ISVISIBLE(c) && c->isfloating && !c->isfullscreen) {
+				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
+				wc.sibling = c->win;
+			}
+		for (c = m->stack; c; c = c->snext)
+			if (ISVISIBLE(c) && c->isfullscreen) {
+				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
+				wc.sibling = c->win;
+			}
 		for (c = m->stack; c; c = c->snext) {
 			if (ISVISIBLE(c) && !c->isfloating) {
 				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
 				wc.sibling = c->win;
 			}
 		}
-
-		for (c = m->stack; c; c = c->snext)
-			if (ISVISIBLE(c) && c->isfullscreen)
-				XRaiseWindow(dpy, c->win);
-
-		for (c = m->stack; c; c = c->snext)
-			if (ISVISIBLE(c) && c->isfloating && !c->isfullscreen)
-				XRaiseWindow(dpy, c->win);
 	}
 
 	if (m->sel && (m->sel->isfullscreen || !afloat(m->sel)))
@@ -1628,7 +1635,7 @@ restack(Monitor *m)
 			if (c->isfullscreen && c != m->sel && ISVISIBLE(c))
 				setfullscreen(c, 0);
 
-	XSync(dpy, False);
+	/* XSync(dpy, 0); */
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
@@ -1653,7 +1660,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	sendconfigurenotify(c);
 	updateborder(c);
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 }
 
 void
@@ -1671,8 +1678,8 @@ sendconfigurenotify(Client *c)
 	ce.height = c->h;
 	ce.border_width = c->bw;
 	ce.above = None;
-	ce.override_redirect = False;
-	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
+	ce.override_redirect = 0;
+	XSendEvent(dpy, c->win, 0, StructureNotifyMask, (XEvent *)&ce);
 }
 
 int
@@ -1859,7 +1866,7 @@ loadmonsettings(void)
 	getcardprop(root, atom[DWMMonSel], (long *)&selnum);
 
 	/* load tags of monitors */
-	while (XGetWindowProperty(dpy, root, atom[DWMMonDesktop], i, 1, False,
+	while (XGetWindowProperty(dpy, root, atom[DWMMonDesktop], i, 1, 0,
 		XA_CARDINAL, &type, &format, &nitems, &remaining,
 		(unsigned char **)&value) == Success
 		&& value
@@ -2022,7 +2029,7 @@ updatebarwin(Monitor *m)
 {
 	XClassHint ch = { "bar", "dwm" };
 	XSetWindowAttributes wa = {
-		.override_redirect = True,
+		.override_redirect = 1,
 		.background_pixmap = ParentRelative,
 		.event_mask = ButtonPressMask|ExposureMask
 	};
@@ -2580,7 +2587,7 @@ systrayupdateicon(Client *c, XResizeRequestEvent *resize)
 
 	if (resize) {
 		XMoveResizeWindow(dpy, c->win, c->x, c->y, resize->width, resize->height);
-		/* XSync(dpy, False); */
+		/* XSync(dpy, 0); */
 		systrayupdate();
 		return;
 	}
@@ -2620,7 +2627,7 @@ systrayinit(void)
 	XClassHint ch = { "systray", "dwm" };
 	unsigned int orientation = _NET_SYSTEM_TRAY_ORIENTATION_HORZ;
 	XSetWindowAttributes swa = {
-		.override_redirect = True,
+		.override_redirect = 1,
 		.background_pixel = schemes[SchemeNorm][ColorBG].pixel,
 		.event_mask = ButtonPressMask|ExposureMask,
 	};
@@ -3209,12 +3216,7 @@ setlayout(const Arg *arg)
 	if (lt)
 		selmon->lt[selmon->sellt] = lt;
 
-	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof(selmon->ltsymbol) - 1);
-
-	if (selmon->sel)
-		arrange(selmon);
-	else
-		drawbar(selmon);
+	arrange(selmon);
 }
 
 /* arg > 1.0 will set mfact absolutely */
@@ -3249,7 +3251,7 @@ killclient(const Arg *arg)
 	/* XSetErrorHandler(xerrordummy); */
 	XSetCloseDownMode(dpy, DestroyAll);
 	XKillClient(dpy, selmon->sel->win);
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 	/* XSetErrorHandler(xerror); */
 	/* XUngrabServer(dpy); */
 }
@@ -3396,7 +3398,7 @@ movemouse(const Arg *arg)
 	ocx = c->x;
 	ocy = c->y;
 
-	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+	if (XGrabPointer(dpy, root, 0, MOUSEMASK, GrabModeAsync, GrabModeAsync,
 		None, cursors[CurMove], CurrentTime) != GrabSuccess
 		|| !getrootptr(&x, &y))
 	{
@@ -3472,7 +3474,7 @@ resizemouse(const Arg *arg)
 	ocx = c->x;
 	ocy = c->y;
 
-	if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+	if (XGrabPointer(dpy, root, 0, MOUSEMASK, GrabModeAsync, GrabModeAsync,
 		None, cursors[CurResize], CurrentTime) != GrabSuccess)
 	{
 		return;
@@ -3572,7 +3574,7 @@ grabbuttons(Client *c, int focused)
 		XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
 
 		if (!focused)
-			XGrabButton(dpy, AnyButton, AnyModifier, c->win, False,
+			XGrabButton(dpy, AnyButton, AnyModifier, c->win, 0,
 				BUTTONMASK, GrabModeSync, GrabModeSync, None, None);
 
 		for (i = 0; i < LENGTH(buttons); i++)
@@ -3581,7 +3583,7 @@ grabbuttons(Client *c, int focused)
 				for (j = 0; j < LENGTH(modifiers); j++)
 					XGrabButton(dpy, buttons[i].button,
 						buttons[i].mod|modifiers[j],
-						c->win, False, BUTTONMASK,
+						c->win, 0, BUTTONMASK,
 						GrabModeAsync, GrabModeSync, None, None);
 	}
 }
@@ -3735,7 +3737,7 @@ grabkeys(void)
 			if ((code = XKeysymToKeycode(dpy, keys[i].keysym)))
 				for (j = 0; j < LENGTH(modifiers); j++)
 					XGrabKey(dpy, code, keys[i].mod|modifiers[j], root,
-						True, GrabModeAsync, GrabModeAsync);
+						1, GrabModeAsync, GrabModeAsync);
 	}
 }
 
@@ -3806,7 +3808,7 @@ getcardprop(Window w, Atom prop, long *ret)
 	unsigned long nitems, remaining;
 	long *value = NULL;
 
-	if (XGetWindowProperty(dpy, w, prop, 0, 1, False, XA_CARDINAL,
+	if (XGetWindowProperty(dpy, w, prop, 0, 1, 0, XA_CARDINAL,
 		&type, &format, &nitems, &remaining, (unsigned char **)&value) != Success
 		|| !value)
 	{
@@ -3826,7 +3828,7 @@ getatomprop(Window w, Atom prop)
 	long *value = NULL;
 	Atom type, atom = None;
 
-	if (XGetWindowProperty(dpy, w, prop, 0L, sizeof atom, False, XA_ATOM,
+	if (XGetWindowProperty(dpy, w, prop, 0L, sizeof atom, 0, XA_ATOM,
 		&type, &format, &nitems, &remaining, (unsigned char **)&value) == Success
 		&& value)
 	{
@@ -3871,7 +3873,7 @@ getxembedinfoprop(Window w, unsigned int *version, unsigned int *flags)
 	long *prop = NULL;
 	int success = 0;
 
-	if (XGetWindowProperty(dpy, w, atom[XembedInfo], 0, 2, False, atom[XembedInfo],
+	if (XGetWindowProperty(dpy, w, atom[XembedInfo], 0, 2, 0, atom[XembedInfo],
 		&type, &format, &nitems, &remaining, (unsigned char **)&prop) == Success
 		&& prop
 		&& nitems == 2)
@@ -3893,7 +3895,7 @@ getstate(Window w)
 	unsigned long nitems, remaining;
 	Atom type;
 
-	if (XGetWindowProperty(dpy, w, atom[WMState], 0, 2, False, atom[WMState],
+	if (XGetWindowProperty(dpy, w, atom[WMState], 0, 2, 0, atom[WMState],
 		&type, &format, &nitems, &remaining, (unsigned char **)&prop) == Success
 		&& prop
 		&& nitems)
@@ -3958,7 +3960,7 @@ sendevent(Client *c, Atom proto)
 		ev.xclient.format = 32;
 		ev.xclient.data.l[0] = proto;
 		ev.xclient.data.l[1] = CurrentTime;
-		XSendEvent(dpy, c->win, False, NoEventMask, &ev);
+		XSendEvent(dpy, c->win, 0, NoEventMask, &ev);
 	}
 
 	return exists;
@@ -3978,7 +3980,7 @@ sendeventraw(Window w, Atom proto, int mask, long d0, long d1, long d2, long d3,
 		.xclient.data.l[3] = d3,
 		.xclient.data.l[4] = d4,
 	};
-	XSendEvent(dpy, w, False, mask, &ev);
+	XSendEvent(dpy, w, 0, mask, &ev);
 }
 
 void
@@ -4298,7 +4300,7 @@ drwinit(void)
 
 	/* init fonts */
 	for (i = 1; i <= LENGTH(fonts); i++)
-		if ((font = xfontcreate(fonts[LENGTH(fonts) - i], NULL))) {
+		if ((font = xftfontcreate(fonts[LENGTH(fonts) - i], NULL))) {
 			font->next = prevfont;
 			prevfont = font;
 		}
@@ -4331,7 +4333,7 @@ drwmap(Monitor *m, unsigned int w, int dest_x)
 	XCopyArea(dpy, drw.pixmap, m->barwin, drw.gc, 0, 0, w, barheight, dest_x, 0);
 	XSetForeground(dpy, drw.gc, schemes[drw.scheme][ColorBG].pixel);
 	XFillRectangle(dpy, drw.pixmap, drw.gc, 0, 0, sw, barheight);
-	/* XSync(dpy, False); */
+	/* XSync(dpy, 0); */
 }
 
 unsigned int
@@ -4371,53 +4373,52 @@ drwrect(int x, int y, unsigned int w, unsigned int h, int filled, int invert)
 		XDrawRectangle(dpy, drw.pixmap, drw.gc, x, y, w - 1, h - 1);
 }
 
-
 DrwFont *
-xfontcreate(const char *fontname, FcPattern *fontpattern)
+xftfontcreate(const char *fontname, FcPattern *fontpattern)
 {
 	DrwFont *font;
-	XftFont *xfont = NULL;
+	XftFont *xftfont = NULL;
 	FcPattern *pattern = NULL;
 	FcBool color;
 
 	if (fontname) {
 		/*
-		 * using the pattern found at font->xfont->pattern does not yield the
+		 * using the pattern found at font->xftfont->pattern does not yield the
 		 * same substitution results as using the pattern returned by
 		 * FcNameParse; using the latter results in the desired fallback
 		 * behaviour whereas the former just results in missing-character
 		 * rectangles being drawn, at least with some fonts.
 		 */
-		if (!(xfont = XftFontOpenName(dpy, screen, fontname))) {
+		if (!(xftfont = XftFontOpenName(dpy, screen, fontname))) {
 			fprintf(stderr, "error, cannot load font from name: '%s'\n", fontname);
 			return NULL;
 		}
 		if (!(pattern = FcNameParse((FcChar8 *) fontname))) {
 			fprintf(stderr, "error, cannot parse font name to pattern: '%s'\n", fontname);
-			XftFontClose(dpy, xfont);
+			XftFontClose(dpy, xftfont);
 			return NULL;
 		}
 	} else if (fontpattern) {
-		if (!(xfont = XftFontOpenPattern(dpy, fontpattern))) {
+		if (!(xftfont = XftFontOpenPattern(dpy, fontpattern))) {
 			fprintf(stderr, "error, cannot load font from pattern.\n");
 			return NULL;
 		}
 	} else {
-		die("no font specified for xfontcreate().");
+		die("no font specified for xftfontcreate().");
 	}
 
 	if (!allowcolorfonts
-		&& FcPatternGetBool(xfont->pattern, FC_COLOR, 0, &color) == FcResultMatch
+		&& FcPatternGetBool(xftfont->pattern, FC_COLOR, 0, &color) == FcResultMatch
 		&& color)
 	{
-		XftFontClose(dpy, xfont);
+		XftFontClose(dpy, xftfont);
 		return NULL;
 	}
 
 	font = ecalloc(1, sizeof(DrwFont));
-	font->xfont = xfont;
+	font->xftfont = xftfont;
 	font->pattern = pattern;
-	font->h = xfont->ascent + xfont->descent;
+	font->h = xftfont->ascent + xftfont->descent;
 
 	return font;
 }
@@ -4447,16 +4448,16 @@ drwfreefonts(DrwFont *font)
 {
 	if (font) {
 		drwfreefonts(font->next);
-		xfontfree(font);
+		xftfontfree(font);
 	}
 }
 
 void
-xfontfree(DrwFont *font)
+xftfontfree(DrwFont *font)
 {
 	if (font->pattern)
 		FcPatternDestroy(font->pattern);
-	XftFontClose(dpy, font->xfont);
+	XftFontClose(dpy, font->xftfont);
 	free(font);
 }
 
@@ -4504,7 +4505,14 @@ drwtext(const char *text, int x, int y, unsigned int w, unsigned int h,
 
 			for (font = drw.fonts; font; font = font->next)
 			{
-				charexists = charexists || XftCharExists(dpy, font->xfont, utf8codepoint);
+				/* for (i = 0; i < LENGTH(utffarsi); i++) { */
+				/* 	if (utf8codepoint >= utffarsi[i][0] && utf8codepoint <= utffarsi[i][1]) { */
+				/* 		system("notify-send -t 1000 farsi-found"); */
+				/* 		break; */
+				/* 	} */
+				/* } */
+
+				charexists = charexists || XftCharExists(dpy, font->xftfont, utf8codepoint);
 
 				if (!charexists)
 					continue;
@@ -4554,10 +4562,10 @@ drwtext(const char *text, int x, int y, unsigned int w, unsigned int h,
 				XFillRectangle(dpy, drw.pixmap, drw.gc, x, y, extentwidth, h);
 				if (!xftdraw)
 					xftdraw = XftDrawCreate(dpy, drw.pixmap, visual, colormap);
-				drw_y = y + (h - usedfont->h) / 2 + usedfont->xfont->ascent;
+				drw_y = y + (h - usedfont->h) / 2 + usedfont->xftfont->ascent;
 				XftDrawStringUtf8(xftdraw,
 					&schemes[drw.scheme][invert ? ColorBG : ColorFG],
-					usedfont->xfont, x, drw_y, (XftChar8 *)utf8str, utf8strlen);
+					usedfont->xftfont, x, drw_y, (XftChar8 *)utf8str, utf8strlen);
 			}
 
 			x += extentwidth;
@@ -4589,7 +4597,7 @@ drwtext(const char *text, int x, int y, unsigned int w, unsigned int h,
 			FcCharSetAddChar(fccharset, utf8codepoint);
 
 			if (!drw.fonts->pattern) {
-				/* refer to the comment in xfontcreate for more information. */
+				/* refer to the comment in xftfontcreate for more information. */
 				die("the first font in the cache must be loaded from a font string.");
 			}
 
@@ -4607,15 +4615,15 @@ drwtext(const char *text, int x, int y, unsigned int w, unsigned int h,
 
 			if (match)
 			{
-				usedfont = xfontcreate(NULL, match);
-				if (usedfont && XftCharExists(dpy, usedfont->xfont, utf8codepoint))
+				usedfont = xftfontcreate(NULL, match);
+				if (usedfont && XftCharExists(dpy, usedfont->xftfont, utf8codepoint))
 				{
 					for (font = drw.fonts; font->next; font = font->next);
 					font->next = usedfont;
 				}
 				else
 				{
-					xfontfree(usedfont);
+					xftfontfree(usedfont);
 					drw.nomatches.idx %= LENGTH(drw.nomatches.codepoints);
 					drw.nomatches.codepoints[drw.nomatches.idx] = utf8codepoint;
 					drw.nomatches.max = MAX(drw.nomatches.max, ++drw.nomatches.idx);
@@ -4644,7 +4652,7 @@ drwgetextents(DrwFont *font, const char *text, unsigned int len,
 	if (!font || !text)
 		return;
 
-	XftTextExtentsUtf8(dpy, font->xfont, (XftChar8 *)text, len, &info);
+	XftTextExtentsUtf8(dpy, font->xftfont, (XftChar8 *)text, len, &info);
 	if (w)
 		*w = info.xOff;
 	if (h)

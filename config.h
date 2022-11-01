@@ -69,9 +69,9 @@ static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
     /* symbol     arrange function */
-    { "[]=",      tile },
+    { "[]=",      tile    },
     { "[M]",      monocle },
-    { "[S]",      stairs },
+    { "[S]",      stairs  },
 };
 
 /* hint for rules
