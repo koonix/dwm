@@ -52,12 +52,13 @@ static const char borderbg[]  = "#000000";
 static const char textcolor[] = "#bfbfbf";
 static const char *colors[SchemeLast][ColorLast] = {
     /*                    FG           BG        Border       BorderBG */
-    [SchemeNorm]      = { normfg,      bgcolor,  "#333333",   borderbg }, /* colors of normal (unselected) items, tags, and window borders */
-    [SchemeSel]       = { "#bfbfbf",   bgcolor,  "#ffffff",   borderbg }, /* colors of selected items, tags and and window borders */
-    [SchemeUrg]       = { NULL,        NULL,     "#993333",   borderbg }, /* border color of urgent windows */
-    [SchemeTitle]     = { textcolor,   bgcolor,  NULL,        NULL     }, /* fg and bg color of the window title area in the bar */
-    [SchemeStatus]    = { "#999999",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar */
-    [SchemeStatusSep] = { "#333333",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar separator characters */
+    [SchemeNorm]       = { normfg,      bgcolor,  "#333333",   borderbg }, /* colors of normal (unselected) items, tags, and window borders */
+    [SchemeSel]        = { "#bfbfbf",   bgcolor,  "#ffffff",   borderbg }, /* colors of selected items, tags and and window borders */
+    [SchemeUrg]        = { NULL,        NULL,     "#993333",   borderbg }, /* border color of urgent windows */
+    [SchemeTitle]      = { textcolor,   bgcolor,  NULL,        NULL     }, /* fg and bg color of the window title area in the bar */
+    [SchemeStatus]     = { "#999999",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar */
+    [SchemeStatusSep]  = { "#333333",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar separator characters */
+    [SchemeWinButton]  = { "#993333",   NULL,     "#000000",   NULL     }, /* fg and bg color of statusbar separator characters */
 };
 
 /* statusbar module separator characters */
@@ -361,6 +362,9 @@ static const Button buttons[] = {
     { ClickWinArea,       Button5,   ModShift,   push,             {.i = +1 } },
     { ClickWinArea,       Button4,   ModCtrl,    setmfact,         {.f = +0.05 } },
     { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = +0.05 } },
+
+    { ClickWinButtonDouble,  Button1,   0,          killclient,       {0} },
+    { ClickWinButton,        Button3,   0,          togglefullscreen, {0} },
 };
 
 /* statusbar module click actions */

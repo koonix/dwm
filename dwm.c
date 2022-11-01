@@ -109,13 +109,15 @@ ColorLast };
 
 /* color schemes */
 enum {
-	SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle, SchemeStatus, SchemeStatusSep,
+	SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle,
+	SchemeStatus, SchemeStatusSep, SchemeWinButton,
 SchemeLast };
 
 /* click areas */
 enum {
-	ClickInvalid, ClickTagBar, ClickLtSymbol, ClickWinTitle,
-	ClickStatusText, ClickClientWin, ClickRootWin, ClickWinArea,
+	ClickInvalid, ClickTagBar, ClickLtSymbol, ClickWinTitle, ClickStatusText,
+	ClickWinButton, ClickWinButtonDouble, ClickClientWin,
+	ClickRootWin, ClickWinArea,
 };
 
 struct Layout {
@@ -280,6 +282,7 @@ static const long utffarsi[][2] = {
 	X( NetWMWindowTypeDock,        "_NET_WM_WINDOW_TYPE_DOCK"       ) \
 	X( NetWMPID,                   "_NET_WM_PID"                    ) \
 	X( NetWMDesktop,               "_NET_WM_DESKTOP"                ) \
+	X( NetWMWindowOpacity,         "_NET_WM_WINDOW_OPACITY"         ) \
 	X( NetClientList,              "_NET_CLIENT_LIST"               ) \
 	X( NetCurrentDesktop,          "_NET_CURRENT_DESKTOP"           ) \
 	X( NetNumberOfDesktops,        "_NET_NUMBER_OF_DESKTOPS"        ) \
@@ -382,7 +385,9 @@ struct Client {
 	Client *snext;
 	Client *swallow;
 	Monitor *mon;
-	Window win, origwin;
+	Window win, origwin, buttonwin;
+	/* Colormap utilcmap; */
+	/* GC utilgc; */
 	int ismapped; /* mapped state for systray icons */
 };
 
@@ -409,6 +414,13 @@ struct DrwFont {
 	XftFont *xftfont;
 	FcPattern *pattern;
 	DrwFont *next;
+};
+
+struct ClickEv {
+	int isvalid;
+	Time time;
+	Window win;
+	unsigned int button;
 };
 
 /* ===================
@@ -444,6 +456,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[DestroyNotify]     =  destroynotify,
 	[UnmapNotify]       =  unmapnotify,
 	[EnterNotify]       =  enternotify,
+	[LeaveNotify]       =  leavenotify,
 	[MotionNotify]      =  motionnotify,
 	[ConfigureNotify]   =  configurenotify,
 	[ConfigureRequest]  =  configurerequest,
@@ -510,7 +523,7 @@ checkotherwm(void)
 void
 setup(void)
 {
-	XSetWindowAttributes wa;
+	XSetWindowAttributes swa;
 	char trayatom_name[32];
 
 	/* clean up any zombies immediately */
@@ -563,12 +576,12 @@ setup(void)
 		PropModeReplace, (unsigned char *)netatom, LENGTH(netatom));
 
 	/* select events */
-	wa.cursor = cursors[CurNormal];
-	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask
+	swa.cursor = cursors[CurNormal];
+	swa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask
 		|ButtonPressMask|PointerMotionMask|EnterWindowMask
 		|LeaveWindowMask|StructureNotifyMask|PropertyChangeMask|KeyPressMask;
-	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &wa);
-	XSelectInput(dpy, root, wa.event_mask);
+	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &swa);
+	XSelectInput(dpy, root, swa.event_mask);
 
 	grabkeys();
 
@@ -696,7 +709,7 @@ unmapnotify(XEvent *e)
 void
 enternotify(XEvent *e)
 {
-	Client *c;
+	Client *c, *s;
 	/* Monitor *m; */
 	XCrossingEvent *ev = &e->xcrossing;
 
@@ -707,7 +720,12 @@ enternotify(XEvent *e)
 	if (isenterignored(ev->window))
 		return;
 
-	c = wintoclient(ev->window);
+	if ((c = wintoclient(ev->window)))
+		for (s = c->mon->clients; s; s = s->next)
+			setcardprop(s->buttonwin, netatom[NetWMWindowOpacity], 0);
+	else if ((c = winbuttontoclient(ev->window)))
+		setcardprop(c->buttonwin, netatom[NetWMWindowOpacity], 0xFFFFFFFF);
+
 	selmon = c ? c->mon : wintomon(ev->window);
 	focus(c);
 
@@ -716,6 +734,19 @@ enternotify(XEvent *e)
 	/* 	selmon = m; */
 	/* } else if (!c || c == selmon->sel) */
 	/* 	return; */
+}
+
+void
+leavenotify(XEvent *e)
+{
+	Client *c;
+	XCrossingEvent *ev = &e->xcrossing;
+
+	if (ev->window != root && (ev->mode != NotifyNormal || ev->detail == NotifyInferior))
+		return;
+
+	if ((c = winbuttontoclient(ev->window)))
+		setcardprop(c->buttonwin, netatom[NetWMWindowOpacity], 0);
 }
 
 void
@@ -964,14 +995,14 @@ manage(Window w, XWindowAttributes wa)
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
 	c->mon = selmon;
-	c->pid = getwinpid(c->win);
+	c->desktop = -1;
 	c->bw = borderpx;
+	c->oldbw = wa.border_width;
 	c->xkblayout  = xkblayout;
 	c->noautofocus = noautofocus;
-	c->desktop = -1;
 	c->w = c->oldw = wa.width;
 	c->h = c->oldh = wa.height;
-	c->oldbw = wa.border_width;
+	c->pid = getwinpid(c->win);
 
 	updateclass(c);
 	updatetitle(c);
@@ -993,6 +1024,7 @@ manage(Window w, XWindowAttributes wa)
 	XSetWindowBorderWidth(dpy, c->win, c->bw);
 	drawborder(c->win, SchemeNorm);
 
+	/* updatewinbutton(c); */
 	updatesizehints(c);
 	updatewindowtype(c);
 	updatewmhints(c);
@@ -1069,6 +1101,7 @@ unmanage(Client *c, int destroyed)
 		/* XUngrabServer(dpy); */
 	}
 
+	XDestroyWindow(dpy, c->buttonwin);
 	tagreduced(c, 1, 0);
 	detach(c);
 	detachstack(c);
@@ -1589,6 +1622,7 @@ showhide(Client *c)
 		/* hide clients bottom up */
 		showhide(c->snext);
 
+		updatewinbutton(c);
 		XMoveWindow(dpy, c->win, WIDTH(c) * -2, c->y);
 		c->geomvalid = 0;
 	}
@@ -1606,19 +1640,23 @@ restack(Monitor *m)
 	if (!m->sel)
 		return;
 
-	if (!m->lt[m->sellt]->arrange)
-		XRaiseWindow(dpy, m->sel->win);
-	else
+	if (m->lt[m->sellt]->arrange)
 	{
 		wc.stack_mode = Below;
 		wc.sibling = m->barwin;
+		if (m->sel->isfloating && !m->sel->isfullscreen) {
+			XConfigureWindow(dpy, m->sel->win, CWSibling|CWStackMode, &wc);
+			wc.sibling = m->sel->win;
+		}
 		for (c = m->stack; c; c = c->snext)
-			if (ISVISIBLE(c) && c->isfloating && !c->isfullscreen) {
+			if (ISVISIBLE(c) && c->isfullscreen) {
 				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
 				wc.sibling = c->win;
 			}
+		/* XConfigureWindow(dpy, m->barwin, CWSibling|CWStackMode, &wc); */
+		/* wc.sibling = m->barwin; */
 		for (c = m->stack; c; c = c->snext)
-			if (ISVISIBLE(c) && c->isfullscreen) {
+			if (ISVISIBLE(c) && c->isfloating && !c->isfullscreen && c != m->sel) {
 				XConfigureWindow(dpy, c->win, CWSibling|CWStackMode, &wc);
 				wc.sibling = c->win;
 			}
@@ -1629,6 +1667,14 @@ restack(Monitor *m)
 			}
 		}
 	}
+
+	for (c = m->stack; c; c = c->snext)
+		updatewinbutton(c);
+
+	/* if (m->sel->isfloating || !m->lt[m->sellt]->arrange) { */
+	/* 	XRaiseWindow(dpy, m->sel->win); */
+	/* 	XRaiseWindow(dpy, m->sel->buttonwin); */
+	/* } */
 
 	if (m->sel && (m->sel->isfullscreen || !afloat(m->sel)))
 		for (c = m->stack; c; c = c->snext)
@@ -1660,6 +1706,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	sendconfigurenotify(c);
 	updateborder(c);
+	updatewinbutton(c);
 	/* XSync(dpy, 0); */
 }
 
@@ -2025,10 +2072,44 @@ updatedesktops(void)
 }
 
 void
+updatewinbutton(Client *c)
+{
+	int width = 20;
+	int height = 15;
+	int border = 2;
+	XWindowChanges wc;
+	XClassHint ch = { "winbutton", "dwm" };
+	XSetWindowAttributes swa = {
+		.override_redirect = 1,
+		.background_pixel = schemes[SchemeWinButton][ColorFG].pixel,
+		.border_pixel = schemes[SchemeWinButton][ColorBorder].pixel,
+	};
+
+	if (!c->buttonwin) {
+		c->buttonwin = XCreateWindow(dpy, root, WIDTH(c) * -2, c->y, width, height,
+			border, depth, CopyFromParent, visual,
+			CWOverrideRedirect|CWBackPixel|CWBorderPixel, &swa);
+		XSetClassHint(dpy, c->buttonwin, &ch);
+		XDefineCursor(dpy, c->buttonwin, cursors[CurNormal]);
+		XSelectInput(dpy, c->buttonwin, ButtonPressMask|EnterWindowMask|LeaveWindowMask);
+		XMapWindow(dpy, c->buttonwin);
+		setcardprop(c->buttonwin, netatom[NetWMWindowOpacity], 0);
+	}
+
+	if (ISVISIBLE(c)) {
+		wc.stack_mode = Above;
+		wc.sibling = c->win;
+		XConfigureWindow(dpy, c->buttonwin, CWSibling|CWStackMode, &wc);
+		XMoveWindow(dpy, c->buttonwin, c->x + WIDTH(c) - width, c->y - (height / 2));
+	} else
+		XMoveWindow(dpy, c->buttonwin, WIDTH(c) * -2, c->y - 10);
+}
+
+void
 updatebarwin(Monitor *m)
 {
 	XClassHint ch = { "bar", "dwm" };
-	XSetWindowAttributes wa = {
+	XSetWindowAttributes swa = {
 		.override_redirect = 1,
 		.background_pixmap = ParentRelative,
 		.event_mask = ButtonPressMask|ExposureMask
@@ -2056,7 +2137,7 @@ updatebarwin(Monitor *m)
 	} else {
 		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, barheight, 0,
 			depth, CopyFromParent, visual,
-			CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+			CWOverrideRedirect|CWBackPixmap|CWEventMask, &swa);
 		XSetClassHint(dpy, m->barwin, &ch);
 		XDefineCursor(dpy, m->barwin, cursors[CurNormal]);
 		setatomprop(m->barwin, netatom[NetWMWindowType], netatom[NetWMWindowTypeDock]);
@@ -2226,6 +2307,7 @@ buttonpress(XEvent *e)
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
 	unsigned int i = 0, click = ClickInvalid, clickalt = ClickInvalid;
+	static ClickEv lastclick = { .isvalid = 0 };
 
 	/* focus monitor if necessary */
 	if ((m = wintomon(ev->window)) && m != selmon)
@@ -2254,7 +2336,7 @@ buttonpress(XEvent *e)
 		else if (ev->x > m->bp.statusstart) {
 			click = ClickStatusText;
 			handlestatusclick(m, ev);
-		}
+			}
 
 		/* window title */
 		else
@@ -2275,6 +2357,26 @@ buttonpress(XEvent *e)
 		XAllowEvents(dpy, ReplayPointer, CurrentTime);
 	}
 
+	else if ((c = winbuttontoclient(ev->window)))
+	{
+		click = ClickWinButton;
+
+		if (lastclick.isvalid
+		 && ev->button == lastclick.button
+		 && ev->window == lastclick.win
+		 && ev->time - lastclick.time < 300)
+		{
+			click = ClickWinButtonDouble;
+			if (c != selmon->sel)
+				focus(c);
+		}
+
+		lastclick.isvalid = 1;
+		lastclick.button = ev->button;
+		lastclick.win = ev->window;
+		lastclick.time = ev->time;
+	}
+
 	if (click == ClickClientWin || click == ClickRootWin)
 		clickalt = ClickWinArea;
 
@@ -2284,6 +2386,7 @@ buttonpress(XEvent *e)
 			&& buttons[i].button == ev->button
 			&& CLEANMASK(buttons[i].mod) == CLEANMASK(ev->state))
 		{
+			lastclick.isvalid = 0;
 			buttons[i].func(click == ClickTagBar && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg);
 		}
 }
@@ -2875,6 +2978,26 @@ origwintoclient(Window w)
 }
 
 Client *
+winbuttontoclient(Window w)
+{
+	Client *c;
+	Monitor *m;
+
+	if (selmon->sel && selmon->sel->buttonwin == w)
+		return selmon->sel;
+
+	if (ISUTILWIN(w))
+		return NULL;
+
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			if (c->buttonwin == w)
+				return c;
+
+	return NULL;
+}
+
+Client *
 wintosystrayicon(Window w)
 {
 	Client *c;
@@ -2900,7 +3023,7 @@ wintomon(Window w)
 		if (w == m->barwin)
 			return m;
 
-	if ((c = wintoclient(w)))
+	if ((c = wintoclient(w)) || (c = winbuttontoclient(w)))
 		return c->mon;
 
 	return selmon;
