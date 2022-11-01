@@ -33,6 +33,7 @@ static const unsigned int snap        = 32;  /* snap pixel */
 static const int lockfullscreen       = 0;   /* 1 will force focus on the fullscreen window */
 static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
 static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
+static const int hintcenter           = 1;   /* 1 means center size-hinted windows in their tiled resizal */
 static const unsigned char xkblayout  = 0;   /* the default keyboard layout number; 0 is the main layout */
 static const int noautofocus          = 1;   /* the default noautofocus setting; see the noautofocus rule below */
 static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
@@ -53,7 +54,7 @@ static const char *colors[SchemeLast][ColorLast] = {
     /*                    FG           BG        Border       BorderBG */
     [SchemeNorm]      = { normfg,      bgcolor,  "#333333",   borderbg }, /* colors of normal (unselected) items, tags, and window borders */
     [SchemeSel]       = { "#bfbfbf",   bgcolor,  "#ffffff",   borderbg }, /* colors of selected items, tags and and window borders */
-    [SchemeUrg]       = { NULL,        NULL,     "#ff0000",   borderbg }, /* border color of urgent windows */
+    [SchemeUrg]       = { NULL,        NULL,     "#993333",   borderbg }, /* border color of urgent windows */
     [SchemeTitle]     = { textcolor,   bgcolor,  NULL,        NULL     }, /* fg and bg color of the window title area in the bar */
     [SchemeStatus]    = { "#999999",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar */
     [SchemeStatusSep] = { "#333333",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar separator characters */
@@ -71,7 +72,6 @@ static const Layout layouts[] = {
     { "[]=",      tile },
     { "[M]",      monocle },
     { "[S]",      stairs },
-    { "><>",      NULL },    /* no layout function means floating behavior */
 };
 
 /* hint for rules
@@ -117,6 +117,7 @@ static const Rule rules[] = {
     { "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0, -1 },
     { "Sxiv", NULL, NULL,                       0,  1,  1,  0,  0,  0,  0, -1 },
     { "mpv", NULL, NULL,                        0,  1,  1,  0,  0,  0,  0, -1 },
+    { "Pinentry", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
     { TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  1,  0,  0, -1 },
     { NULL, NULL, "Event Tester",               0,  0,  0,  1,  0,  0,  0, -1 },
 };
@@ -211,12 +212,14 @@ static void (*attachdirection)(Client *) = attachbelow;
     "pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
     "notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
 
+/* pause mpd and play/pause any mpris-capable media player. requires playerctl. */
 #define MEDIA_PLAYPAUSE \
     SHCMD("mpc pause & file=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
     "-f '{{playerInstance}}\t{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
     "printf '%s\\n' \"$p\" >\"$file\"; playerctl -a pause; : ;} || " \
     "cut -f1 \"$file\" | xargs -rL1 playerctl play -p")
 
+/* run media actions using both mpc and playerctl */
 #define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
     SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & " \
     "playerctl -a status -f '{{playerInstance}}\t{{status}}' | " \
@@ -226,13 +229,13 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define MEDIA_PREV MEDIACMD("prev", "previous")
 #define MEDIA_SEEK_FWD  MEDIACMD("seek +10", "position 10+")
 #define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
+#define MPC_TOGGLE CMD("mpc", "toggle")
 
 /* change the brightness of internal and external monitors */
 #define LIGHTINC(N) SHCMD("light -A " #N "; monbrightness raise " #N)
 #define LIGHTDEC(N) SHCMD("light -U " #N "; monbrightness lower " #N)
 
 /* other */
-#define PIPEURL CMD("pipeurl", "--clipboard", "ask")
 #define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define SENDKEY(KEYUP, ...) CMD("xdotool", "keyup", KEYUP, "key", "--clearmodifiers", __VA_ARGS__)
@@ -248,6 +251,9 @@ static void (*attachdirection)(Client *) = attachbelow;
     "xclip -o -r -selection clipboard ${target:+-t $target} | " \
     "DISPLAY=$dpy xclip -selection clipboard ${target:+-t $target}; done")
 
+/* ============ */
+/* = Bindings = */
+/* ============ */
 
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
@@ -280,10 +286,10 @@ PAIR( PAIR_JK,          ModAltShift,      spawn,            MPCVOL(-10), MPCVOL(
     { XF86XK_AudioMute,     0,            spawn,            MUTE },
     { XF86XK_AudioMicMute,  0,            spawn,            TOGGLE_MIC_MUTE },
 
-    { XK_p,             ModAltShift,      spawn,            CMD("mpc", "toggle") },
+    { XK_p,             ModAltShift,      spawn,            MPC_TOGGLE },
     { XK_p,             ModAlt,           spawn,            MEDIA_PLAYPAUSE },
-PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
-PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
+PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
+PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
     { XK_n,             ModAlt,           spawn,            NOTIFYSONG },
     { XF86XK_AudioPlay, 0,                spawn,            MEDIA_PLAYPAUSE },
     { XF86XK_AudioPrev, 0,                spawn,            MEDIA_PREV },
@@ -294,7 +300,7 @@ PAIR( PAIR_BRIGHTNESS,  Shift,            spawn,            LIGHTDEC(1),  LIGHTI
 PAIR( PAIR_BRACKET,     Mod,              spawn,            LIGHTDEC(10), LIGHTINC(10) ),
 PAIR( PAIR_BRACKET,     ModShift,         spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
 
-    { XK_r,             Mod,              spawn,            PIPEURL },
+    { XK_r,             Mod,              spawn,            CMD("pipeurl", "--clipboard", "ask") },
     { XK_r,             ModShift,         spawn,            CMD("pipeurl", "history") },
     { XK_y,             Mod,              spawn,            CMD("qrsend") },
 
@@ -328,46 +334,52 @@ PAIR( PAIR_COMMAPERIOD, ModShift,         tagmon,           {.i = +1 }, {.i = -1
     TAGKEYS(XK_7, 6), TAGKEYS(XK_8, 7), TAGKEYS(XK_9, 8),
 };
 
-/* statusbar module click actions */
-static const StatusClick statusclick[] = {
-    /* module       button     modifier    function          argument */
-    { "audio",      Button1,   0,          spawn,            PACYCLE },
-    { "audio",      Button3,   0,          spawn,            TUI("pulsemixer") },
-    { "audio",      Button4,   0,          spawn,            VOL(+3) },
-    { "audio",      Button5,   0,          spawn,            VOL(-3) },
-    { "network",    Button1,   0,          spawn,            CMD("networkmanager_dmenu") },
-};
-
-/* macro for defining click actions for when the cursor is on any window or the root window */
-#define GLOBALCLICK(MOD, FN, ARG) \
-    { ClickRootWin,   Button1, MOD, FN, ARG }, \
-    { ClickClientWin, Button1, MOD, FN, ARG }
-
-/* same as above, but for scrolling */
-#define GLOBALSCROLL(MOD, FN, ARG_UP, ARG_DOWN) \
-    { ClickRootWin,   Button4, MOD, FN, ARG_UP   }, \
-    { ClickRootWin,   Button5, MOD, FN, ARG_DOWN }, \
-    { ClickClientWin, Button4, MOD, FN, ARG_UP   }, \
-    { ClickClientWin, Button5, MOD, FN, ARG_DOWN }
+/* ======================== */
+/* = Button Click Actions = */
+/* ======================== */
 
 /* button definitions */
-/* click can be ClickTagBar, ClickLtSymbol, ClickWinTitle, ClickClientWin, or ClickRootWin */
 static const Button buttons[] = {
-    /* click              button     modifier    function          argument */
-    { ClickLtSymbol,      Button1,   0,          setlayout,        {0} },
-    { ClickLtSymbol,      Button2,   0,          setlayout,        {.lt = tile } },
-    { ClickLtSymbol,      Button3,   0,          setlayout,        {.lt = stairs } },
+    /* click area         button     modifier    function          argument */
+    { ClickLtSymbol,      Button1,   0,          setlayout,        {.i = +2 } },
+    { ClickLtSymbol,      Button3,   0,          setlayout,        {.i = -2 } },
+
     { ClickClientWin,     Button1,   Mod,        movemouse,        {0} },
     { ClickClientWin,     Button2,   Mod,        togglefloating,   {0} },
     { ClickClientWin,     Button3,   Mod,        resizemouse,      {0} },
+
     { ClickTagBar,        Button1,   0,          view,             {0} },
     { ClickTagBar,        Button3,   0,          toggleview,       {0} },
-    { ClickTagBar,        Button1,   Mod,        tag,              {0} },
-    { ClickTagBar,        Button3,   Mod,        toggletag,        {0} },
+    { ClickTagBar,        Button1,   Shift,      tag,              {0} },
+    { ClickTagBar,        Button3,   Shift,      toggletag,        {0} },
+    { ClickTagBar,        Button4,   0,          cycleview,        {.i = +1 } },
+    { ClickTagBar,        Button5,   0,          cycleview,        {.i = -1 } },
 
-    GLOBALSCROLL( Mod,        focusstacktiled,  {.i = -1 },     {.i = +1 }    ), /* super+scroll:          change focus */
-    GLOBALSCROLL( ModShift,   push,             {.i = -1 },     {.i = +1 }    ), /* super+shift+scroll:    push the focused window */
-    GLOBALSCROLL( ModCtrl,    setmfact,         {.f = +0.05 },  {.f = -0.05 } ), /* super+control+scroll:  change mfact */
+    { ClickWinArea,       Button4,   Mod,        focusstacktile,   {.i = -1 } },
+    { ClickWinArea,       Button5,   Mod,        focusstacktile,   {.i = +1 } },
+    { ClickWinArea,       Button4,   ModShift,   push,             {.i = -1 } },
+    { ClickWinArea,       Button5,   ModShift,   push,             {.i = +1 } },
+    { ClickWinArea,       Button4,   ModCtrl,    setmfact,         {.f = +0.05 } },
+    { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = +0.05 } },
+};
+
+/* statusbar module click actions */
+static const StatusClick statusclick[] = {
+    /* module       button     modifier    function          argument */
+    { "date",       Button1,   0,          spawn,            SHCMD("notify-send \"$(pcal -t)\"") },
+
+    { "audio",      Button1,   0,          spawn,            MUTE },
+    { "audio",      Button2,   0,          spawn,            TUI("pulsemixer") },
+    { "audio",      Button3,   0,          spawn,            PACYCLE },
+    { "audio",      Button4,   0,          spawn,            VOL(+3) },
+    { "audio",      Button5,   0,          spawn,            VOL(-3) },
+
+    { "music",      Button1,   0,          spawn,            MPC_TOGGLE },
+    { "music",      Button3,   0,          spawn,            TUI("ncmpcpp") },
+    { "music",      Button4,   0,          spawn,            MPCVOL(+10) },
+    { "music",      Button5,   0,          spawn,            MPCVOL(-10) },
+
+    { "network",    Button1,   0,          spawn,            CMD("networkmanager_dmenu") },
 };
 
 // vim:expandtab
