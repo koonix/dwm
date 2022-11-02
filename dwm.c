@@ -66,6 +66,14 @@
 
 #include "dwm.h"
 
+/* TODO: any new clients opening should un-fullscreen the currently fullscreened
+ *       window, even if it is noautofocus. */
+/* TODO: investigate the exact purpose of expose events on the bar,
+ *       specially when a compositor starts/stops */
+/* TODO: if you decide to keep the winbutton thingy:
+ *       - make it smaller
+ *       - perhaps hide it completely if there is no compositor */
+/* TODO: DECIDE ON AND FIX THE FUCKING STACKING ORDER OF WINDOWS */
 /* TODO: give functions (yes, all of them) (and variables?) more sensible names */
 /* TODO: either fix the backtrace or get rid of it */
 /* TODO: rewrite drwtext in a non-stupid way, then add farsi font support to it,
