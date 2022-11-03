@@ -206,7 +206,8 @@ struct StatusClick {
 #define ClassNameSize      32
 #define PertagStackSize    16
 #define BackTraceSize      16
-#define DrwNoMatchSize     1024
+/* #define DrwNoMatchSize     1024 */
+#define DrwBufferSize      1024
 
 /* utility macros */
 #define BUTTONMASK            (ButtonPressMask|ButtonReleaseMask)
@@ -394,8 +395,6 @@ struct Client {
 	Client *swallow;
 	Monitor *mon;
 	Window win, origwin, buttonwin;
-	/* Colormap utilcmap; */
-	/* GC utilgc; */
 	int ismapped; /* mapped state for systray icons */
 };
 
@@ -410,11 +409,21 @@ struct Drw {
 	DrwFont *fonts;
 	int scheme;
 	unsigned int ellipsiswidth;
+
+	/* struct { */
+	/* 	long codepoints[DrwNoMatchSize]; */
+	/* 	unsigned int idx; */
+	/* 	unsigned int max; */
+	/* } nomatches; */
+
 	struct {
-		long codepoints[DrwNoMatchSize];
+		struct {
+			long codepoint;
+			DrwFont *font;
+		} chars[DrwBufferSize];
 		unsigned int idx;
 		unsigned int max;
-	} nomatches;
+	} nomatches, exists;
 };
 
 struct DrwFont {
@@ -1478,7 +1487,7 @@ createmon(void)
 	m->gappx = gappx;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
-	/* strncpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol) - 1); */
+	/* strscpy(m->ltsymbol, layouts[0].symbol, sizeof(m->ltsymbol)); */
 
 	for (i = 0; i < LENGTH(tags); i++) {
 		m->pertag[i].mfact = m->mfact;
@@ -1500,8 +1509,8 @@ applyrules(Client *c)
 	for (i = 0; i < LENGTH(rules); i++) {
 		r = &rules[i];
 		if ((!r->title || strstr(c->title, r->title))
-		&& (!r->class || strstr(c->class, r->class))
-		&& (!r->instance || strstr(c->instance, r->instance)))
+		 && (!r->class || strstr(c->class, r->class))
+		 && (!r->instance || strstr(c->instance, r->instance)))
 		{
 			c->isfloating = r->isfloating;
 			c->compfullscreen = r->compfullscreen;
@@ -1595,7 +1604,7 @@ arrange(Monitor *m)
 
 	showhide(m->stack);
 
-	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol) - 1);
+	strscpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof(m->ltsymbol));
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 
@@ -1947,8 +1956,8 @@ updateclass(Client *c)
 	XClassHint ch = { NULL, NULL };
 
 	XGetClassHint(dpy, c->win, &ch);
-	strncpy(c->class, ch.res_class ? ch.res_class : broken, sizeof(c->class));
-	strncpy(c->instance, ch.res_name ? ch.res_name : broken, sizeof(c->instance));
+	strscpy(c->class, ch.res_class ? ch.res_class : broken, sizeof(c->class));
+	strscpy(c->instance, ch.res_name ? ch.res_name : broken, sizeof(c->instance));
 	XFree(ch.res_class);
 	XFree(ch.res_name);
 }
@@ -1959,7 +1968,7 @@ updatetitle(Client *c)
 	if (!gettextprop(c->win, netatom[NetWMName], c->title, sizeof(c->title)))
 		gettextprop(c->win, XA_WM_NAME, c->title, sizeof(c->title));
 	if (c->title[0] == '\0') /* hack to mark broken clients */
-		strcpy(c->title, broken);
+		strscpy(c->title, broken, sizeof(c->title));
 }
 
 void
@@ -2162,7 +2171,7 @@ void
 updatestatustext(void)
 {
 	if (!gettextprop(root, XA_WM_NAME, statustext, sizeof(statustext)))
-		strcpy(statustext, "dwm-"VERSION);
+		strscpy(statustext, "dwm-"VERSION, sizeof(statustext));
 }
 
 void
@@ -2243,7 +2252,7 @@ drawbar(Monitor *m)
 		if (m->sel)
 		{
 			drw.scheme = m == selmon ? SchemeTitle : SchemeNorm;
-			fribidi(m->sel->title, biditext);
+			fribidi(biditext, m->sel->title, sizeof(m->sel->title));
 			DRWTEXTWP(biditext, x, w, 0);
 
 			/* draw a floating indicator */
@@ -2300,9 +2309,9 @@ barunchanged(Monitor *m)
 	m->bs.isselmon = (m == selmon);
 	m->bs.isstatusmon = (m == STATUSMON);
 	m->bs.isfloating = (m->sel && m->sel->isfloating);
-	strncpy(m->bs.ltsymbol, m->ltsymbol, sizeof(m->ltsymbol));
-	strncpy(m->bs.statustext, statustext, sizeof(statustext));
-	strncpy(m->bs.title, m->sel ? m->sel->title : "\0", sizeof(m->sel->title));
+	strscpy(m->bs.ltsymbol, m->ltsymbol, sizeof(m->bs.ltsymbol));
+	strscpy(m->bs.statustext, statustext, sizeof(m->bs.statustext));
+	strscpy(m->bs.title, m->sel ? m->sel->title : "\0", sizeof(m->bs.title));
 
 	return 0;
 }
@@ -2417,17 +2426,14 @@ handlestatusclick(Monitor *m, XButtonPressedEvent *ev)
 int
 drawstatus(Monitor *m)
 {
-	char c, normaltext[LENGTH(statustext)] = {'\0'};
-	int i, x = 0, pos = 0, normalstartpos = 0, tagstartpos = 0, skiptag = 0;
+	char c, modulename[64] = {'\0'}, normaltext[LENGTH(statustext)] = {'\0'};
+	int i, islastchar, x = 0, pos = 0, normalstartpos = 0, tagstartpos = 0, skiptag = 0;
 	unsigned int status_w, status_x, modulestart_x = 0;
-	int islastchar, modulefound[LENGTH(statusclick)];
 	enum modes { Normal, Tag, };
 	enum modes mode = Normal;
 
-	for (i = 0; i < LENGTH(statusclick); i++) {
+	for (i = 0; i < LENGTH(statusclick); i++)
 		m->bp.modules[i].exists = 0;
-		modulefound[i] = 0;
-	}
 
 	for (c = statustext[0]; c; c = statustext[++pos])
 	{
@@ -2449,15 +2455,8 @@ drawstatus(Monitor *m)
 				strncat(normaltext, &statustext[normalstartpos], tagstartpos - normalstartpos);
 			normalstartpos = pos + 1;
 
-			/* record modules's start x coord */
-			for (i = 0; i < LENGTH(statusclick); i++)
-				if (strncmp(&statustext[tagstartpos + 1], statusclick[i].module,
-					pos - (tagstartpos + 1)) == 0)
-				{
-					m->bp.modules[i].exists = 1;
-					m->bp.modules[i].start = modulestart_x;
-					modulefound[i] = 1;
-				}
+			/* record modules's name */
+			strsscpy(modulename, &statustext[tagstartpos + 1], sizeof(modulename), pos - (tagstartpos + 1));
 		}
 
 		/* no end of tag found;
@@ -2484,11 +2483,12 @@ finaldraw:
 				x = drwtext(normaltext, x, 0, m->bdw, barheight, 0, 0);
 			}
 
-			/* record module's end x coord */
+			/* record module's start and end x coord */
 			for (i = 0; i < LENGTH(statusclick); i++)
-				if (modulefound[i]) {
+				if (strcmp(statusclick[i].module, modulename) == 0) {
+					m->bp.modules[i].exists = 1;
+					m->bp.modules[i].start = modulestart_x;
 					m->bp.modules[i].end = x;
-					modulefound[i] = 0;
 				}
 
 			if (!c)
@@ -3982,12 +3982,12 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size)
 		return 0;
 
 	if (prop.encoding == XA_STRING) {
-		strncpy(text, (char *)prop.value, size - 1);
+		strscpy(text, (char *)prop.value, size);
 	}
 	else if (XmbTextPropertyToTextList(dpy, &prop, &list, &n) >= Success
 		&& n > 0 && *list)
 	{
-		strncpy(text, *list, size - 1);
+		strscpy(text, *list, size);
 		XFreeStringList(list);
 	}
 	text[size - 1] = '\0';
@@ -4361,21 +4361,21 @@ lasttiled(Monitor *m)
 }
 
 void
-fribidi(char *in, char *out)
+fribidi(char *dest, char *src, size_t size)
 {
 	FriBidiStrIndex len;
 	FriBidiCharSet charset;
-	FriBidiChar logical[StatusSize];
-	FriBidiChar visual[StatusSize];
-	FriBidiParType base = FRIBIDI_PAR_ON;
+	FriBidiChar unicodestr[size * 3];
+	FriBidiChar visstr[size * 3];
+	FriBidiParType partype = FRIBIDI_PAR_ON;
 
-	out[0] = '\0';
-	if (!(len = strlen(in)))
+	dest[0] = '\0';
+	if (!(len = strnlen(src, size)))
 		return;
 	charset = fribidi_parse_charset("UTF-8");
-	len = fribidi_charset_to_unicode(charset, in, len, logical);
-	fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
-	fribidi_unicode_to_charset(charset, visual, len, out);
+	len = fribidi_charset_to_unicode(charset, src, len, unicodestr);
+	fribidi_log2vis(unicodestr, len, &partype, visstr, NULL, NULL, NULL);
+	fribidi_unicode_to_charset(charset, visstr, len, dest);
 }
 
 /* there's no way to check accesses to destroyed windows, thus those cases are
@@ -4420,7 +4420,7 @@ mksimplewin(void)
 }
 
 void
-drwinit(void)
+renderinit(void)
 {
 	DrwFont *font, *prevfont = NULL;
 	int i, j;
@@ -4459,7 +4459,7 @@ drwinit(void)
 }
 
 void
-drwmap(Monitor *m, unsigned int w, int dest_x)
+rendermap(Monitor *m, unsigned int w, int dest_x)
 {
 	XCopyArea(dpy, drw.pixmap, m->barwin, drw.gc, 0, 0, w, barheight, dest_x, 0);
 	XSetForeground(dpy, drw.gc, schemes[drw.scheme][ColorBG].pixel);
@@ -4483,7 +4483,7 @@ drwgettextwidthclamp(const char *text, unsigned int n)
 }
 
 void
-drwupdatesize(void)
+renderupdatesize(void)
 {
 	XFreePixmap(dpy, drw.pixmap);
 	drw.pixmap = XCreatePixmap(dpy, root, sw, barheight, depth);
@@ -4494,7 +4494,7 @@ drwupdatesize(void)
 }
 
 void
-drwrect(int x, int y, unsigned int w, unsigned int h, int filled, int invert)
+renderrect(int x, int y, unsigned int w, unsigned int h, int filled, int invert)
 {
 	XSetForeground(dpy, drw.gc,
 		invert ? schemes[drw.scheme][ColorBG].pixel : schemes[drw.scheme][ColorFG].pixel);
@@ -4504,58 +4504,8 @@ drwrect(int x, int y, unsigned int w, unsigned int h, int filled, int invert)
 		XDrawRectangle(dpy, drw.pixmap, drw.gc, x, y, w - 1, h - 1);
 }
 
-DrwFont *
-xftfontcreate(const char *fontname, FcPattern *fontpattern)
-{
-	DrwFont *font;
-	XftFont *xftfont = NULL;
-	FcPattern *pattern = NULL;
-	FcBool color;
-
-	if (fontname) {
-		/*
-		 * using the pattern found at font->xftfont->pattern does not yield the
-		 * same substitution results as using the pattern returned by
-		 * FcNameParse; using the latter results in the desired fallback
-		 * behaviour whereas the former just results in missing-character
-		 * rectangles being drawn, at least with some fonts.
-		 */
-		if (!(xftfont = XftFontOpenName(dpy, screen, fontname))) {
-			fprintf(stderr, "error, cannot load font from name: '%s'\n", fontname);
-			return NULL;
-		}
-		if (!(pattern = FcNameParse((FcChar8 *) fontname))) {
-			fprintf(stderr, "error, cannot parse font name to pattern: '%s'\n", fontname);
-			XftFontClose(dpy, xftfont);
-			return NULL;
-		}
-	} else if (fontpattern) {
-		if (!(xftfont = XftFontOpenPattern(dpy, fontpattern))) {
-			fprintf(stderr, "error, cannot load font from pattern.\n");
-			return NULL;
-		}
-	} else {
-		die("no font specified for xftfontcreate().");
-	}
-
-	if (!allowcolorfonts
-		&& FcPatternGetBool(xftfont->pattern, FC_COLOR, 0, &color) == FcResultMatch
-		&& color)
-	{
-		XftFontClose(dpy, xftfont);
-		return NULL;
-	}
-
-	font = ecalloc(1, sizeof(DrwFont));
-	font->xftfont = xftfont;
-	font->pattern = pattern;
-	font->h = xftfont->ascent + xftfont->descent;
-
-	return font;
-}
-
 void
-drwfree(void)
+renderfree(void)
 {
 	int i, j;
 
@@ -4575,21 +4525,100 @@ drwfree(void)
 }
 
 void
-drwfreefonts(DrwFont *font)
+renderfreefonts(DrwFont *font)
 {
 	if (font) {
-		drwfreefonts(font->next);
+		renderfreefonts(font->next);
 		xftfontfree(font);
 	}
 }
 
-void
-xftfontfree(DrwFont *font)
+int
+rendertext(const char *text, int x, int y, unsigned int w, unsigned int h,
+	unsigned int pad, int invert)
 {
-	if (font->pattern)
-		FcPatternDestroy(font->pattern);
-	XftFontClose(dpy, font->xftfont);
-	free(font);
+	char *origtext = text;
+	int utf8charsize;
+	long utf8codepoint;
+
+	while (*text)
+	{
+		getfirstcharinfo(text, &font, &size, &widthpx);
+		text += size;
+		totalsize += size;
+		totalwidthpx += widthpx;
+	}
+}
+
+void
+getfirstcharinfo(const char* string, DrwFont **font, unsigned int *size, unsigned int *widthpx)
+{
+	long codepoint;
+	DrwFont *font;
+	unsigned int w;
+
+	*size = utf8decode(string, &codepoint, UTF_SIZ);
+	*font = getcharfont(codepoint);
+	*widthpx = getcharwidth(*font, string, *size);
+}
+
+DrwFont *
+getcharfont(long codepoint)
+{
+	DrwFont *font, *lastfont;
+	FcCharSet *fccharset;
+	FcPattern *fcpattern, match;
+	XftResult result;
+
+	for (font = drw.fonts; font; font = font->net)
+		if (XftCharExists(dpy, font->xftfont, codepoint))
+			return font;
+
+	fccharset = FcCharSetCreate();
+	FcCharSetAddChar(fccharset, codepoint);
+
+	/* refer to the comment in xftfontcreate for more information. */
+	if (!drw.fonts->pattern)
+		die("the first font in the cache must be loaded from a font string.");
+
+	fcpattern = FcPatternDuplicate(drw.fonts->pattern);
+	FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
+	FcPatternAddBool(fcpattern, FC_SCALABLE, FcTrue);
+	if (!allowcolorfonts)
+		FcPatternAddBool(fcpattern, FC_COLOR, FcFalse);
+
+	FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
+	FcDefaultSubstitute(fcpattern);
+	match = XftFontMatch(dpy, screen, fcpattern, &result);
+
+	FcCharSetDestroy(fccharset);
+	FcPatternDestroy(fcpattern);
+
+	if (!match)
+		return drw.fonts;
+
+	font = xftfontcreate(NULL, match);
+	if (font && XftCharExists(dpy, font->xftfont, codepoint)) {
+		/* TODO: add the character to the list of matched fonts */
+		for (lastfont = drw.fonts; lastfont->next; lastfont = lastfont->next);
+		lastfont->next = font;
+	}
+	else {
+		xftfontfree(font);
+		/* TODO: add the character to the list of nomatch fonts */
+	}
+}
+
+unsigned int
+getcharwidth(DrwFont *font, const char *string, unsigned int size)
+{
+	XGlyphInfo info;
+
+	if (!text)
+		return 0;
+
+	XftTextExtentsUtf8(dpy, font->xftfont, (XftChar8 *)string, size, &info);
+	return info.xOff;
 }
 
 int
@@ -4775,7 +4804,7 @@ nomatch:
 }
 
 void
-drwgetextents(DrwFont *font, const char *text, unsigned int len,
+rendergetextents(DrwFont *font, const char *text, unsigned int len,
 	unsigned int *w, unsigned int *h)
 {
 	XGlyphInfo info;
@@ -4790,27 +4819,86 @@ drwgetextents(DrwFont *font, const char *text, unsigned int len,
 		*h = font->h;
 }
 
+DrwFont *
+xftfontcreate(const char *fontname, FcPattern *fontpattern)
+{
+	DrwFont *font;
+	XftFont *xftfont = NULL;
+	FcPattern *pattern = NULL;
+	FcBool color;
+
+	if (fontname) {
+		/*
+		 * using the pattern found at font->xftfont->pattern does not yield the
+		 * same substitution results as using the pattern returned by
+		 * FcNameParse; using the latter results in the desired fallback
+		 * behaviour whereas the former just results in missing-character
+		 * rectangles being drawn, at least with some fonts.
+		 */
+		if (!(xftfont = XftFontOpenName(dpy, screen, fontname))) {
+			fprintf(stderr, "error, cannot load font from name: '%s'\n", fontname);
+			return NULL;
+		}
+		if (!(pattern = FcNameParse((FcChar8 *) fontname))) {
+			fprintf(stderr, "error, cannot parse font name to pattern: '%s'\n", fontname);
+			XftFontClose(dpy, xftfont);
+			return NULL;
+		}
+	} else if (fontpattern) {
+		if (!(xftfont = XftFontOpenPattern(dpy, fontpattern))) {
+			fprintf(stderr, "error, cannot load font from pattern.\n");
+			return NULL;
+		}
+	} else {
+		die("no font specified for xftfontcreate().");
+	}
+
+	if (!allowcolorfonts
+		&& FcPatternGetBool(xftfont->pattern, FC_COLOR, 0, &color) == FcResultMatch
+		&& color)
+	{
+		XftFontClose(dpy, xftfont);
+		return NULL;
+	}
+
+	font = ecalloc(1, sizeof(DrwFont));
+	font->xftfont = xftfont;
+	font->pattern = pattern;
+	font->h = xftfont->ascent + xftfont->descent;
+
+	return font;
+}
+
+void
+xftfontfree(DrwFont *font)
+{
+	if (font->pattern)
+		FcPatternDestroy(font->pattern);
+	XftFontClose(dpy, font->xftfont);
+	free(font);
+}
+
 size_t
-utf8decode(const char *c, long *u, size_t clen)
+utf8decode(const char *string, long *codepoint_ret, size_t clen)
 {
 	size_t i, j, len, type;
-	long udecoded;
+	long codepoint;
 
-	*u = UTF_INVALID;
+	*codepoint_ret = UTF_INVALID;
 	if (!clen)
 		return 0;
-	udecoded = utf8decodebyte(c[0], &len);
+	codepoint = utf8decodebyte(string[0], &len);
 	if (!BETWEEN(len, 1, UTF_SIZ))
 		return 1;
 	for (i = 1, j = 1; i < clen && j < len; ++i, ++j) {
-		udecoded = (udecoded << 6) | utf8decodebyte(c[i], &type);
+		codepoint = (codepoint << 6) | utf8decodebyte(string[i], &type);
 		if (type)
 			return j;
 	}
 	if (j < len)
 		return 0;
-	*u = udecoded;
-	utf8validate(u, len);
+	*codepoint_ret = codepoint;
+	utf8validate(codepoint_ret, len);
 
 	return len;
 }
@@ -4825,12 +4913,36 @@ utf8decodebyte(const char c, size_t *i)
 }
 
 size_t
-utf8validate(long *u, size_t i)
+utf8validate(long *codepoint, size_t i)
 {
-	if (!BETWEEN(*u, utfmin[i], utfmax[i]) || BETWEEN(*u, 0xD800, 0xDFFF))
-		*u = UTF_INVALID;
-	for (i = 1; *u > utfmax[i]; ++i);
+	if (!BETWEEN(*codepoint, utfmin[i], utfmax[i])
+	  || BETWEEN(*codepoint, 0xD800, 0xDFFF))
+		*codepoint = UTF_INVALID;
+	for (i = 1; *codepoint > utfmax[i]; ++i);
 	return i;
+}
+
+/* copy src (or as much of it as fits) into dest. */
+void
+strscpy(char *dest, const char *src, size_t size)
+{
+	if (size <= 0)
+		return;
+	size_t len = strnlen(src, size - 1);
+	memcpy(dest, src, len);
+	dest[len] = '\0';
+}
+
+/* copy src (or as much of it as fits) into dest.
+ * won't truncate if src is not null-terminated and dest has enough space. */
+void
+strsscpy(char *dest, const char *src, size_t destsize, size_t srcsize)
+{
+	if (destsize <= 0)
+		return;
+	size_t len = MIN(destsize - 1, strnlen(src, srcsize));
+	memcpy(dest, src, len);
+	dest[len] = '\0';
 }
 
 void *
@@ -4840,6 +4952,16 @@ ecalloc(size_t nmemb, size_t size)
 
 	if (!(p = calloc(nmemb, size)))
 		die("calloc:");
+	return p;
+}
+
+void *
+ereallocarray(void *ptr, size_t nmemb, size_t size)
+{
+	void *p;
+
+	if (!(p = reallocarray(ptr, nmemb, size)))
+		die("reallocarray:");
 	return p;
 }
 
@@ -4854,7 +4976,7 @@ die(const char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 
-	if (fmt[0] && fmt[strlen(fmt)-1] == ':') {
+	if (fmt[0] && fmt[strlen(fmt) - 1] == ':') {
 		fputc(' ', stderr);
 		perror(NULL);
 	} else {

@@ -205,6 +205,17 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define MPCVOL(PERCENT) CMD("mpc", "volume", #PERCENT)
 #define MUTE CMD("pamixer", "-t")
 #define PACYCLE CMD("pacycle")
+#define MPC_TOGGLE CMD("mpc", "toggle")
+#define MEDIA_PLAYPAUSE SHCMD("mpc pause & playerctl play-pause")
+
+/* run media actions using both mpc and playerctl */
+#define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
+    SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & playerctl " PLAYERCTL_CMD)
+
+#define MEDIA_NEXT MEDIACMD("next", "next")
+#define MEDIA_PREV MEDIACMD("prev", "previous")
+#define MEDIA_SEEK_FWD  MEDIACMD("seek +10", "position 10+")
+#define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
 
 #define TOGGLE_MIC_MUTE \
     SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
@@ -213,31 +224,11 @@ static void (*attachdirection)(Client *) = attachbelow;
     "pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
     "notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
 
-/* pause mpd and play/pause any mpris-capable media player. requires playerctl. */
-#define MEDIA_PLAYPAUSE \
-    SHCMD("mpc pause & file=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
-    "-f '{{playerInstance}}\t{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
-    "printf '%s\\n' \"$p\" >\"$file\"; playerctl -a pause; : ;} || " \
-    "cut -f1 \"$file\" | xargs -rL1 playerctl play -p")
-
-/* run media actions using both mpc and playerctl */
-#define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
-    SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & " \
-    "playerctl -a status -f '{{playerInstance}}\t{{status}}' | " \
-    "grep Playing | cut -f1 | xargs -rL1 playerctl " PLAYERCTL_CMD " -p")
-
-#define MEDIA_NEXT MEDIACMD("next", "next")
-#define MEDIA_PREV MEDIACMD("prev", "previous")
-#define MEDIA_SEEK_FWD  MEDIACMD("seek +10", "position 10+")
-#define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
-#define MPC_TOGGLE CMD("mpc", "toggle")
-
 /* change the brightness of internal and external monitors */
 #define LIGHTINC(N) SHCMD("light -A " #N "; monbrightness raise " #N)
 #define LIGHTDEC(N) SHCMD("light -U " #N "; monbrightness lower " #N)
 
 /* other */
-#define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define SENDKEY(KEYUP, ...) CMD("xdotool", "keyup", KEYUP, "key", "--clearmodifiers", __VA_ARGS__)
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
@@ -246,7 +237,7 @@ static void (*attachdirection)(Client *) = attachbelow;
 /* copy the clipboard contents to all running Xephyr instances */
 #define COPYTOXEPHYR \
     SHCMD("confirm=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
-    "-nb '#222222' -nf '#aaaaaa' -sb '#52161e'); [ \"$confirm\" != Yes ] && exit; " \
+    "-nb '#222222' -nf '#aaaaaa' -sb '#52161e'); [ \"$confirm\" = Yes ] || exit; " \
     "xclip -o -selection clipboard -t TARGETS | grep -q image/png && target=image/png || unset target; " \
     "for dpy in $(pgrep -ax Xephyr | grep -o ' :[0-9]\\+'); do " \
     "xclip -o -r -selection clipboard ${target:+-t $target} | " \
@@ -289,9 +280,8 @@ PAIR( PAIR_JK,          ModAltShift,      spawn,            MPCVOL(-10), MPCVOL(
 
     { XK_p,             ModAltShift,      spawn,            MPC_TOGGLE },
     { XK_p,             ModAlt,           spawn,            MEDIA_PLAYPAUSE },
-PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
-PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
-    { XK_n,             ModAlt,           spawn,            NOTIFYSONG },
+PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
+PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
     { XF86XK_AudioPlay, 0,                spawn,            MEDIA_PLAYPAUSE },
     { XF86XK_AudioPrev, 0,                spawn,            MEDIA_PREV },
     { XF86XK_AudioNext, 0,                spawn,            MEDIA_NEXT },

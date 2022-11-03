@@ -189,7 +189,8 @@ static Client *firsttiled(Monitor *m) __attribute__((unused));
 static Client *firsttiledontag(Client *c);
 static Client *firsttiledcore(Client *c, unsigned int tags);
 static Client *lasttiled(Monitor *m);
-static void fribidi(char *in, char *out);
+/* static void fribidi(char *in, char *out, size_t size) */
+static void fribidi(char *dest, char *src, size_t size);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee) __attribute__((unused));
@@ -209,5 +210,8 @@ static void drwgetextents(DrwFont *font, const char *text, unsigned int len, uns
 static size_t utf8decode(const char *c, long *u, size_t clen);
 static long utf8decodebyte(const char c, size_t *i);
 static size_t utf8validate(long *u, size_t i);
-static void * ecalloc(size_t nmemb, size_t size);
+static void strscpy(char *dest, const char *src, size_t size);
+static void strsscpy(char *dest, const char *src, size_t destsize, size_t srcsize);
+static void *ecalloc(size_t nmemb, size_t size);
+static void *ereallocarray(void *ptr, size_t nmemb, size_t size);
 static void die(const char *fmt, ...);
