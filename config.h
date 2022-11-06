@@ -5,18 +5,18 @@
 #define TERMCLASS "st-256color"
 
 /* border */
-static const unsigned int borderpx             = 7;  /* border pixel of windows */
-static const unsigned int innerborderpx        = 3;  /* inner border pixel of windows */
-static const unsigned int innerborderoffsetpx  = 2;  /* distance between inner border and window */
+static const int borderpx             = 7;  /* border pixel of windows */
+static const int innerborderpx        = 3;  /* inner border pixel of windows */
+static const int innerborderoffsetpx  = 2;  /* distance between inner border and window */
 
 /* layout settings */
 static const int pertag            = 1;    /* 1 means remember layout, mfact and nmaster per tag */
 static const int resettag          = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
-static const unsigned int gappx    = 15;   /* gaps between windows */
+static const int gappx             = 15;   /* gaps between windows */
 static const float mfact           = 0.5;  /* factor of master area size [0.05..0.95] */
 static const int nmaster           = 1;    /* number of clients in master area */
 static const int nmasterbias       = 1;    /* reduce nmaster if masters are removed when nmaster > nmasterbias; <0 to disable */
-static const unsigned int stairpx  = 75;   /* depth of the stairs layout */
+static const int stairpx           = 75;   /* depth of the stairs layout */
 static const int stairsdirection   = 1;    /* alignment of the stairs layout; 0: left-aligned, 1: right-aligned */
 static const int stairssamesize    = 0;    /* 1 means shrink all the staired windows to the same size */
 
@@ -29,7 +29,7 @@ static const int statusmonnum     = -1;    /* monitor number to show status and 
 static const float cindfact       = 0.1;   /* size of client indicators relative to font height */
 
 /* other settings */
-static const unsigned int snap        = 32;  /* snap pixel */
+static const int snap                 = 32;  /* snap pixel */
 static const int lockfullscreen       = 0;   /* 1 will force focus on the fullscreen window */
 static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
 static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
@@ -39,7 +39,7 @@ static const int noautofocus          = 1;   /* the default noautofocus setting;
 static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
 
 /* fonts */
-static const char *fonts[] = {
+static const char *fontnames[] = {
     "Signika Negative:size=13",
     ":lang=fa:spacing=mono:size=13",
     "Symbols Nerd Font:size=10",
@@ -72,7 +72,7 @@ static const Layout layouts[] = {
     /* symbol     arrange function */
     { "[]=",      tile    },
     { "[M]",      monocle },
-    { "[S]",      stairs  },
+    { "[]/",      stairs  },
 };
 
 /* hint for rules
@@ -126,28 +126,21 @@ static const Rule rules[] = {
 /* hint for attachdirection
  *
  * attach:
- *   the default behavior; new clients go in the master area.
+ *   the default behavior; new clients become a master.
  *
  * attachabove:
- *   make new clients attach above the selected client,
- *   instead of always becoming the new master. this behavior is known from xmonad.
- *
- * attachaside:
- *   make new clients get attached and focused in the stacking area,
- *   instead of always becoming the new master. it's basically an attachabove modification.
+ *   make new clients attach above the selected client.
+ *   this behavior is known from xmonad.
  *
  * attachbelow:
- *   make new clients attach below the selected client,
- *   instead of always becoming the new master. inspired heavily by attachabove.
- *
- * attachbottom:
- *   new clients attach at the bottom of the stack instead of the top.
+ *   make new clients attach below the selected client.
  *
  * attachtop:
- *   new client attaches below the last master/on top of the stack.
- *   behavior feels very intuitive as it doesn't disrupt existing masters,
- *   no matter the amount of them, it only pushes the clients in stack down.
- *   in case of nmaster = 1 feels like attachaside.
+ *   new client attaches below the last master, on top of the stack.
+ *   behavior feels very intuitive as it doesn't disrupt the existing masters.
+ *
+ * attachbottom:
+ *   new clients attach at the bottom of the stack.
  */
 static void (*attachdirection)(Client *) = attachbelow;
 
@@ -310,8 +303,8 @@ PAIR( PAIR_HL,          Mod,              setmfact,         {.f = -0.05 }, {.f =
     { XK_semicolon,     ModCtrl,          setlayout,        {.lt = monocle } },
 PAIR( PAIR_JK,          ModCtrl,          incnmaster,       {.i = -1 }, {.i = +1 } ),
     { XK_f,             ModShift,         togglefloating,   {0} },
-    { XK_0,             Mod,              view,             {.ui = ~0 } },
-    { XK_0,             ModShift,         tag,              {.ui = ~0 } },
+    { XK_0,             Mod,              view,             {.ui = ~0U } },
+    { XK_0,             ModShift,         tag,              {.ui = ~0U } },
 
 PAIR( PAIR_COMMAPERIOD, Mod,              viewmon,          {.i = +1 }, {.i = -1 } ),
 PAIR( PAIR_COMMAPERIOD, ModShift,         tagmon,           {.i = +1 }, {.i = -1 } ),
@@ -354,7 +347,10 @@ static const Button buttons[] = {
     { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = +0.05 } },
 
     { ClickWinButtonDouble,  Button1,   0,          killclient,       {0} },
+    { ClickWinButton,        Button2,   0,          zoom,             {0} },
     { ClickWinButton,        Button3,   0,          togglefullscreen, {0} },
+    { ClickWinButton,        Button4,   0,          push,             {.i = -1 } },
+    { ClickWinButton,        Button5,   0,          push,             {.i = +1 } },
 };
 
 /* statusbar module click actions */
