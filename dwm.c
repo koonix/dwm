@@ -156,6 +156,10 @@ enum {
 #define XEMBED_MAPPED                      (1 << 0)
 #define XEMBED_VERSION                     0
 
+/* opacity */
+#define TRANSPARENT  0
+#define OPAQUE       0xFFFFFFFF
+
 /* buffer sizes */
 #define UTF8CacheSize      2048
 #define StatusSize         1024
@@ -282,10 +286,10 @@ struct Systray {
 };
 
 struct ClickEv {
-	int isvalid;
-	Time time;
-	Window win;
 	unsigned int button;
+	Window win;
+	Time time;
+	int isvalid;
 };
 
 struct XFont {
@@ -719,9 +723,9 @@ enternotify(XEvent *e)
 
 	if ((c = wintoclient(ev->window)))
 		for (s = c->mon->clients; s; s = s->next)
-			setcardprop(s->buttonwin, netatoms[NetWMWindowOpacity], 0);
+			setcardprop(s->buttonwin, netatoms[NetWMWindowOpacity], TRANSPARENT);
 	else if ((c = winbuttontoclient(ev->window)))
-		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], 0xFFFFFFFF);
+		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], OPAQUE);
 
 	selmon = c ? c->mon : wintomon(ev->window);
 	focus(c);
@@ -737,7 +741,7 @@ leavenotify(XEvent *e)
 		return;
 
 	if ((c = winbuttontoclient(ev->window)))
-		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], 0);
+		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], TRANSPARENT);
 }
 
 void
@@ -2089,7 +2093,7 @@ updatewinbutton(Client *c)
 		XDefineCursor(dpy, c->buttonwin, cursors[CurNormal]);
 		XSelectInput(dpy, c->buttonwin, ButtonPressMask|EnterWindowMask|LeaveWindowMask);
 		XMapWindow(dpy, c->buttonwin);
-		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], 0);
+		setcardprop(c->buttonwin, netatoms[NetWMWindowOpacity], TRANSPARENT);
 	}
 
 	if (ISVISIBLE(c)) {
