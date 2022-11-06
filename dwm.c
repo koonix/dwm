@@ -4755,6 +4755,8 @@ die(const char *fmt, ...)
 	exit(1);
 }
 
+/* TODO: don't constantly create/free pixmaps when drawing borders for windows and
+ *       see if that speeds up their resizing (you just create one pixmap per depth) */
 /* TODO: make sure borderpx, gappx, stairpx etc. won't cause any negative width or height values
          also make sure and prove widths and heights are always positive */
 /* TODO: any new clients opening should un-fullscreen the currently fullscreened

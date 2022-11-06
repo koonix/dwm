@@ -346,7 +346,7 @@ static const Button buttons[] = {
     { ClickWinArea,       Button4,   ModShift,   push,             {.i = -1 } },
     { ClickWinArea,       Button5,   ModShift,   push,             {.i = +1 } },
     { ClickWinArea,       Button4,   ModCtrl,    setmfact,         {.f = +0.05 } },
-    { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = +0.05 } },
+    { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = -0.05 } },
 
     { ClickWinButtonDouble,  Button1,   0,          killclient,       {0} },
     { ClickWinButton,        Button2,   0,          zoom,             {0} },
