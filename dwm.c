@@ -2599,8 +2599,8 @@ systrayupdate(void)
 			wa.height = fontheight;
 		}
 		c->x = x + lastpad;
-		c->y = barheight - fontheight / 2; /* TODO: abs() ? */
-		c->h = fontheight;
+		c->y = barheight - (fontheight / 2);
+		c->h = MIN(fontheight, barheight);
 		c->w = c->h * ((float)wa.width / wa.height);
 		XMoveResizeWindow(dpy, c->win, GEOM(c));
 		XSetWindowBackground(dpy, c->win, schemes[SchemeNorm][ColorBG].pixel);
