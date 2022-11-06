@@ -39,10 +39,12 @@ static const int noautofocus          = 1;   /* the default noautofocus setting;
 static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
 
 /* fonts */
-static const char *fontnames[] = {
-    "Signika Negative:size=13",
-    ":lang=fa:spacing=mono:size=13",
-    "Symbols Nerd Font:size=10",
+static const FontDef fontdefs[] = {
+    /* font name                        favoring unicode block */
+    { "Signika Negative:size=13",       UnicodeGeneric  },
+    { ":lang=fa:size=13",               UnicodeFarsi    },
+    { "Symbols Nerd Font:size=10",      UnicodeNerd     },
+    { "JoyPixels:size=12",              UnicodeEmoji    },
 };
 
 /* colors */
@@ -144,9 +146,9 @@ static const Rule rules[] = {
  */
 static void (*attachdirection)(Client *) = attachbelow;
 
-/* ============== */
-/* = Key Macros = */
-/* ============== */
+/* ==============
+ * = Key Macros
+ * ============== */
 
 /* key definitions */
 #define Mod           Mod4Mask
@@ -185,9 +187,9 @@ static void (*attachdirection)(Client *) = attachbelow;
     { KEY,  ModShift,      tag,         {.ui = 1 << TAG} }, \
     { KEY,  ModCtrlShift,  toggletag,   {.ui = 1 << TAG} }
 
-/* ============ */
-/* = Commands = */
-/* ============ */
+/* ============
+ * = Commands
+ * ============ */
 
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 #define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
@@ -236,9 +238,9 @@ static void (*attachdirection)(Client *) = attachbelow;
     "xclip -o -r -selection clipboard ${target:+-t $target} | " \
     "DISPLAY=$dpy xclip -selection clipboard ${target:+-t $target}; done")
 
-/* ============ */
-/* = Bindings = */
-/* ============ */
+/* ============
+ * = Bindings
+ * ============ */
 
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
@@ -318,9 +320,9 @@ PAIR( PAIR_COMMAPERIOD, ModShift,         tagmon,           {.i = +1 }, {.i = -1
     TAGKEYS(XK_7, 6), TAGKEYS(XK_8, 7), TAGKEYS(XK_9, 8),
 };
 
-/* ======================== */
-/* = Button Click Actions = */
-/* ======================== */
+/* ========================
+ * = Button Click Actions
+ * ======================== */
 
 /* button definitions */
 static const Button buttons[] = {

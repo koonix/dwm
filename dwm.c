@@ -1,9 +1,5 @@
 /* see LICENSE file for copyright and license details. */
 
-/* ===========
- * = Headers
- * =========== */
-
 #include <errno.h>
 #include <locale.h>
 #include <signal.h>
@@ -53,22 +49,31 @@
  * = Public Data Types
  * ====================== */
 
-/* colors */
 enum {
 	ColorFG, ColorBG, ColorBorder, ColorBorderBG,
 ColorLast };
 
-/* color schemes */
 enum {
 	SchemeNorm, SchemeSel, SchemeUrg, SchemeTitle,
 	SchemeStatus, SchemeStatusSep, SchemeWinButton,
 SchemeLast };
 
-/* click areas */
 enum {
 	ClickInvalid, ClickTagBar, ClickLtSymbol, ClickWinTitle, ClickStatusText,
 	ClickWinButton, ClickWinButtonDouble, ClickClientWin,
 	ClickRootWin, ClickWinArea,
+};
+
+enum {
+	UnicodeGeneric,
+	UnicodeFarsi,
+	UnicodeEmoji,
+	UnicodeNerd,
+};
+
+struct FontDef {
+	const char *name;
+	int block;
 };
 
 struct Layout {
@@ -107,7 +112,7 @@ struct Key {
 };
 
 struct Button {
-	unsigned int click;
+	int click;
 	unsigned int button;
 	unsigned int mod;
 	void (*func)(const Arg *arg);
@@ -123,7 +128,7 @@ struct StatusClick {
 };
 
 /* ============
- * = Config.h
+ * = config.h
  * ============ */
 
 #include "config.h"
@@ -137,7 +142,8 @@ enum {
 	UTF8Init = 0,
 	UTF8Accept = 0,
 	UTF8Reject = 12,
-	UTF8Invalid = 0xFFFD,
+	UTF8Invalid = 0xFFFD, /* replacement character */
+	UTF8ZWNBS = 0xFEFF,   /* zero-width non-breaking space */
 };
 
 /* systray and Xembed constants */
@@ -151,22 +157,13 @@ enum {
 #define XEMBED_VERSION                     0
 
 /* buffer sizes */
+#define UTF8CacheSize      2048
 #define StatusSize         1024
 #define WinTitleSize       256
 #define LtSymbolSize       16
 #define ClassNameSize      32
 #define PertagStackSize    16
 #define BackTraceSize      16
-
-static const long utffarsi[][2] = {
-	/* start     end    */
-	{ 0x600,     0x6FF   },
-	{ 0x750,     0x77F   },
-	{ 0x8A0,     0x8FF   },
-	{ 0xFB50,    0xFDFF  },
-	{ 0xFE70,    0xFEFF  },
-	{ 0x1EE00,   0x1EEFF },
-};
 
 /* ==================
  * = Utility Macros
@@ -205,69 +202,6 @@ static const long utffarsi[][2] = {
 /* X macro */
 #define X1(A, B) A,
 #define X2(A, B) B,
-
-/* =============
- * = Atoms
- * ============= */
-
-#define ATOMS(X) \
-	X( WMProtocols,                "WM_PROTOCOLS"       ) \
-	X( WMState,                    "WM_STATE"           ) \
-	X( WMTakeFocus,                "WM_TAKE_FOCUS"      ) \
-	X( WMDelete,                   "WM_DELETE_WINDOW"   ) \
-	X( Manager,                    "MANAGER"            ) \
-	X( Xembed,                     "_XEMBED"            ) \
-	X( XembedInfo,                 "_XEMBED_INFO"       ) \
-	X( DWMSwallow,                 "_DWM_SWALLOW"       ) \
-	X( DWMSwallower,               "_DWM_SWALLOWER"     ) \
-	X( DWMSwallowed,               "_DWM_SWALLOWED"     ) \
-	X( DWMMonDesktop,              "_DWM_MON_DESKTOP"   ) \
-	X( DWMMonSel,                  "_DWM_MON_SEL"       )
-
-#define NETATOMS(X) \
-	X( NetSupported,               "_NET_SUPPORTED"                 ) \
-	X( NetWMCheck,                 "_NET_SUPPORTING_WM_CHECK"       ) \
-	X( NetActiveWindow,            "_NET_ACTIVE_WINDOW"             ) \
-	X( NetWMName,                  "_NET_WM_NAME"                   ) \
-	X( NetWMState,                 "_NET_WM_STATE"                  ) \
-	X( NetWMFullscreen,            "_NET_WM_STATE_FULLSCREEN"       ) \
-	X( NetWMUserTime,              "_NET_WM_USER_TIME"              ) \
-	X( NetWMUserTimeWindow,        "_NET_WM_USER_TIME_WINDOW"       ) \
-	X( NetWMWindowType,            "_NET_WM_WINDOW_TYPE"            ) \
-	X( NetWMWindowTypeDialog,      "_NET_WM_WINDOW_TYPE_DIALOG"     ) \
-	X( NetWMWindowTypeDock,        "_NET_WM_WINDOW_TYPE_DOCK"       ) \
-	X( NetWMPID,                   "_NET_WM_PID"                    ) \
-	X( NetWMDesktop,               "_NET_WM_DESKTOP"                ) \
-	X( NetWMWindowOpacity,         "_NET_WM_WINDOW_OPACITY"         ) \
-	X( NetClientList,              "_NET_CLIENT_LIST"               ) \
-	X( NetCurrentDesktop,          "_NET_CURRENT_DESKTOP"           ) \
-	X( NetNumberOfDesktops,        "_NET_NUMBER_OF_DESKTOPS"        ) \
-	X( NetDesktopNames,            "_NET_DESKTOP_NAMES"             ) \
-	X( NetSystemTray,              "_NET_SYSTEM_TRAY"               ) \
-	X( NetSystemTrayOP,            "_NET_SYSTEM_TRAY_OPCODE"        ) \
-	X( NetSystemTrayOrientation,   "_NET_SYSTEM_TRAY_ORIENTATION"   )
-
-enum { ATOMS(X1) };
-enum { NETATOMS(X1) };
-static char *atom_names[] = { ATOMS(X2) };
-static char *netatom_names[] = { NETATOMS(X2) };
-static Atom atoms[LENGTH(atom_names)], netatoms[LENGTH(netatom_names)];
-#undef ATOMS
-#undef NETATOMS
-
-/* =============
- * = Cursors
- * ============= */
-
-#define CURSORS(X) \
-	X( CurNormal,  XC_left_ptr ) \
-	X( CurResize,  XC_sizing   ) \
-	X( CurMove,    XC_fleur    )
-
-enum { CURSORS(X1) };
-static int cursor_shapes[] = { CURSORS(X2) };
-static Cursor cursors[LENGTH(cursor_shapes)];
-#undef CURSORS
 
 /* ======================
  * = Private Data Types
@@ -355,10 +289,130 @@ struct ClickEv {
 };
 
 struct XFont {
-	int h;
+	int height, block;
 	XftFont *xftfont;
 	FcPattern *pattern;
 	XFont *next;
+};
+
+struct UTF8Cache {
+	struct {
+		unsigned long codepoint;
+		XFont *font;
+		int width;
+	} list[UTF8CacheSize];
+	int idx, len;
+};
+
+struct UnicodeBlockDef {
+	int block;
+	unsigned long start;
+	unsigned long end;
+};
+
+/* =============
+ * = Atoms
+ * ============= */
+
+#define ATOMS(X) \
+	X( WMProtocols,                "WM_PROTOCOLS"       ) \
+	X( WMState,                    "WM_STATE"           ) \
+	X( WMTakeFocus,                "WM_TAKE_FOCUS"      ) \
+	X( WMDelete,                   "WM_DELETE_WINDOW"   ) \
+	X( Manager,                    "MANAGER"            ) \
+	X( Xembed,                     "_XEMBED"            ) \
+	X( XembedInfo,                 "_XEMBED_INFO"       ) \
+	X( DWMSwallow,                 "_DWM_SWALLOW"       ) \
+	X( DWMSwallower,               "_DWM_SWALLOWER"     ) \
+	X( DWMSwallowed,               "_DWM_SWALLOWED"     ) \
+	X( DWMMonDesktop,              "_DWM_MON_DESKTOP"   ) \
+	X( DWMMonSel,                  "_DWM_MON_SEL"       )
+
+#define NETATOMS(X) \
+	X( NetSupported,               "_NET_SUPPORTED"                 ) \
+	X( NetWMCheck,                 "_NET_SUPPORTING_WM_CHECK"       ) \
+	X( NetActiveWindow,            "_NET_ACTIVE_WINDOW"             ) \
+	X( NetWMName,                  "_NET_WM_NAME"                   ) \
+	X( NetWMState,                 "_NET_WM_STATE"                  ) \
+	X( NetWMFullscreen,            "_NET_WM_STATE_FULLSCREEN"       ) \
+	X( NetWMUserTime,              "_NET_WM_USER_TIME"              ) \
+	X( NetWMUserTimeWindow,        "_NET_WM_USER_TIME_WINDOW"       ) \
+	X( NetWMWindowType,            "_NET_WM_WINDOW_TYPE"            ) \
+	X( NetWMWindowTypeDialog,      "_NET_WM_WINDOW_TYPE_DIALOG"     ) \
+	X( NetWMWindowTypeDock,        "_NET_WM_WINDOW_TYPE_DOCK"       ) \
+	X( NetWMPID,                   "_NET_WM_PID"                    ) \
+	X( NetWMDesktop,               "_NET_WM_DESKTOP"                ) \
+	X( NetWMWindowOpacity,         "_NET_WM_WINDOW_OPACITY"         ) \
+	X( NetClientList,              "_NET_CLIENT_LIST"               ) \
+	X( NetCurrentDesktop,          "_NET_CURRENT_DESKTOP"           ) \
+	X( NetNumberOfDesktops,        "_NET_NUMBER_OF_DESKTOPS"        ) \
+	X( NetDesktopNames,            "_NET_DESKTOP_NAMES"             ) \
+	X( NetSystemTray,              "_NET_SYSTEM_TRAY"               ) \
+	X( NetSystemTrayOP,            "_NET_SYSTEM_TRAY_OPCODE"        ) \
+	X( NetSystemTrayOrientation,   "_NET_SYSTEM_TRAY_ORIENTATION"   )
+
+enum { ATOMS(X1) };
+enum { NETATOMS(X1) };
+static char *atom_names[] = { ATOMS(X2) };
+static char *netatom_names[] = { NETATOMS(X2) };
+static Atom atoms[LENGTH(atom_names)], netatoms[LENGTH(netatom_names)];
+#undef ATOMS
+#undef NETATOMS
+
+/* =============
+ * = Cursors
+ * ============= */
+
+#define CURSORS(X) \
+	X( CurNormal,  XC_left_ptr ) \
+	X( CurResize,  XC_sizing   ) \
+	X( CurMove,    XC_fleur    )
+
+enum { CURSORS(X1) };
+static int cursor_shapes[] = { CURSORS(X2) };
+static Cursor cursors[LENGTH(cursor_shapes)];
+#undef CURSORS
+
+/* ==================
+ * = Unicode Blocks
+ * ================== */
+
+static const UnicodeBlockDef blockdefs[] = {
+	/* block          start      end    */
+	{ UnicodeFarsi,   0x600,     0x6FF    },
+	{ UnicodeFarsi,   0x750,     0x77F    },
+	{ UnicodeFarsi,   0x8A0,     0x8FF    },
+	{ UnicodeFarsi,   0xFB50,    0xFDFF   },
+	{ UnicodeFarsi,   0xFE70,    0xFEFF   },
+	{ UnicodeFarsi,   0x1EE00,   0x1EEFF  },
+
+	{ UnicodeEmoji,   0x2600,    0x26FF   },
+	{ UnicodeEmoji,   0x2700,    0x27BF   },
+	{ UnicodeEmoji,   0x1F300,   0x1F5FF  },
+	{ UnicodeEmoji,   0x1F600,   0x1F64F  },
+	{ UnicodeEmoji,   0x1F680,   0x1F6FF  },
+	{ UnicodeEmoji,   0x1F900,   0x1F9FF  },
+
+	{ UnicodeNerd,    0xE000,    0xE00D,  },
+	{ UnicodeNerd,    0xE0A0,    0xE0A2,  },
+	{ UnicodeNerd,    0xE0B0,    0xE0B3,  },
+	{ UnicodeNerd,    0xE0A3,    0xE0A3,  },
+	{ UnicodeNerd,    0xE0B4,    0xE0C8,  },
+	{ UnicodeNerd,    0xE0CC,    0xE0D2,  },
+	{ UnicodeNerd,    0xE0D4,    0xE0D4,  },
+	{ UnicodeNerd,    0xE5FA,    0xE62B,  },
+	{ UnicodeNerd,    0xE700,    0xE7C5,  },
+	{ UnicodeNerd,    0xF000,    0xF2E0,  },
+	{ UnicodeNerd,    0xE200,    0xE2A9,  },
+	{ UnicodeNerd,    0xF400,    0xF4A8,  },
+	{ UnicodeNerd,    0x2665,    0x2665,  },
+	{ UnicodeNerd,    0x26A1,    0x26A1,  },
+	{ UnicodeNerd,    0xF27C,    0xF27C,  },
+	{ UnicodeNerd,    0xF300,    0xF313,  },
+	{ UnicodeNerd,    0x23FB,    0x23FE,  },
+	{ UnicodeNerd,    0x2B58,    0x2B58,  },
+	{ UnicodeNerd,    0xF500,    0xFD46,  },
+	{ UnicodeNerd,    0xE300,    0xE3EB,  },
 };
 
 /* ===================
@@ -379,6 +433,7 @@ static Pixmap pixmap;
 static GC gc;
 static XFont *fonts;
 static XftDraw *xftdraw;
+static UTF8Cache utf8cache = { .len = 0, .idx = 0 };
 
 static Window root, wmcheckwin, ignoreenterwin = 0;
 static Monitor *mons, *selmon, **statusmonptr;
@@ -411,12 +466,12 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MappingNotify]     =  mappingnotify,
 };
 
-/* compile-time check if all tags fit into an unsigned int bit array. */
-struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
-
 /* =============
  * = Functions
  * ============= */
+
+/* compile-time check if all tags fit into an unsigned int bit array. */
+struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
 int
 main(int argc, char *argv[])
@@ -1715,7 +1770,7 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 			updatesizehints(c);
 
 		/* see last two sentences in ICCCM 4.1.2.3 */
-		baseismin = c->basew == c->minw && c->baseh == c->minh;
+		baseismin = (c->basew == c->minw && c->baseh == c->minh);
 		if (!baseismin) { /* temporarily remove base dimensions */
 			*w -= c->basew;
 			*h -= c->baseh;
@@ -2130,7 +2185,7 @@ drawbar(Monitor *m)
 	m->bp = (const ButtonPos){0};
 
 	/* draw status first so it can be overdrawn by tags later */
-	status_x = m == STATUSMON ? drawstatus(m) : m->bdw;
+	status_x = (m == STATUSMON) ? drawstatus(m) : m->bdw;
 
 	/* draw tags */
 	for (i = 0; i < LENGTH(tags); i++)
@@ -2169,7 +2224,7 @@ drawbar(Monitor *m)
 	{
 		if (m->sel)
 		{
-			scheme = m == selmon ? SchemeTitle : SchemeNorm;
+			scheme = (m == selmon) ? SchemeTitle : SchemeNorm;
 			fribidi(biditext, m->sel->title, sizeof(m->sel->title));
 			RENDERTEXTWP(scheme, biditext, x, w, 0);
 
@@ -2344,8 +2399,8 @@ drawstatus(Monitor *m)
 	char c, modulename[64] = {'\0'}, normaltext[LENGTH(statustext)] = {'\0'};
 	int x = 0, pos = 0, normalstartpos = 0, tagstartpos = 0, skiptag = 0;
 	int i, islastchar, status_w, status_x, modulestart_x = 0;
-	enum modes { Normal, Tag, };
-	enum modes mode = Normal;
+	enum Mode { Normal, Tag, };
+	enum Mode mode = Normal;
 
 	for (i = 0; i < LENGTH(statusclick); i++)
 		m->bp.modules[i].exists = 0;
@@ -3959,7 +4014,7 @@ sendevent(Client *c, Atom proto)
 
 	if (XGetWMProtocols(dpy, c->win, &protocols, &nproto)) {
 		while (!exists && nproto--)
-			exists = protocols[nproto] == proto;
+			exists = (protocols[nproto] == proto);
 		XFree(protocols);
 	}
 
@@ -4185,26 +4240,6 @@ prevtiled(Client *c)
 	return r;
 }
 
-/* Client * */
-/* firsttiled(Monitor *m) */
-/* { */
-/* 	return firsttiledcore(m->clients, m->tagset[m->seltags]); */
-/* } */
-
-/* Client * */
-/* firsttiledontag(Client *c) */
-/* { */
-/* 	return firsttiledcore(c, c->tags); */
-/* } */
-
-/* Client * */
-/* firsttiledcore(Client *c, unsigned int tags) */
-/* { */
-/* 	Client *t = c->mon->clients; */
-/* 	for (; t && (t->isfloating || !ISVISIBLEONTAG(t, tags)); t = t->next); */
-/* 	return t; */
-/* } */
-
 Client *
 lasttiled(Monitor *m)
 {
@@ -4286,15 +4321,16 @@ renderinit(void)
 	xftdraw = XftDrawCreate(dpy, pixmap, visual, colormap);
 
 	/* init fonts */
-	for (i = 1; i <= LENGTH(fontnames); i++)
-		if ((font = createfont(fontnames[LENGTH(fontnames) - i], NULL))) {
+	for (i = 1; i <= LENGTH(fontdefs); i++)
+		if ((font = createfont(fontdefs[LENGTH(fontdefs) - i].name, NULL))) {
+			font->block = fontdefs[LENGTH(fontdefs) - i].block;
 			font->next = prevfont;
 			prevfont = font;
 		}
 	if (!(fonts = prevfont))
 		die("no fonts could be loaded");
 
-	fontheight = fonts->h;
+	fontheight = fonts->height;
 	barheight = fontheight;
 	barheight *= barheightfact;
 
@@ -4379,35 +4415,24 @@ renderrect(int scheme, int x, int y, int w, int h, int filled, int invert)
 int
 rendergettextwidth(const char *string)
 {
-	return rendertext(SchemeNorm, string, 0, 0, 0, 0, 0, 0);
+	return rendertext(0, string, 0, 0, 0, 0, 0, 0);
 }
-
-#define EXEC(cmd, ...) \
-	do { \
-		pid_t pid; \
-		if ((pid = fork()) == 0) { \
-			execlp(cmd, cmd, __VA_ARGS__, (char *)NULL); \
-			exit(0); \
-		} \
-		if (pid > 0) \
-			waitpid(pid, NULL, 0); \
-	} while(0)
 
 int
 rendertext(int scheme, const char *string, int x, int y, int w, int h,
 	int pad, int invert)
 {
-	int render, render_y, init_x, tmpwidth, width = 0;
-	unsigned int tmpsize, size = 0;
-	XFont *font, *prevfont = NULL;
+	int render, render_y, tmpwidth = 0, width = 0;
+	unsigned int tmpsize = 0, size = 0;
+	XFont *font = NULL, *prevfont = NULL;
 	const char *prevstring = string;
 	XftColor fgcolor, bgcolor;
 
-	fgcolor = schemes[scheme][invert ? ColorBG : ColorFG];
-	bgcolor = schemes[scheme][invert ? ColorFG : ColorBG];
 	render = x || y || w || h;
 
 	if (render) {
+		fgcolor = schemes[scheme][invert ? ColorBG : ColorFG];
+		bgcolor = schemes[scheme][invert ? ColorFG : ColorBG];
 		XSetForeground(dpy, gc, bgcolor.pixel);
 		XFillRectangle(dpy, pixmap, gc, x, y, pad, h);
 	}
@@ -4423,13 +4448,16 @@ rendertext(int scheme, const char *string, int x, int y, int w, int h,
 		if (!prevfont)
 			prevfont = font;
 
-		if (size && (!*string || font != prevfont)) {
-			if (render) {
+		if (size && (!*string || font != prevfont))
+		{
+			if (render && width > 0)
+			{
 				XFillRectangle(dpy, pixmap, gc, x, y, width, h);
-				render_y = y + (h - prevfont->h) / 2 + prevfont->xftfont->ascent;
+				render_y = y + (h - prevfont->height) / 2 + prevfont->xftfont->ascent;
 				XftDrawStringUtf8(xftdraw, &fgcolor, prevfont->xftfont,
 					x, render_y, (XftChar8 *)prevstring, size);
 			}
+
 			x += width;
 			w -= width;
 			width = size = 0;
@@ -4454,28 +4482,48 @@ rendertext(int scheme, const char *string, int x, int y, int w, int h,
 void
 getfirstcharinfo(const char* string, XFont **font_ret, unsigned int *size_ret, int *width_ret)
 {
-	long codepoint;
+	unsigned long codepoint;
 	int i;
 
-	utf8decodenext(string, &codepoint, size_ret);
-	*font_ret = getcharfont(codepoint);
-	*width_ret = getcharwidth(*font_ret, string, *size_ret);
+	utf8decodefirst(string, &codepoint, size_ret);
 
-	/* for (i = 0; i < LENGTH(utffarsi); i++) { */
-	/* 	if (codepoint >= utffarsi[i][0] && codepoint <= utffarsi[i][1]) { */
-	/* 		system("notify-send -t 1000 farsi-found"); */
-	/* 		break; */
-	/* 	} */
-	/* } */
+	for (i = 0; i < utf8cache.len; i++)
+		if (codepoint == utf8cache.list[i].codepoint) {
+			*font_ret = utf8cache.list[i].font;
+			*width_ret = utf8cache.list[i].width;
+			return;
+		}
+
+	*font_ret = getcharfont(codepoint);
+	*width_ret = (codepoint == UTF8ZWNBS)
+		? 0 : getcharwidth(*font_ret, string, *size_ret);
+
+	utf8cache.idx %= LENGTH(utf8cache.list);
+	utf8cache.list[utf8cache.idx].codepoint = codepoint;
+	utf8cache.list[utf8cache.idx].font = *font_ret;
+	utf8cache.list[utf8cache.idx].width = *width_ret;
+	utf8cache.len = MAX(utf8cache.len, utf8cache.idx++);
 }
 
 XFont *
-getcharfont(long codepoint)
+getcharfont(unsigned long codepoint)
 {
 	XFont *font, *lastfont;
 	FcCharSet *fccharset;
 	FcPattern *fcpattern, *match;
 	XftResult result;
+	int i;
+
+	for (font = fonts; font; font = font->next)
+		if (font->block != UnicodeGeneric)
+			for (i = 0; i < LENGTH(blockdefs); i++)
+				if (blockdefs[i].block == font->block
+				 && codepoint >= blockdefs[i].start
+				 && codepoint <= blockdefs[i].end
+				 && XftCharExists(dpy, font->xftfont, codepoint))
+				{
+					return font;
+				}
 
 	for (font = fonts; font; font = font->next)
 		if (XftCharExists(dpy, font->xftfont, codepoint))
@@ -4512,7 +4560,7 @@ getcharfont(long codepoint)
 	}
 	else {
 		freefont(font);
-		font = NULL;
+		font = fonts;
 		/* TODO: add the character to the list of nomatch fonts */
 	}
 
@@ -4576,7 +4624,7 @@ createfont(const char *fontname, FcPattern *fontpattern)
 	font = ecalloc(1, sizeof(XFont));
 	font->xftfont = xftfont;
 	font->pattern = pattern;
-	font->h = xftfont->ascent + xftfont->descent;
+	font->height = xftfont->ascent + xftfont->descent;
 
 	return font;
 }
@@ -4590,11 +4638,10 @@ freefont(XFont *font)
 	free(font);
 }
 
-
 void
-utf8decodenext(const char *string, long *codepoint_ret, unsigned int *size_ret)
+utf8decodefirst(const char *string, unsigned long *codepoint_ret, unsigned int *size_ret)
 {
-	long state, prevstate;
+	unsigned long state, prevstate;
 	const char *start = string;
 
 	*codepoint_ret = UTF8Invalid;
@@ -4621,7 +4668,7 @@ utf8decodenext(const char *string, long *codepoint_ret, unsigned int *size_ret)
 /* Bjoern Hoehrmann's UTF-8 decoder (bjoern@hoehrmann.de)
  * for details, see http://bjoern.hoehrmann.de/utf-8/decoder/dfa */
 void
-utf8decode(long* state, unsigned char byte, long* codepoint_ret)
+utf8decode(unsigned long* state, unsigned char byte, unsigned long* codepoint_ret)
 {
 	const long utf8d[] = {
 		/* map bytes to character classes to create bitmasks */
@@ -4641,7 +4688,7 @@ utf8decode(long* state, unsigned char byte, long* codepoint_ret)
 		12,36,12,12,12,12,12,12,12,12,12,12,
 	};
 
-	long type = utf8d[byte];
+	unsigned long type = utf8d[byte];
 
 	*codepoint_ret = (*state == UTF8Init)
 		? (0xFF >> type) & (byte)

@@ -1,3 +1,4 @@
+typedef struct FontDef FontDef;
 typedef struct Layout Layout;
 typedef struct Rule Rule;
 typedef union  Arg Arg;
@@ -12,6 +13,8 @@ typedef struct Client Client;
 typedef struct Systray Systray;
 typedef struct ClickEv ClickEv;
 typedef struct XFont XFont;
+typedef struct UTF8Cache UTF8Cache;
+typedef struct UnicodeBlockDef UnicodeBlockDef;
 
 static void checkotherwm(void);
 static void setup(void);
@@ -193,12 +196,12 @@ static void renderrect(int scheme, int x, int y, int w, int h, int filled, int i
 static int rendergettextwidth(const char *string) __attribute__((unused));
 static int rendertext(int scheme, const char *string, int x, int y, int w, int h, int pad, int invert);
 static void getfirstcharinfo(const char *string, XFont **font, unsigned int *size, int *width);
-static XFont *getcharfont(long codepoint);
+static XFont *getcharfont(unsigned long codepoint);
 static int getcharwidth(XFont *font, const char *string, unsigned int size);
 static XFont *createfont(const char *fontname, FcPattern *fontpattern);
 static void freefont(XFont *font);
-static void utf8decodenext(const char *string, long *codepoint_ret, unsigned int *size_ret);
-static void utf8decode(long *state, unsigned char byte, long *codepoint_ret);
+static void utf8decodefirst(const char *string, unsigned long *codepoint_ret, unsigned int *size_ret);
+static void utf8decode(unsigned long *state, unsigned char byte, unsigned long *codepoint_ret);
 static void strscpy(char *dest, const char *src, size_t size);
 static void strsscpy(char *dest, const char *src, size_t destsize, size_t srcsize);
 static void *ecalloc(size_t nmemb, size_t size);
