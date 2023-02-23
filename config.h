@@ -12,7 +12,7 @@ static const int innerborderoffsetpx  = 2;  /* distance between inner border and
 /* layout settings */
 static const int pertag            = 1;    /* 1 means remember layout, mfact and nmaster per tag */
 static const int resettag          = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
-static const int gappx             = 15;   /* gaps between windows */
+static const int gappx             = 25;   /* gaps between windows */
 static const float mfact           = 0.5;  /* factor of master area size [0.05..0.95] */
 static const int nmaster           = 1;    /* number of clients in master area */
 static const int nmasterbias       = 1;    /* reduce nmaster if masters are removed when nmaster > nmasterbias; <0 to disable */
@@ -34,8 +34,8 @@ static const int lockfullscreen       = 0;   /* 1 will force focus on the fullsc
 static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
 static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
 static const int hintcenter           = 1;   /* 1 means center size-hinted windows in their tiled resizal */
-static const unsigned char xkblayout  = 0;   /* the default keyboard layout number; 0 is the main layout */
 static const int noautofocus          = 1;   /* the default noautofocus setting; see the noautofocus rule below */
+static const int xkblayout            = 0;   /* the default keyboard layout number; 0 is the main layout */
 static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
 
 /* fonts */
@@ -74,7 +74,7 @@ static const Layout layouts[] = {
     /* symbol     arrange function */
     { "[]=",      tile    },
     { "[M]",      monocle },
-    { "[]/",      stairs  },
+    { "[S]",      stairs  },
 };
 
 /* hint for rules
@@ -112,8 +112,9 @@ static const Rule rules[] = {
     { "TelegramDesktop", NULL, "Media viewer",  1,  1,  0,  0,  0,  0,  0, -1 },
     { "Qalculate", NULL, NULL,                  1,  0,  0,  0,  0,  0,  0, -1 },
     { "Droidcam", NULL, NULL,                   1,  0,  0,  0,  0,  0,  0, -1 },
-    { ".exe", NULL, NULL,                       0,  0,  1,  0,  0,  0,  0, -1 },
+    { ".exe", NULL, NULL,                       0,  0,  1,  0,  0,  1,  0, -1 },
     { "Steam", NULL, NULL,                      0,  0,  1,  0,  0,  1,  0, -1 },
+    { "steam_app", NULL, NULL,                  0,  0,  1,  0,  0,  1,  0, -1 },
     { "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0, -1 },
     { "firefox", NULL, "Picture-in-Picture",    0,  1,  0,  0,  0,  0,  0, -1 },
     { "chromium", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
@@ -121,7 +122,10 @@ static const Rule rules[] = {
     { "Sxiv", NULL, NULL,                       0,  1,  1,  0,  0,  0,  0, -1 },
     { "mpv", NULL, NULL,                        0,  1,  1,  0,  0,  0,  0, -1 },
     { "Pinentry", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
-    { TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  1,  0,  0, -1 },
+    { "st-256color", NULL, NULL,                0,  0,  0,  0,  1,  0,  0, -1 },
+    { "mlterm", NULL, NULL,                     0,  0,  0,  0,  1,  0,  0, -1 },
+    { "Alacritty", NULL, NULL,                  0,  0,  0,  0,  1,  0,  0, -1 },
+    { "kitty", NULL, NULL,                      0,  0,  0,  0,  1,  0,  0, -1 },
     { NULL, NULL, "Event Tester",               0,  0,  0,  1,  0,  0,  0, -1 },
 };
 
@@ -138,7 +142,7 @@ static const Rule rules[] = {
  *   make new clients attach below the selected client.
  *
  * attachtop:
- *   new client attaches below the last master, on top of the stack.
+ *   new client attaches below the last master.
  *   behavior feels very intuitive as it doesn't disrupt the existing masters.
  *
  * attachbottom:
@@ -198,7 +202,7 @@ static void (*attachdirection)(Client *) = attachbelow;
 
 #define VOL(dB) CMD("pactl", "set-sink-volume", "@DEFAULT_SINK@", #dB "dB")
 #define MPCVOL(PERCENT) CMD("mpc", "volume", #PERCENT)
-#define MUTE CMD("pamixer", "-t")
+#define MUTE CMD("pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle")
 #define PACYCLE CMD("pacycle")
 #define MPC_TOGGLE CMD("mpc", "toggle")
 #define MEDIA_PLAYPAUSE SHCMD("mpc pause & playerctl play-pause")
@@ -349,10 +353,8 @@ static const Button buttons[] = {
     { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = -0.05 } },
 
     { ClickWinButtonDouble,  Button1,   0,          killclient,       {0} },
-    { ClickWinButton,        Button2,   0,          zoom,             {0} },
-    { ClickWinButton,        Button3,   0,          togglefullscreen, {0} },
-    { ClickWinButton,        Button4,   0,          push,             {.i = -1 } },
-    { ClickWinButton,        Button5,   0,          push,             {.i = +1 } },
+    { ClickWinButton,        Button2,   0,          togglefullscreen, {0} },
+    { ClickWinButton,        Button3,   0,          zoom,             {0} },
 };
 
 /* statusbar module click actions */
