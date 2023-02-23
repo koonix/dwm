@@ -5,166 +5,150 @@
 #define TERMCLASS "st-256color"
 
 /* border */
-static const unsigned int borderpx          = 7;  /* border pixel of windows */
-static const unsigned int innerborderpx     = 3;  /* inner border pixel of windows */
-static const unsigned int innerborderoffset = 2;  /* distance between inner border and window */
+static const int borderpx             = 7;  /* border pixel of windows */
+static const int innerborderpx        = 3;  /* inner border pixel of windows */
+static const int innerborderoffsetpx  = 2;  /* distance between inner border and window */
 
 /* layout settings */
-static const int pertag           = 1;    /* 1 means remember layout, mfact and nmaster per tag */
-static const int resettag         = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
-static const unsigned int gappx   = 15;   /* gaps between windows */
-static const float mfact          = 0.5;  /* factor of master area size [0.05..0.95] */
-static const int nmaster          = 1;    /* number of clients in master area */
-static const unsigned int stairpx = 75;   /* depth of the stairs layout */
-static const int stairsdirection  = 1;    /* alignment of the stairs layout; 0: left-aligned, 1: right-aligned */
-static const int stairssamesize   = 0;    /* 1 means shrink all the staired windows to the same size */
+static const int pertag            = 1;    /* 1 means remember layout, mfact and nmaster per tag */
+static const int resettag          = 1;    /* 1 means reset layout, mfact and nmaster when tag is emptied */
+static const int gappx             = 15;   /* gaps between windows */
+static const float mfact           = 0.5;  /* factor of master area size [0.05..0.95] */
+static const int nmaster           = 1;    /* number of clients in master area */
+static const int nmasterbias       = 1;    /* reduce nmaster if masters are removed when nmaster > nmasterbias; <0 to disable */
+static const int stairpx           = 75;   /* depth of the stairs layout */
+static const int stairsdirection   = 1;    /* alignment of the stairs layout; 0: left-aligned, 1: right-aligned */
+static const int stairssamesize    = 0;    /* 1 means shrink all the staired windows to the same size */
 
 /* bar and systray */
-static const int showbar                 = 1;    /* 0 means no bar */
-static const int topbar                  = 1;    /* 0 means bottom bar */
-static const int statuspad               = 4;    /* status text padding on the right */
-static const float cindfact              = 0.1;  /* size of client indicators */
-static const int showsystray             = 1;    /* 0 means no systray */
-static const int systrayoffset           = -5;   /* systray offset from the edge */
-static const unsigned int systrayspacing = 4;    /* systray spacing */
-static const unsigned int systraypinning = 0;    /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
-static const int systraypinningfailfirst = 1;    /* 1: if pinning fails, display systray on the first monitor, 0: display systray on the last monitor */
-static const unsigned int systrayonleft  = 0;    /* 0: systray in the right corner, >0: systray on left of status text */
+static const int showbar          = 1;     /* 0 means no bar */
+static const int topbar           = 1;     /* 0 means bottom bar */
+static const float barheightfact  = 1.30;  /* multiply bar height by this value */
+static const int showsystray      = 1;     /* 0 means no systray */
+static const int statusmonnum     = -1;    /* monitor number to show status and systray on; <0 means follow selected monitor */
+static const float cindfact       = 0.1;   /* size of client indicators relative to font height */
 
 /* other settings */
-static const unsigned int snap       = 32;  /* snap pixel */
-static const int lockfullscreen      = 0;   /* 1 will force focus on the fullscreen window */
-static const int barfullscreen       = 0;   /* the default barfullscreen rule; see the rules below */
-static const int swallowfloating     = 0;   /* 1 means swallow floating windows as well */
-static const int resizehints         = 1;   /* 1 means respect size hints in tiled resizals */
-static const unsigned char xkblayout = 0;   /* the default keyboard layout number; 0 is the main layout */
-
-/* reduce nmaster if a master is tagged away or killed when nmaster is greater
- * than nmasterbias. set to a negative value to disable. */
-static const int nmasterbias = nmaster;
-
-/* the default input block time of new windows (in milliseconds).
- * see the rules below for explanation. */
-static const unsigned int blockinputmsec = 1000;
+static const int snap                 = 32;  /* snap pixel */
+static const int lockfullscreen       = 0;   /* 1 will force focus on the fullscreen window */
+static const int swallowfloating      = 0;   /* 1 means swallow floating windows as well */
+static const int resizehints          = 1;   /* 1 means respect size hints in tiled resizals */
+static const int hintcenter           = 1;   /* 1 means center size-hinted windows in their tiled resizal */
+static const unsigned char xkblayout  = 0;   /* the default keyboard layout number; 0 is the main layout */
+static const int noautofocus          = 1;   /* the default noautofocus setting; see the noautofocus rule below */
+static const int allowcolorfonts      = 1;   /* wether to use color fonts (eg. emoji fonts) in the bar */
 
 /* fonts */
-static const char *fonts[] = {
-	"Signika Negative:size=13",
-	":lang=fa:spacing=mono:size=12",
-	"Symbols Nerd Font:size=10",
+static const FontDef fontdefs[] = {
+    /* font name                        favoring unicode block */
+    { "Signika Negative:size=13",       UnicodeGeneric  },
+    { ":lang=fa:size=13",               UnicodeFarsi    },
+    { "Symbols Nerd Font:size=10",      UnicodeNerd     },
+    { "JoyPixels:size=12",              UnicodeEmoji    },
 };
 
 /* colors */
 static const char normfg[]    = "#666666";
-static const char bgcol[]     = "#181b1c";
-static const char bordercol[] = "#000000";
-static const char textcol[]   = "#bfbfbf";
-static const char *colors[][4] = {
-	/*                    fg           bg      innerborder    outerborder */
-	[SchemeNorm]      = { normfg,      bgcol,  "#333333",     bordercol }, /* colors of normal (unselected) items, tags, and window borders */
-	[SchemeSel]       = { "#bfbfbf",   bgcol,  "#ffffff",     bordercol }, /* colors of selected items, tags and and window borders */
-	[SchemeTitle]     = { textcol,     bgcol,  NULL,          NULL      }, /* fg and bg color of the window title area in the bar */
-	[SchemeUrg]       = { NULL,        NULL,   "#ff0000",     bordercol }, /* border color of urgent windows */
-	[SchemeBlockNorm] = { NULL,        NULL,   "#004d00",     bordercol }, /* border color of unselected input-blocked windows */
-	[SchemeBlockSel]  = { NULL,        NULL,   "#00b301",     bordercol }, /* border color of selected input-blocked windows */
+static const char bgcolor[]   = "#181b1c";
+static const char borderbg[]  = "#000000";
+static const char textcolor[] = "#bfbfbf";
+static const char *colors[SchemeLast][ColorLast] = {
+    /*                    FG           BG        Border       BorderBG */
+    [SchemeNorm]       = { normfg,      bgcolor,  "#333333",   borderbg }, /* colors of normal (unselected) items, tags, and window borders */
+    [SchemeSel]        = { "#bfbfbf",   bgcolor,  "#ffffff",   borderbg }, /* colors of selected items, tags and and window borders */
+    [SchemeUrg]        = { NULL,        NULL,     "#993333",   borderbg }, /* border color of urgent windows */
+    [SchemeTitle]      = { textcolor,   bgcolor,  NULL,        NULL     }, /* fg and bg color of the window title area in the bar */
+    [SchemeStatus]     = { "#999999",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar */
+    [SchemeStatusSep]  = { "#333333",   bgcolor,  NULL,        NULL     }, /* fg and bg color of statusbar separator characters */
+    [SchemeWinButton]  = { "#993333",   NULL,     "#000000",   NULL     }, /* fg and bg color of statusbar separator characters */
 };
 
-/* colors that can be used by the statusbar */
-static const char *statuscolors[] = { "#333333", textcol };
+/* statusbar module separator characters */
+static const char statusseparators[]  = { '|' };
 
-/* tagging */
+/* tags */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
 /* layout array. first entry is default. */
 static const Layout layouts[] = {
-	/* symbol     arrange function */
-	{ "[]=",      tile },
-	{ "[M]",      monocle },
-	{ "[S]",      stairs },
-	{ "><>",      NULL },    /* no layout function means floating behavior */
+    /* symbol     arrange function */
+    { "[]=",      tile    },
+    { "[M]",      monocle },
+    { "[]/",      stairs  },
 };
 
 /* hint for rules
  *
- * barfullscreen:
- *    1 means show bar when the focused window is fullscreen as well.
- *    a negative value means use the default value set above.
+ * completefullscreen:
+ *   1 means make the window cover the entire monitor (even the bar) when
+ *   it's fullscreen.
  *
- * blockinput:
- *   sometimes you're typing and all of a sudden a window pops out of nowhere,
- *   steals yours input focus and receives some bogus input. this rule is here to stop that.
- *   this rule blocks the input of newly opened windows for the specified amount of time in milliseconds.
- *   set to 0 to disable, set to a negative value to use the default value (blockinputmsec).
- *   swallowing windows won't be input-blocked because they don't steal the focus.
+ * noautofocus:
+ *   1 means don't focus the window initially,
+ *   0 means default behavior (autofocus).
  *
- * sametagid, sametagparentid:
- *   with these rules you can have some windows open in the same tag and monitor
- *   as other windows. ex. if window A has a sametagid of 10, and window B has a
- *   sametagparentid of 10, window B will be opened next to window A.
- *   can be an integer between 0 and 127. a value of zero disables this feature.
- *
- * fixjump:
- *   some clients jump around every time they're focues or unfocued.
- *   by setting fixjump to 1, the x and y of the configure event of the client
- *   will be ignored, thus preventing it from dictating it's own window position.
+ * nojitter:
+ *   some clients jump around every time their focue changes because they send
+ *   ConfigureRequest events with incorrect coordinates.
+ *   by setting nojitter to 1, the x and y of the ConfigureRequest of the client
+ *   will be ignored, preventing it from dictating it's own window position.
  *
  * xprop(1):
  *    WM_CLASS(STRING) = instance, class
  *    WM_NAME(STRING) = title
  *
- *
- *   1  = tagmask,       2  = isfloating,       3  = barfullscreen,
- *   4  = blockinput,    5  = sametagid,        6  = sametagparentid,
- *   7  = isterminal,    8  = noswallow,        9  = fixjump,
- *   10 = monitor
- *
+ * flt : isfloating
+ * cfs : completefullscreen
+ * naf : noautofocus
+ * nsl : noswallow
+ * ist : isterminal
+ * njt : nojitter
+ * tag : tagmask
+ * mon : monitor
  */
 static const Rule rules[] = {
-	 /* class, instance, title,                 1   2   3   4   5   6   7   8   9   10 */
-	{ "TelegramDesktop", NULL, "Media viewer",  0,  1,  0,  0,  0,  0,  0,  0,  0, -1 }, /* don't tile telegram's media viewer */
-	{ "Qalculate-gtk", NULL, NULL,              0,  1, -1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile qalculate */
-	{ "Droidcam", NULL, NULL,                   0,  1, -1, -1,  0,  0,  0,  0,  0, -1 }, /* don't tile droidcam */
-	{ ".exe", NULL, NULL,                       0,  0, -1, -1,  1,  1,  0,  0,  0, -1 }, /* spawn wine programs next to each other */
-	{ "Steam", NULL, NULL,                      0,  0, -1, -1,  2,  2,  0,  0,  1, -1 }, /* spawn steam windows next to each other and fixjump it */
-	{ "firefox", NULL, NULL,                    0,  0,  1,  0,  0,  0,  0,  0,  0, -1 }, /* don't block firefox's input */
-	{ "tabbed", NULL, NULL,                     0,  0, -1,  0,  0,  0,  0,  0,  0, -1 }, /* don't block tabbed's input */
-	{ "Sxiv", NULL, NULL,                       0,  0,  0, -1,  0,  0,  0,  0,  0, -1 }, /* no barfullscreen */
-	{ "mpv", NULL, NULL,                        0,  0,  0, -1,  0,  0,  0,  0,  0, -1 }, /* no barfullscreen */
-	{ TERMCLASS, NULL, NULL,                    0,  0,  1,  0,  0,  0,  1,  0,  0, -1 }, /* set isterminal and barfullscreen */
-	{ NULL, NULL, "Event Tester",               0,  0, -1,  0,  0,  0,  0,  1,  0, -1 }, /* don't swallow xev's window */
+    /* class, instance, title,                 flt cfs naf nsl ist njt tag mon  */
+    { "TelegramDesktop", NULL, NULL,            0,  0,  0,  0,  0,  0,  0, -1 },
+    { "TelegramDesktop", NULL, "Media viewer",  1,  1,  0,  0,  0,  0,  0, -1 },
+    { "Qalculate", NULL, NULL,                  1,  0,  0,  0,  0,  0,  0, -1 },
+    { "Droidcam", NULL, NULL,                   1,  0,  0,  0,  0,  0,  0, -1 },
+    { ".exe", NULL, NULL,                       0,  0,  1,  0,  0,  0,  0, -1 },
+    { "Steam", NULL, NULL,                      0,  0,  1,  0,  0,  1,  0, -1 },
+    { "firefox", NULL, NULL,                    0,  0,  0,  0,  0,  0,  0, -1 },
+    { "firefox", NULL, "Picture-in-Picture",    0,  1,  0,  0,  0,  0,  0, -1 },
+    { "chromium", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
+    { "tabbed", NULL, NULL,                     0,  0,  0,  0,  0,  0,  0, -1 },
+    { "Sxiv", NULL, NULL,                       0,  1,  1,  0,  0,  0,  0, -1 },
+    { "mpv", NULL, NULL,                        0,  1,  1,  0,  0,  0,  0, -1 },
+    { "Pinentry", NULL, NULL,                   0,  0,  0,  0,  0,  0,  0, -1 },
+    { TERMCLASS, NULL, NULL,                    0,  0,  0,  0,  1,  0,  0, -1 },
+    { NULL, NULL, "Event Tester",               0,  0,  0,  1,  0,  0,  0, -1 },
 };
 
 /* hint for attachdirection
  *
  * attach:
- *   the default behavior; new clients go in the master area.
+ *   the default behavior; new clients become a master.
  *
  * attachabove:
- *   make new clients attach above the selected client,
- *   instead of always becoming the new master. this behavior is known from xmonad.
- *
- * attachaside:
- *   make new clients get attached and focused in the stacking area,
- *   instead of always becoming the new master. it's basically an attachabove modification.
+ *   make new clients attach above the selected client.
+ *   this behavior is known from xmonad.
  *
  * attachbelow:
- *   make new clients attach below the selected client,
- *   instead of always becoming the new master. inspired heavily by attachabove.
- *
- * attachbottom:
- *   new clients attach at the bottom of the stack instead of the top.
+ *   make new clients attach below the selected client.
  *
  * attachtop:
- *   new client attaches below the last master/on top of the stack.
- *   behavior feels very intuitive as it doesn't disrupt existing masters,
- *   no matter the amount of them, it only pushes the clients in stack down.
- *   in case of nmaster = 1 feels like attachaside.
+ *   new client attaches below the last master, on top of the stack.
+ *   behavior feels very intuitive as it doesn't disrupt the existing masters.
+ *
+ * attachbottom:
+ *   new clients attach at the bottom of the stack.
  */
 static void (*attachdirection)(Client *) = attachbelow;
 
-/* ============== */
-/* = Key Macros = */
-/* ============== */
+/* ==============
+ * = Key Macros
+ * ============== */
 
 /* key definitions */
 #define Mod           Mod4Mask
@@ -185,9 +169,9 @@ static void (*attachdirection)(Client *) = attachbelow;
 /* key pair definition */
 #define K1(K1, K2) K1
 #define K2(K1, K2) K2
-#define PAIR(MOD, PAIR, FN, ARG1, ARG2) \
-	{ MOD, K1(PAIR), FN, ARG1 }, \
-	{ MOD, K2(PAIR), FN, ARG2 }
+#define PAIR(PAIR, MOD, FN, ARG1, ARG2) \
+    { K1(PAIR), MOD, FN, ARG1 }, \
+    { K2(PAIR), MOD, FN, ARG2 }
 
 /* common key pairs */
 #define PAIR_JK            XK_j, XK_k
@@ -198,14 +182,14 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define PAIR_BRIGHTNESS    XF86XK_MonBrightnessDown, XF86XK_MonBrightnessUp
 
 #define TAGKEYS(KEY,TAG) \
-	{ Mod,              KEY,    view,           {.ui = 1 << TAG} }, \
-	{ ModCtrl,          KEY,    toggleview,     {.ui = 1 << TAG} }, \
-	{ ModShift,         KEY,    tag,            {.ui = 1 << TAG} }, \
-	{ ModCtrlShift,     KEY,    toggletag,      {.ui = 1 << TAG} }
+    { KEY,  Mod,           view,        {.ui = 1 << TAG} }, \
+    { KEY,  ModCtrl,       toggleview,  {.ui = 1 << TAG} }, \
+    { KEY,  ModShift,      tag,         {.ui = 1 << TAG} }, \
+    { KEY,  ModCtrlShift,  toggletag,   {.ui = 1 << TAG} }
 
-/* ============ */
-/* = Commands = */
-/* ============ */
+/* ============
+ * = Commands
+ * ============ */
 
 #define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 #define TUI(...)   { .v = (const char*[]){ TERM, "-e", __VA_ARGS__, NULL } }
@@ -216,37 +200,30 @@ static void (*attachdirection)(Client *) = attachbelow;
 #define MPCVOL(PERCENT) CMD("mpc", "volume", #PERCENT)
 #define MUTE CMD("pamixer", "-t")
 #define PACYCLE CMD("pacycle")
+#define MPC_TOGGLE CMD("mpc", "toggle")
+#define MEDIA_PLAYPAUSE SHCMD("mpc pause & playerctl play-pause")
 
-#define TOGGLE_MIC_MUTE \
-	SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
-	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
-	"notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;} || { " \
-	"pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
-	"notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
-
-#define MEDIA_PLAYPAUSE \
-	SHCMD("mpc pause & file=${XDG_RUNTIME_DIR:?}/playpause p=$(playerctl -a status " \
-	"-f '{{playerInstance}}	{{status}}' | grep -v '\\<mpd\\>' | grep Playing) && { " \
-	"printf '%s\\n' \"$p\" >\"$file\"; playerctl -a pause; : ;} || " \
-	"cut -f1 \"$file\" | xargs -rL1 playerctl play -p")
-
+/* run media actions using both mpc and playerctl */
 #define MEDIACMD(MPC_CMD, PLAYERCTL_CMD) \
-	SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & " \
-	"playerctl -a status -f '{{playerInstance}}	{{status}}' | " \
-	"grep Playing | cut -f1 | xargs -rL1 playerctl " PLAYERCTL_CMD " -p")
+    SHCMD("(mpc | grep -q '^\\[playing' && mpc " MPC_CMD ") & playerctl " PLAYERCTL_CMD)
 
 #define MEDIA_NEXT MEDIACMD("next", "next")
 #define MEDIA_PREV MEDIACMD("prev", "previous")
 #define MEDIA_SEEK_FWD  MEDIACMD("seek +10", "position 10+")
 #define MEDIA_SEEK_BACK MEDIACMD("seek -10", "position 10-")
 
+#define TOGGLE_MIC_MUTE \
+    SHCMD("pacmd list-sources | grep -q 'muted: yes' && { " \
+    "pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} false && " \
+    "notify-send ' Mic Enabled.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;} || { " \
+    "pactl list short sources | cut -f1 | xargs -I{} pacmd set-source-mute {} true && " \
+    "notify-send ' Mic Muted.' -u low -h string:x-canonical-private-synchronous:togglemicmute; : ;}")
+
 /* change the brightness of internal and external monitors */
 #define LIGHTINC(N) SHCMD("light -A " #N "; monbrightness raise " #N)
 #define LIGHTDEC(N) SHCMD("light -U " #N "; monbrightness lower " #N)
 
 /* other */
-#define PIPEURL CMD("pipeurl", "--clipboard", "ask")
-#define NOTIFYSONG SHCMD("notify-send -u low -h string:x-canonical-private-synchronous:notifysong Playing: \"$(mpc current)\"")
 #define XMOUSELESS SHCMD("usv down unclutter; xmouseless; usv up unclutter")
 #define SENDKEY(KEYUP, ...) CMD("xdotool", "keyup", KEYUP, "key", "--clearmodifiers", __VA_ARGS__)
 #define TERMCWD SHCMD("cd \"$(xcwd)\" && " TERM)
@@ -254,136 +231,147 @@ static void (*attachdirection)(Client *) = attachbelow;
 
 /* copy the clipboard contents to all running Xephyr instances */
 #define COPYTOXEPHYR \
-	SHCMD("confirm=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
-	"-nb '#222222' -nf '#aaaaaa' -sb '#52161e'); [ \"$confirm\" != Yes ] && exit; " \
-	"xclip -o -selection clipboard -t TARGETS | grep -q image/png && target=image/png || unset target; " \
-	"for dpy in $(pgrep -ax Xephyr | grep -o ' :[0-9]\\+'); do " \
-	"xclip -o -r -selection clipboard ${target:+-t $target} | " \
-	"DISPLAY=$dpy xclip -selection clipboard ${target:+-t $target}; done")
+    SHCMD("confirm=$(printf 'No\\nYes\\n' | dmenu -p 'Copy Clipboard to all Xephyr instances?' " \
+    "-nb '#222222' -nf '#aaaaaa' -sb '#52161e'); [ \"$confirm\" = Yes ] || exit; " \
+    "xclip -o -selection clipboard -t TARGETS | grep -q image/png && target=image/png || unset target; " \
+    "for dpy in $(pgrep -ax Xephyr | grep -o ' :[0-9]\\+'); do " \
+    "xclip -o -r -selection clipboard ${target:+-t $target} | " \
+    "DISPLAY=$dpy xclip -selection clipboard ${target:+-t $target}; done")
 
+/* ============
+ * = Bindings
+ * ============ */
 
 /* binding logic:
  * - audio and music related bindings start with super+alt (ModAlt)
  * - most bindings that have a similar function only differ by a shift modifier */
 static const Key keys[] = {
-  /*  modifier          key                   function        argument */
-    { Mod,              XK_q,                 spawn,          CMD("sysact") },
-    { Mod,              XK_m,                 spawn,          CMD("manuals") },
-    { Mod,              XK_o,                 spawn,          CMD("stuff", "-m") },
-    { ModShift,         XK_o,                 spawn,          CMD("dmenu_run", "-p", "Programs") },
-    { Mod,              XK_p,                 spawn,          CMD("dmenu-pass") },
-    { Mod,              XK_i,                 spawn,          CMD("freq", "-m") },
-    { Mod,              XK_t,                 spawn,          CMD(TERM) },
-    { ModShift,         XK_t,                 spawn,          TERMCWD },
-    { Mod,              XK_b,                 spawn,          SHCMD("exec $BROWSER") },
-    { Mod,              XK_g,                 spawn,          XMOUSELESS },
-    { Mod,              XK_n,                 spawn,          CMD("dunstctl", "close") },
-    { ModShift,         XK_n,                 spawn,          CMD("dunstctl", "action") },
-    { ModCtrl,          XK_n,                 spawn,          CMD("dunstctl", "history-pop") },
-    { Mod,              XK_v,                 spawn,          SHTUI("exec ${EDITOR:-nvim}") },
-    { Mod,              XK_e,                 spawn,          CMD("loginctl", "lock-session") },
-    { Mod,              XK_d,                 spawn,          TUI("dictfzf") },
-    { Mod,              XK_x,                 spawn,          COPYTOXEPHYR },
-    { ModShift,         XK_q,                 restart,        {0} },
+  /*  modifier          key               function          argument */
+    { XK_q,             Mod,              spawn,            CMD("sysact") },
+    { XK_m,             Mod,              spawn,            CMD("manuals") },
+    { XK_p,             Mod,              spawn,            CMD("stuff", "-m") },
+    { XK_p,             ModShift,         spawn,            CMD("dmenu_run", "-p", "Programs") },
+    { XK_t,             Mod,              spawn,            CMD(TERM) },
+    { XK_t,             ModShift,         spawn,            TERMCWD },
+    { XK_b,             Mod,              spawn,            SHCMD("exec $BROWSER") },
+    { XK_g,             Mod,              spawn,            XMOUSELESS },
+    { XK_n,             Mod,              spawn,            CMD("dunstctl", "close") },
+    { XK_n,             ModShift,         spawn,            CMD("dunstctl", "action") },
+    { XK_n,             ModCtrl,          spawn,            CMD("dunstctl", "history-pop") },
+    { XK_v,             Mod,              spawn,            SHTUI("exec ${EDITOR:-nvim}") },
+    { XK_e,             Mod,              spawn,            CMD("loginctl", "lock-session") },
+    { XK_d,             Mod,              spawn,            TUI("dictfzf") },
+    { XK_x,             Mod,              spawn,            COPYTOXEPHYR },
+    { XK_q,             ModShift,         restart,          {0} },
 
-PAIR( 0,                PAIR_VOL,             spawn,          VOL(-3), VOL(+3) ),
-PAIR( ModAlt,           PAIR_JK,              spawn,          VOL(-3), VOL(+3) ),
-PAIR( ModAltShift,      PAIR_JK,              spawn,          MPCVOL(-10), MPCVOL(+10) ),
-    { ModAlt,           XK_m,                 spawn,          MUTE },
-    { ModAltShift,      XK_m,                 spawn,          TOGGLE_MIC_MUTE },
-    { ModCtrl,          XK_s,                 spawn,          PACYCLE },
-    { 0,                XF86XK_AudioMute,     spawn,          MUTE },
-    { 0,                XF86XK_AudioMicMute,  spawn,          TOGGLE_MIC_MUTE },
+PAIR( PAIR_VOL,         0,                spawn,            VOL(-3), VOL(+3) ),
+PAIR( PAIR_JK,          ModAlt,           spawn,            VOL(-3), VOL(+3) ),
+PAIR( PAIR_JK,          ModAltShift,      spawn,            MPCVOL(-10), MPCVOL(+10) ),
+    { XK_m,             ModAlt,           spawn,            MUTE },
+    { XK_m,             ModAltShift,      spawn,            TOGGLE_MIC_MUTE },
+    { XK_s,             ModCtrl,          spawn,            PACYCLE },
+    { XF86XK_AudioMute,     0,            spawn,            MUTE },
+    { XF86XK_AudioMicMute,  0,            spawn,            TOGGLE_MIC_MUTE },
 
-    { ModAltShift,      XK_p,                 spawn,          CMD("mpc", "toggle") },
-    { ModAlt,           XK_p,                 spawn,          MEDIA_PLAYPAUSE },
-PAIR( ModAlt,           PAIR_HL,              spawn,          MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
-PAIR( ModAltShift,      PAIR_HL,              spawn,          MEDIA_PREV,      MEDIA_NEXT     ),
-    { ModAlt,           XK_n,                 spawn,          NOTIFYSONG },
-    { 0,                XF86XK_AudioPlay,     spawn,          MEDIA_PLAYPAUSE },
-    { 0,                XF86XK_AudioPrev,     spawn,          MEDIA_PREV },
-    { 0,                XF86XK_AudioNext,     spawn,          MEDIA_NEXT },
+    { XK_p,             ModAltShift,      spawn,            MPC_TOGGLE },
+    { XK_p,             ModAlt,           spawn,            MEDIA_PLAYPAUSE },
+PAIR( PAIR_HL,          ModAlt,           spawn,            MEDIA_SEEK_BACK, MEDIA_SEEK_FWD ),
+PAIR( PAIR_HL,          ModAltShift,      spawn,            MEDIA_PREV,      MEDIA_NEXT     ),
+    { XF86XK_AudioPlay, 0,                spawn,            MEDIA_PLAYPAUSE },
+    { XF86XK_AudioPrev, 0,                spawn,            MEDIA_PREV },
+    { XF86XK_AudioNext, 0,                spawn,            MEDIA_NEXT },
 
-PAIR( 0,                PAIR_BRIGHTNESS,      spawn,          LIGHTDEC(10), LIGHTINC(10) ),
-PAIR( Shift,            PAIR_BRIGHTNESS,      spawn,          LIGHTDEC(1),  LIGHTINC(1)  ),
-PAIR( Mod,              PAIR_BRACKET,         spawn,          LIGHTDEC(10), LIGHTINC(10) ),
-PAIR( ModShift,         PAIR_BRACKET,         spawn,          LIGHTDEC(1),  LIGHTINC(1)  ),
+PAIR( PAIR_BRIGHTNESS,  0,                spawn,            LIGHTDEC(10), LIGHTINC(10) ),
+PAIR( PAIR_BRIGHTNESS,  Shift,            spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
+PAIR( PAIR_BRACKET,     Mod,              spawn,            LIGHTDEC(10), LIGHTINC(10) ),
+PAIR( PAIR_BRACKET,     ModShift,         spawn,            LIGHTDEC(1),  LIGHTINC(1)  ),
 
-    { Mod,              XK_r,                 spawn,          PIPEURL },
-    { ModShift,         XK_r,                 spawn,          CMD("pipeurl", "history") },
-    { Mod,              XK_y,                 spawn,          CMD("qrsend") },
+    { XK_r,             Mod,              spawn,            CMD("pipeurl", "--clipboard", "ask") },
+    { XK_r,             ModShift,         spawn,            CMD("pipeurl", "history") },
+    { XK_y,             Mod,              spawn,            CMD("qrsend") },
 
-PAIR( Mod,              PAIR_JK,              focusstack,     {.i = +1 },    {.i = -1 } ),
-PAIR( ModShift,         PAIR_JK,              push,           {.i = +1 },    {.i = -1 } ),
-PAIR( Mod,              PAIR_HL,              setmfact,       {.f = -0.05 }, {.f = +0.05 } ),
-    { Mod,              XK_s,                 switchcol,      {0} },
-    { Mod,              XK_space,             zoom,           {0} },
-    { ModShift,         XK_space,             transfer,       {0} },
-    { Mod,              XK_Tab,               view,           {0} },
-    { Mod,              XK_u,                 gotourgent,     {0} },
-    { Mod,              XK_w,                 killclient,     {0} },
-    { ModCtrl,          XK_b,                 togglebar,      {0} },
-    { Mod,              XK_f,                 togglefullscr,  {0} },
-    { Mod,              XK_semicolon,         setlayout,      {.lt = tile } },
-    { ModShift,         XK_semicolon,         setlayout,      {.lt = stairs } },
-    { ModCtrl,          XK_semicolon,         setlayout,      {.lt = monocle } },
-PAIR( ModCtrl,          PAIR_JK,              incnmaster,     {.i = -1 }, {.i = +1 } ),
-    { ModShift,         XK_f,                 togglefloating, {0} },
-    { Mod,              XK_0,                 view,           {.ui = ~0 } },
-    { ModShift,         XK_0,                 tag,            {.ui = ~0 } },
+PAIR( PAIR_JK,          Mod,              focusstack,       {.i = +1 },    {.i = -1 } ),
+PAIR( PAIR_JK,          ModShift,         push,             {.i = +1 },    {.i = -1 } ),
+PAIR( PAIR_HL,          Mod,              setmfact,         {.f = -0.05 }, {.f = +0.05 } ),
+    { XK_s,             Mod,              switchcol,        {0} },
+    { XK_space,         Mod,              zoom,             {0} },
+    { XK_space,         ModShift,         transfer,         {0} },
+    { XK_Tab,           Mod,              view,             {0} },
+    { XK_w,             ModShift,         killclient,       {0} },
+    { XK_b,             ModCtrl,          togglebar,        {0} },
+    { XK_f,             Mod,              togglefullscreen, {0} },
+    { XK_semicolon,     Mod,              setlayout,        {.lt = tile } },
+    { XK_semicolon,     ModShift,         setlayout,        {.lt = stairs } },
+    { XK_semicolon,     ModCtrl,          setlayout,        {.lt = monocle } },
+PAIR( PAIR_JK,          ModCtrl,          incnmaster,       {.i = -1 }, {.i = +1 } ),
+    { XK_f,             ModShift,         togglefloating,   {0} },
+    { XK_0,             Mod,              view,             {.ui = ~0U } },
+    { XK_0,             ModShift,         tag,              {.ui = ~0U } },
 
-    /* { Mod,              XK_n,                 adjacent,       {.adj = view } }, */
-    /* { ModCtrl,          XK_n,                 adjacent,       {.adj = toggleview } }, */
-    /* { ModShift,         XK_n,                 adjacent,       {.adj = tag } }, */
-    /* { ModCtrlShift,     XK_n,                 adjacent,       {.adj = toggletag } }, */
-
-PAIR( Mod,              PAIR_COMMAPERIOD,     focusmon,       {.i = +1 }, {.i = -1 } ),
-PAIR( ModShift,         PAIR_COMMAPERIOD,     tagmon,         {.i = +1 }, {.i = -1 } ),
-    { Mod,              XK_comma,             focusmon,       {.i = -1 } },
-    { Mod,              XK_period,            focusmon,       {.i = +1 } },
-    { ModShift,         XK_comma,             tagmon,         {.i = -1 } },
-    { ModShift,         XK_period,            tagmon,         {.i = +1 } },
+PAIR( PAIR_COMMAPERIOD, Mod,              viewmon,          {.i = +1 }, {.i = -1 } ),
+PAIR( PAIR_COMMAPERIOD, ModShift,         tagmon,           {.i = +1 }, {.i = -1 } ),
+    { XK_comma,         Mod,              viewmon,          {.i = -1 } },
+    { XK_period,        Mod,              viewmon,          {.i = +1 } },
+    { XK_comma,         ModShift,         tagmon,           {.i = -1 } },
+    { XK_period,        ModShift,         tagmon,           {.i = +1 } },
 
     TAGKEYS(XK_1, 0), TAGKEYS(XK_2, 1), TAGKEYS(XK_3, 2),
     TAGKEYS(XK_4, 3), TAGKEYS(XK_5, 4), TAGKEYS(XK_6, 5),
     TAGKEYS(XK_7, 6), TAGKEYS(XK_8, 7), TAGKEYS(XK_9, 8),
 };
 
-/* macro for defining scroll actions for when the cursor is on any window or the root window */
-#define GLOBALSCROLL(MOD, FN, ARG_UP, ARG_DOWN) \
-	{ ClkRootWin,   MOD, Button4, FN, ARG_UP   }, \
-	{ ClkRootWin,   MOD, Button5, FN, ARG_DOWN }, \
-	{ ClkClientWin, MOD, Button4, FN, ARG_UP   }, \
-	{ ClkClientWin, MOD, Button5, FN, ARG_DOWN }
-
-/* same as above, but for clicking instead of scrolling */
-#define GLOBALCLICK(MOD, FN, ARG) \
-	{ ClkRootWin,   MOD, Button1, FN, ARG }, \
-	{ ClkClientWin, MOD, Button1, FN, ARG }
+/* ========================
+ * = Button Click Actions
+ * ======================== */
 
 /* button definitions */
-/* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static const Button buttons[] = {
-	/* click            modifier   key         function          argument */
-	{ ClkLtSymbol,      0,         Button1,    setlayout,        {0} },
-	{ ClkLtSymbol,      0,         Button2,    setlayout,        {.lt = tile } },
-	{ ClkLtSymbol,      0,         Button3,    setlayout,        {.lt = stairs } },
-	{ ClkWinTitle,      0,         Button1,    spawn,            PIPEURL },
-	{ ClkStatusText,    0,         Button2,    spawn,            CMD(TERM) },
-	{ ClkClientWin,     Mod,       Button1,    movemouse,        {0} },
-	{ ClkClientWin,     Mod,       Button2,    togglefloating,   {0} },
-	{ ClkClientWin,     Mod,       Button3,    resizemouse,      {0} },
-	{ ClkTagBar,        0,         Button1,    view,             {0} },
-	{ ClkTagBar,        0,         Button3,    toggleview,       {0} },
-	{ ClkTagBar,        Mod,       Button1,    tag,              {0} },
-	{ ClkTagBar,        Mod,       Button3,    toggletag,        {0} },
-	{ ClkStatusText,    0,         Button1,    spawn,            MUTE },
-	{ ClkStatusText,    0,         Button3,    spawn,            PACYCLE },
-	{ ClkStatusText,    0,         Button4,    spawn,            VOL(+3) },
-	{ ClkStatusText,    0,         Button5,    spawn,            VOL(-3) },
-	GLOBALSCROLL(       Mod,                   focusstacktiled,  {.i = -1 },     {.i = +1 }    ), /* super+scroll:          change focus */
-	GLOBALSCROLL(       ModShift,              push,             {.i = -1 },     {.i = +1 }    ), /* super+shift+scroll:    push the focused window */
-	GLOBALSCROLL(       ModCtrl,               setmfact,         {.f = +0.05 },  {.f = -0.05 } ), /* super+control+scroll:  change mfact */
+    /* click area         button     modifier    function          argument */
+    { ClickLtSymbol,      Button1,   0,          setlayout,        {.i = +2 } },
+    { ClickLtSymbol,      Button3,   0,          setlayout,        {.i = -2 } },
+
+    { ClickClientWin,     Button1,   Mod,        movemouse,        {0} },
+    { ClickClientWin,     Button2,   Mod,        togglefloating,   {0} },
+    { ClickClientWin,     Button3,   Mod,        resizemouse,      {0} },
+
+    { ClickTagBar,        Button1,   0,          view,             {0} },
+    { ClickTagBar,        Button3,   0,          toggleview,       {0} },
+    { ClickTagBar,        Button1,   Shift,      tag,              {0} },
+    { ClickTagBar,        Button3,   Shift,      toggletag,        {0} },
+    { ClickTagBar,        Button4,   0,          cycleview,        {.i = +1 } },
+    { ClickTagBar,        Button5,   0,          cycleview,        {.i = -1 } },
+
+    { ClickWinArea,       Button4,   Mod,        focusstacktile,   {.i = -1 } },
+    { ClickWinArea,       Button5,   Mod,        focusstacktile,   {.i = +1 } },
+    { ClickWinArea,       Button4,   ModShift,   push,             {.i = -1 } },
+    { ClickWinArea,       Button5,   ModShift,   push,             {.i = +1 } },
+    { ClickWinArea,       Button4,   ModCtrl,    setmfact,         {.f = +0.05 } },
+    { ClickWinArea,       Button5,   ModCtrl,    setmfact,         {.f = -0.05 } },
+
+    { ClickWinButtonDouble,  Button1,   0,          killclient,       {0} },
+    { ClickWinButton,        Button2,   0,          zoom,             {0} },
+    { ClickWinButton,        Button3,   0,          togglefullscreen, {0} },
+    { ClickWinButton,        Button4,   0,          push,             {.i = -1 } },
+    { ClickWinButton,        Button5,   0,          push,             {.i = +1 } },
 };
 
-// vim:noexpandtab
+/* statusbar module click actions */
+static const StatusClick statusclick[] = {
+    /* module       button     modifier    function          argument */
+    { "date",       Button1,   0,          spawn,            SHCMD("notify-send \"$(pcal -t)\"") },
+
+    { "audio",      Button1,   0,          spawn,            MUTE },
+    { "audio",      Button2,   0,          spawn,            TUI("pulsemixer") },
+    { "audio",      Button3,   0,          spawn,            PACYCLE },
+    { "audio",      Button4,   0,          spawn,            VOL(+3) },
+    { "audio",      Button5,   0,          spawn,            VOL(-3) },
+
+    { "music",      Button1,   0,          spawn,            MPC_TOGGLE },
+    { "music",      Button3,   0,          spawn,            TUI("ncmpcpp") },
+    { "music",      Button4,   0,          spawn,            MPCVOL(+10) },
+    { "music",      Button5,   0,          spawn,            MPCVOL(-10) },
+
+    { "network",    Button1,   0,          spawn,            CMD("networkmanager_dmenu") },
+};
+
+// vim:expandtab

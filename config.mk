@@ -32,8 +32,10 @@ LIBS = -L${X11LIB} -lm -lX11 ${XINERAMALIBS} ${FREETYPELIBS} -lX11-xcb -lxcb -lx
 
 # flags
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=200809L -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
-#CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
-CFLAGS   = -std=c99 -pedantic -Wall -Wno-deprecated-declarations -Os ${INCS} ${CPPFLAGS}
+CFLAGS   = -std=c99 -pedantic -Wall -Wtype-limits -Wlogical-op -Wformat=2 \
+	-Winit-self -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls \
+	-Wold-style-definition -O2 ${INCS} ${CPPFLAGS}
+#CFLAGS = -std=c99 -g -rdynamic -pedantic -Wall -O1 ${INCS} ${CPPFLAGS}
 LDFLAGS  = ${LIBS}
 
 # Solaris
